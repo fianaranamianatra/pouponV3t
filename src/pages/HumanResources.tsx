@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Search, Plus, Filter, Edit, Trash2, Eye, Users, DollarSign, UserCheck, Building, User, Calendar, Briefcase, Clock, Calculator } from 'lucide-react';
+import { Search, Plus, Filter, Edit, Trash2, Eye, Users, DollarSign, UserCheck, Building, User, Calendar, Briefcase, Clock, Calculator, FileText } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { EmployeeForm } from '../components/forms/EmployeeForm';
+import { PayslipA5Modal } from '../components/payroll/PayslipA5Modal';
 import { Avatar } from '../components/Avatar';
 
 interface Employee {
@@ -119,6 +120,7 @@ export function HumanResources() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showPayslipModal, setShowPayslipModal] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
@@ -184,6 +186,11 @@ export function HumanResources() {
   const handleEditClick = (employee: Employee) => {
     setSelectedEmployee(employee);
     setShowEditForm(true);
+  };
+
+  const handleShowPayslip = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setShowPayslipModal(true);
   };
 
   return (
@@ -362,6 +369,13 @@ export function HumanResources() {
                         title="Modifier"
                       >
                         <Edit className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleShowPayslip(employee)}
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Afficher le bulletin de paie"
+                      >
+                        <FileText className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleDeleteEmployee(employee.id)}
@@ -731,6 +745,27 @@ export function HumanResources() {
           </div>
         )}
       </Modal>
+
+      {/* Payslip A5 Modal */}
+      {selectedEmployee && (
+        <PayslipA5Modal
+          isOpen={showPayslipModal}
+          onClose={() => {
+            setShowPayslipModal(false);
+            setSelectedEmployee(null);
+          }}
+          employee={{
+            id: selectedEmployee.id,
+            firstName: selectedEmployee.firstName,
+            lastName: selectedEmployee.lastName,
+            position: selectedEmployee.position,
+            department: selectedEmployee.department,
+            salary: selectedEmployee.salary,
+            entryDate: selectedEmployee.entryDate,
+            contractType: selectedEmployee.contractType
+          }}
+        />
+      )}
     </div>
   );
 }

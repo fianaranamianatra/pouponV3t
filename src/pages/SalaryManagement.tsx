@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Filter, Edit, Trash2, Eye, Users, DollarSign, TrendingUp, Calendar, History, Calculator, Wallet, AlertTriangle } from 'lucide-react';
+import { Search, Plus, Filter, Edit, Trash2, Eye, Users, DollarSign, TrendingUp, Calendar, History, Calculator, Wallet, AlertTriangle, FileText } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { SalaryForm } from '../components/forms/SalaryForm';
 import { SalaryHistoryModal } from '../components/modals/SalaryHistoryModal';
+import { PayslipA5Modal } from '../components/payroll/PayslipA5Modal';
 import { Avatar } from '../components/Avatar';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { hierarchyService, teachersService } from '../lib/firebase/firebaseService';
@@ -115,6 +116,7 @@ export function SalaryManagement() {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showPayslipModal, setShowPayslipModal] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<SalaryRecord | null>(null);
 
   // Hook Firebase pour charger les employés
@@ -229,6 +231,11 @@ export function SalaryManagement() {
   const handleViewHistory = (record: SalaryRecord) => {
     setSelectedRecord(record);
     setShowHistoryModal(true);
+  };
+
+  const handleShowPayslip = (record: SalaryRecord) => {
+    setSelectedRecord(record);
+    setShowPayslipModal(true);
   };
 
   const handleExport = () => {
@@ -471,6 +478,13 @@ export function SalaryManagement() {
                             <History className="w-4 h-4" />
                           </button>
                           <button 
+                            onClick={() => handleShowPayslip(record)}
+                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Afficher le bulletin de paie"
+                          >
+                            <FileText className="w-4 h-4" />
+                          </button>
+                          <button 
                             onClick={() => record.id && handleDeleteRecord(record.id)}
                             className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Supprimer"
@@ -704,6 +718,26 @@ export function SalaryManagement() {
           }}
           employee={selectedRecord}
           history={salaryHistory.filter(h => h.employeeId === selectedRecord.employeeId)}
+        />
+      )}
+
+      {/* Payslip A5 Modal */}
+      {selectedRecord && (
+        <PayslipA5Modal
+          isOpen={showPayslipModal}
+          onClose={() => {
+            setShowPayslipModal(false);
+            setSelectedRecord(null);
+          }}
+          employee={{
+            id: selectedRecord.employeeId,
+            firstName: selectedRecord.employeeName.split(' ')[0] || '',
+            lastName: selectedRecord.employeeName.split(' ')[1] || '',
+            position: selectedRecord.position,
+            department: selectedRecord.department,
+            salary: selectedRecord.baseSalary,
+            contractType: selectedRecord.status
+          }}
         />
       )}
     </div>

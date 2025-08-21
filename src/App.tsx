@@ -17,9 +17,11 @@ import { ReportsFirebase } from './pages/ReportsFirebase';
 import { HumanResources } from './pages/HumanResources';
 import { UserProfile } from './pages/UserProfile';
 import { AccessDenied } from './pages/AccessDenied';
+import { SalaryManagement } from './pages/SalaryManagement';
+import { ExpensesManagement } from './pages/ExpensesManagement';
 import { USER_ROLES } from './lib/roles';
 
-export type Page = 'dashboard' | 'students' | 'teachers' | 'classes' | 'subjects' | 'ecolage' | 'payroll' | 'transactions' | 'reports' | 'hr' | 'import';
+export type Page = 'dashboard' | 'students' | 'teachers' | 'classes' | 'subjects' | 'ecolage' | 'payroll' | 'transactions' | 'salary-management' | 'expenses' | 'reports' | 'hr' | 'import';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
@@ -63,6 +65,18 @@ function App() {
         return (
           <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]}>
             <PayrollManagement />
+          </RoleBasedRoute>
+        );
+      case 'salary-management':
+        return (
+          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]}>
+            <SalaryManagement />
+          </RoleBasedRoute>
+        );
+      case 'expenses':
+        return (
+          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]}>
+            <ExpensesManagement />
           </RoleBasedRoute>
         );
       case 'transactions':

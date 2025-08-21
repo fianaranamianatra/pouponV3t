@@ -1,4 +1,5 @@
 import React from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Home, 
@@ -15,7 +16,12 @@ import {
   UserCheck,
   User,
   School,
-  Upload
+  Upload,
+  ChevronDown,
+  ChevronRight,
+  Wallet,
+  TrendingUp,
+  Receipt
 } from 'lucide-react';
 import type { Page } from '../App';
 import { usePermissions } from '../hooks/usePermissions';
@@ -35,15 +41,20 @@ const menuItems = [
   { id: 'classes', label: 'Classes', icon: BookOpen },
   { id: 'subjects', label: 'Matières', icon: BookOpen },
   { id: 'hr', label: 'Ressources Humaines', icon: UserCheck },
-  { id: 'ecolage', label: 'Gestion Écolage', icon: CreditCard },
-  { id: 'payroll', label: 'Gestion de la Paie', icon: Calculator },
-  { id: 'transactions', label: 'Encaissements et Décaissements', icon: DollarSign },
   { id: 'reports', label: 'Rapports', icon: BarChart3 },
   { id: 'import', label: 'Import de Données', icon: Upload }
 ] as const;
 
+const financialMenuItems = [
+  { id: 'ecolage', label: 'Gestion Écolage', icon: CreditCard },
+  { id: 'transactions', label: 'Encaissements et Décaissements', icon: DollarSign },
+  { id: 'salary-management', label: 'Gestion des Salaires', icon: Wallet },
+  { id: 'expenses', label: 'Charges et Dépenses', icon: TrendingUp },
+  { id: 'payroll', label: 'Bulletins de Paie', icon: Receipt }
+] as const;
 export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse }: SidebarProps) {
   const { can, is } = usePermissions();
+  const [financialMenuOpen, setFinancialMenuOpen] = useState(false);
   
   // Filter menu items based on user permissions
   const getFilteredMenuItems = () => {
@@ -57,12 +68,6 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
           return can('manage_classes') || can('view_classes');
         case 'subjects':
           return can('manage_subjects') || can('view_subjects');
-        case 'ecolage':
-          return can('manage_fees') || can('view_all_fees') || can('view_child_fees');
-        case 'payroll':
-          return can('manage_finances') || is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]);
-        case 'transactions':
-          return can('manage_finances') || can('view_finances') || is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]);
         case 'reports':
           return can('all_reports') || can('view_all_reports');
         case 'hr':
@@ -75,7 +80,42 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
     });
   };
   
+  // Check if user has access to financial features
+  const hasFinancialAccess = () => {
+    return can('manage_fees') || can('view_all_fees') || can('view_child_fees') ||
+           can('manage_finances') || can('view_finances') ||
+           is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]);
+  };
+  
+  // Filter financial menu items based on permissions
+  const getFilteredFinancialItems = () => {
+    return financialMenuItems.filter(item => {
+      switch (item.id) {
+        case 'ecolage':
+          return can('manage_fees') || can('view_all_fees') || can('view_child_fees');
+        case 'transactions':
+        case 'salary-management':
+        case 'expenses':
+        case 'payroll':
+          return can('manage_finances') || can('view_finances') || is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]);
+        default:
+          return true;
+      }
+    });
+  };
+  
   const filteredMenuItems = getFilteredMenuItems();
+  const filteredFinancialItems = getFilteredFinancialItems();
+  
+  // Check if current page is a financial page
+  const isFinancialPage = financialMenuItems.some(item => item.id === currentPage);
+  
+  // Auto-open financial menu if current page is financial
+  React.useEffect(() => {
+    if (isFinancialPage) {
+      setFinancialMenuOpen(true);
+    }
+  }, [isFinancialPage]);
   
   return (
     <div className={`fixed left-0 top-0 h-full bg-white shadow-lg transition-all duration-300 z-30 ${
@@ -130,6 +170,62 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
               </li>
             );
           })}
+          
+          {/* Financial Management Menu */}
+          {hasFinancialAccess() && (
+            <li className="relative">
+              <button
+                onClick={() => setFinancialMenuOpen(!financialMenuOpen)}
+                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 group ${
+                  isFinancialPage
+                    ? 'bg-green-50 text-green-600 shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <Wallet className={`w-5 h-5 transition-colors ${
+                  isFinancialPage ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600'
+                }`} />
+                {!collapsed && (
+                  <>
+                    <span className="font-medium text-sm flex-1">Gestion Financière</span>
+                    {financialMenuOpen ? (
+                      <ChevronDown className="w-4 h-4" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4" />
+                    )}
+                  </>
+                )}
+              </button>
+              
+              {/* Financial Submenu */}
+              {!collapsed && financialMenuOpen && (
+                <ul className="mt-1 ml-8 space-y-1">
+                  {filteredFinancialItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = currentPage === item.id;
+                    
+                    return (
+                      <li key={item.id}>
+                        <button
+                          onClick={() => onPageChange(item.id as Page)}
+                          className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-all duration-200 group ${
+                            isActive
+                              ? 'bg-green-100 text-green-700 shadow-sm'
+                              : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                          }`}
+                        >
+                          <Icon className={`w-4 h-4 transition-colors ${
+                            isActive ? 'text-green-700' : 'text-gray-400 group-hover:text-gray-600'
+                          }`} />
+                          <span className="font-medium text-xs">{item.label}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </li>
+          )}
           
           {/* User Management - Admin Only */}
           <li>

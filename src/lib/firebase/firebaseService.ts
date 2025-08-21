@@ -15,6 +15,10 @@ class FirebaseService {
     this.collectionRef = collection(db, collectionName);
   }
 
+  getCollectionRef() {
+    return this.collectionRef;
+  }
+
   async create(data) {
     try {
       const docRef = await addDoc(this.collectionRef, data);
@@ -76,6 +80,33 @@ class FirebaseService {
       throw error;
     }
   }
+
+  async generateGradesReport(filters) {
+    try {
+      // Implementation for generating grades report
+      const documents = await this.getAll();
+      return documents.filter(doc => {
+        // Apply filters if provided
+        if (filters) {
+          // Add filtering logic based on the filters parameter
+          return true; // Placeholder logic
+        }
+        return true;
+      });
+    } catch (error) {
+      console.error("Error generating grades report: ", error);
+      throw error;
+    }
+  }
 }
+
+// Create and export service instances for each collection
+export const studentsService = new FirebaseService('students');
+export const teachersService = new FirebaseService('teachers');
+export const classesService = new FirebaseService('classes');
+export const subjectsService = new FirebaseService('subjects');
+export const feesService = new FirebaseService('fees');
+export const reportsService = new FirebaseService('reports');
+export const hierarchyService = new FirebaseService('hierarchy');
 
 export default FirebaseService;

@@ -19,7 +19,7 @@ import { UserProfile } from './pages/UserProfile';
 import { AccessDenied } from './pages/AccessDenied';
 import { USER_ROLES } from './lib/roles';
 
-export type Page = 'dashboard' | 'students' | 'teachers' | 'classes' | 'subjects' | 'ecolage' | 'payroll' | 'transactions' | 'reports' | 'hr';
+export type Page = 'dashboard' | 'students' | 'teachers' | 'classes' | 'subjects' | 'ecolage' | 'payroll' | 'transactions' | 'reports' | 'hr' | 'import';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
@@ -81,6 +81,30 @@ function App() {
         return (
           <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR]}>
             <HumanResources />
+          </RoleBasedRoute>
+        );
+      case 'import':
+        return (
+          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR]}>
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Import de Données</h1>
+                <p className="text-gray-600">Importez vos données en masse via des fichiers CSV ou Excel pour une mise à jour rapide du système.</p>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Zone d'Import</h3>
+                  <p className="text-gray-500 mb-6">Glissez vos fichiers ici ou cliquez pour sélectionner des fichiers</p>
+                  <p className="text-sm text-gray-400">Formats acceptés: CSV, Excel (.xlsx, .xls)</p>
+                </div>
+              </div>
+            </div>
           </RoleBasedRoute>
         );
       default:

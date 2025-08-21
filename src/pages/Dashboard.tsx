@@ -1,6 +1,6 @@
 import React from 'react';
 import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCircle, AlertTriangle, Plus } from 'lucide-react';
-import { DataInitializer } from '../components/admin/DataInitializer';
+// import { DataInitializer } from '../components/admin/DataInitializer';
 
 const stats = [
   {
@@ -231,7 +231,7 @@ export function Dashboard() {
       </div>
 
       {/* Data Initializer - Admin Panel */}
-      <DataInitializer />
+      {/* <DataInitializer /> */}
 
       {/* Quick Actions */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

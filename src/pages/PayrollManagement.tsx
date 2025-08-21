@@ -12,8 +12,13 @@ interface Employee {
   id?: string;
   firstName: string;
   lastName: string;
+  dateOfBirth?: string;
   position: string;
   department: string;
+  entryDate?: string;
+  contractType?: string;
+  experience?: string;
+  retirementDate?: string;
   salary: number;
   status: 'active' | 'inactive';
 }

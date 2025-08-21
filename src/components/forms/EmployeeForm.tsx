@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, Briefcase, Building, Users, DollarSign, Calendar, Shield } from 'lucide-react';
+import { User, Mail, Phone, Briefcase, Building, Users, DollarSign, Calendar, Shield, Calculator, Clock } from 'lucide-react';
 import { useFirebaseCollection } from '../../hooks/useFirebaseCollection';
 import { hierarchyService } from '../../lib/firebase/firebaseService';
 
@@ -16,6 +16,7 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
   const [formData, setFormData] = useState({
     firstName: initialData?.firstName || '',
     lastName: initialData?.lastName || '',
+    dateOfBirth: initialData?.dateOfBirth || '',
     email: initialData?.email || '',
     phone: initialData?.phone || '',
     position: initialData?.position || '',
@@ -23,12 +24,21 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
     level: initialData?.level || 1,
     parentId: initialData?.parentId || '',
     salary: initialData?.salary || '',
-    hireDate: initialData?.hireDate || new Date().toISOString().split('T')[0],
+    entryDate: initialData?.entryDate || '',
+    contractType: initialData?.contractType || '',
+    experience: initialData?.experience || '',
+    retirementDate: initialData?.retirementDate || '',
     status: initialData?.status || 'active'
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [calculatedValues, setCalculatedValues] = useState({
+    age: 0,
+    calculatedExperience: 0,
+    experienceText: '',
+    calculatedRetirementDate: ''
+  });
 
   // Options prédéfinies pour les postes
   const positionOptions = [
@@ -84,6 +94,102 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
     { value: 'Chauffeur', label: 'Chauffeur', department: 'Service', level: 4 }
   ];
 
+  // Fonction pour calculer l'âge
+  const calculateAge = (dateOfBirth: string): number => {
+    if (!dateOfBirth) return 0;
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  // Fonction pour calculer l'expérience
+  const calculateExperience = (entryDate: string): { years: number; months: number; text: string } => {
+    if (!entryDate) return { years: 0, months: 0, text: '' };
+    
+    const today = new Date();
+    const entry = new Date(entryDate);
+    
+    let years = today.getFullYear() - entry.getFullYear();
+    let months = today.getMonth() - entry.getMonth();
+    
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+    
+    if (today.getDate() < entry.getDate()) {
+      months--;
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+    }
+    
+    // Générer le texte d'affichage
+    let text = '';
+    if (years > 0 && months > 0) {
+      text = `${years} an${years > 1 ? 's' : ''} ${months} mois`;
+    } else if (years > 0) {
+      text = `${years} an${years > 1 ? 's' : ''}`;
+    } else if (months > 0) {
+      text = `${months} mois`;
+    } else {
+      text = 'Moins d\'un mois';
+    }
+    
+    return { years: Math.max(0, years), months: Math.max(0, months), text };
+  };
+
+  // Fonction pour calculer la date de retraite
+  const calculateRetirementDate = (dateOfBirth: string, contractType: string): string => {
+    if (!dateOfBirth || !contractType) return '';
+    
+    const birthDate = new Date(dateOfBirth);
+    let retirementAge = 60; // Tous à 60 ans pour l'instant
+    
+    // Règles de retraite selon le type de contrat (tous à 60 ans actuellement)
+    switch (contractType) {
+      case 'FRAM':
+      case 'CDI':
+      case 'CDD':
+        retirementAge = 60;
+        break;
+      default:
+        retirementAge = 60;
+    }
+    
+    const retirementDate = new Date(birthDate);
+    retirementDate.setFullYear(birthDate.getFullYear() + retirementAge);
+    
+    return retirementDate.toISOString().split('T')[0];
+  };
+
+  // Effet pour recalculer automatiquement les valeurs
+  React.useEffect(() => {
+    const age = calculateAge(formData.dateOfBirth);
+    const experienceData = calculateExperience(formData.entryDate);
+    const calculatedRetirementDate = calculateRetirementDate(formData.dateOfBirth, formData.contractType);
+    
+    setCalculatedValues({
+      age,
+      calculatedExperience: experienceData.years,
+      experienceText: experienceData.text,
+      calculatedRetirementDate
+    });
+    
+    // Mettre à jour automatiquement l'expérience et la date de retraite dans le formulaire
+    setFormData(prev => ({
+      ...prev,
+      experience: experienceData.years.toString(),
+      retirementDate: calculatedRetirementDate
+    }));
+  }, [formData.dateOfBirth, formData.entryDate, formData.contractType]);
+
   // Options pour les départements
   const departmentOptions = [
     { value: 'Direction', label: 'Direction', icon: '👑' },
@@ -113,7 +219,6 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
     if (!formData.position) newErrors.position = 'Le poste est requis';
     if (!formData.department) newErrors.department = 'Le département est requis';
     if (!formData.salary || parseFloat(formData.salary) <= 0) newErrors.salary = 'Le salaire doit être supérieur à 0';
-    if (!formData.hireDate) newErrors.hireDate = 'La date d\'embauche est requise';
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -211,6 +316,26 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
           />
           {errors.lastName && (
             <p className="text-red-600 text-xs mt-1">{errors.lastName}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Calendar className="w-4 h-4 inline mr-2" />
+            Date de naissance (optionnel)
+          </label>
+          <input
+            type="date"
+            name="dateOfBirth"
+            value={formData.dateOfBirth}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          {calculatedValues.age > 0 && (
+            <p className="text-blue-600 text-xs mt-1">
+              <Calculator className="w-3 h-3 inline mr-1" />
+              Âge calculé: {calculatedValues.age} ans
+            </p>
           )}
         </div>
 
@@ -321,6 +446,26 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
+            Type de contrat (optionnel)
+          </label>
+          <select
+            name="contractType"
+            value={formData.contractType}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">Sélectionner un type de contrat</option>
+            <option value="FRAM">FRAM - Fonctionnaire</option>
+            <option value="CDI">CDI - Contrat à Durée Indéterminée</option>
+            <option value="CDD">CDD - Contrat à Durée Déterminée</option>
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            Détermine l'âge de retraite (actuellement 60 ans pour tous)
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             <Users className="w-4 h-4 inline mr-2" />
             Niveau hiérarchique *
           </label>
@@ -393,19 +538,60 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <Calendar className="w-4 h-4 inline mr-2" />
-            Date d'embauche *
+            Date d'entrée (optionnel)
           </label>
           <input
             type="date"
-            name="hireDate"
-            value={formData.hireDate}
+            name="entryDate"
+            value={formData.entryDate}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.hireDate ? 'border-red-300' : 'border-gray-300'
-            }`}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
-          {errors.hireDate && (
-            <p className="text-red-600 text-xs mt-1">{errors.hireDate}</p>
+          {calculatedValues.experienceText && (
+            <p className="text-blue-600 text-xs mt-1">
+              <Calculator className="w-3 h-3 inline mr-1" />
+              Expérience calculée: {calculatedValues.experienceText}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Clock className="w-4 h-4 inline mr-2" />
+            Années d'expérience (calculé automatiquement)
+          </label>
+          <input
+            type="text"
+            name="experience"
+            value={calculatedValues.experienceText || 'Non calculé'}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            readOnly
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Calculé automatiquement à partir de la date d'entrée
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Calendar className="w-4 h-4 inline mr-2" />
+            Date de retraite (calculée automatiquement)
+          </label>
+          <input
+            type="date"
+            name="retirementDate"
+            value={formData.retirementDate}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            readOnly
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Calculée automatiquement (60 ans pour tous les types de contrat)
+          </p>
+          {calculatedValues.calculatedRetirementDate && (
+            <p className="text-blue-600 text-xs mt-1">
+              <Calculator className="w-3 h-3 inline mr-1" />
+              Retraite prévue: {new Date(calculatedValues.calculatedRetirementDate).toLocaleDateString('fr-FR')}
+            </p>
           )}
         </div>
 
@@ -427,13 +613,36 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
       </div>
 
       {/* Informations sur la hiérarchie */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-800 mb-2">Informations hiérarchiques</h4>
-        <div className="text-sm text-blue-700 space-y-1">
-          <p><strong>Département sélectionné :</strong> {formData.department || 'Aucun'}</p>
-          <p><strong>Niveau hiérarchique :</strong> {formData.level}</p>
-          <p><strong>Superviseur :</strong> {formData.parentId || 'Aucun (poste de direction)'}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="font-medium text-blue-800 mb-2">Informations hiérarchiques</h4>
+          <div className="text-sm text-blue-700 space-y-1">
+            <p><strong>Département :</strong> {formData.department || 'Aucun'}</p>
+            <p><strong>Niveau hiérarchique :</strong> {formData.level}</p>
+            <p><strong>Superviseur :</strong> {formData.parentId || 'Aucun (poste de direction)'}</p>
+          </div>
         </div>
+        
+        {/* Résumé des calculs */}
+        {(calculatedValues.age > 0 || calculatedValues.experienceText || calculatedValues.calculatedRetirementDate) && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h4 className="font-medium text-green-800 mb-2 flex items-center">
+              <Calculator className="w-4 h-4 mr-2" />
+              Calculs automatiques
+            </h4>
+            <div className="text-sm text-green-700 space-y-1">
+              {calculatedValues.age > 0 && (
+                <p><strong>Âge actuel:</strong> {calculatedValues.age} ans</p>
+              )}
+              {calculatedValues.experienceText && (
+                <p><strong>Expérience:</strong> {calculatedValues.experienceText}</p>
+              )}
+              {calculatedValues.calculatedRetirementDate && (
+                <p><strong>Retraite prévue:</strong> {new Date(calculatedValues.calculatedRetirementDate).toLocaleDateString('fr-FR')}</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex space-x-3 pt-4">

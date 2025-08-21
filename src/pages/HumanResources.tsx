@@ -8,11 +8,15 @@ interface Employee {
   id: string;
   firstName: string;
   lastName: string;
+  dateOfBirth?: string;
   position: string;
   department: string;
-  baseSalary: number;
+  salary: number;
   status: 'Actif' | 'Inactif';
-  hireDate: string;
+  entryDate?: string;
+  contractType?: string;
+  experience?: string;
+  retirementDate?: string;
   email: string;
   phone: string;
 }
@@ -22,11 +26,13 @@ const mockEmployees: Employee[] = [
     id: '1',
     firstName: 'Marie',
     lastName: 'Rakoto',
+    dateOfBirth: '1985-03-15',
     position: 'Directrice',
     department: 'Administration',
-    baseSalary: 800000,
+    salary: 800000,
     status: 'Actif',
-    hireDate: '2020-01-15',
+    entryDate: '2020-01-15',
+    contractType: 'CDI',
     email: 'marie.rakoto@lespoupons.mg',
     phone: '+261 34 12 345 67'
   },
@@ -34,11 +40,13 @@ const mockEmployees: Employee[] = [
     id: '2',
     firstName: 'Jean',
     lastName: 'Rabe',
+    dateOfBirth: '1978-07-22',
     position: 'Professeur de Mathématiques',
     department: 'Enseignement',
-    baseSalary: 450000,
+    salary: 450000,
     status: 'Actif',
-    hireDate: '2021-09-01',
+    entryDate: '2021-09-01',
+    contractType: 'FRAM',
     email: 'jean.rabe@lespoupons.mg',
     phone: '+261 34 23 456 78'
   },
@@ -46,15 +54,64 @@ const mockEmployees: Employee[] = [
     id: '3',
     firstName: 'Sophie',
     lastName: 'Andry',
+    dateOfBirth: '1990-12-10',
     position: 'Secrétaire',
     department: 'Administration',
-    baseSalary: 320000,
+    salary: 320000,
     status: 'Actif',
-    hireDate: '2019-03-20',
+    entryDate: '2019-03-20',
+    contractType: 'CDD',
     email: 'sophie.andry@lespoupons.mg',
     phone: '+261 34 34 567 89'
   }
 ];
+
+// Fonction pour calculer l'âge
+const calculateAge = (dateOfBirth: string): number => {
+  if (!dateOfBirth) return 0;
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
+// Fonction pour calculer l'expérience
+const calculateExperience = (entryDate: string): string => {
+  if (!entryDate) return 'Non renseigné';
+  
+  const today = new Date();
+  const entry = new Date(entryDate);
+  
+  let years = today.getFullYear() - entry.getFullYear();
+  let months = today.getMonth() - entry.getMonth();
+  
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  
+  if (today.getDate() < entry.getDate()) {
+    months--;
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+  }
+  
+  if (years > 0 && months > 0) {
+    return `${years} an${years > 1 ? 's' : ''} ${months} mois`;
+  } else if (years > 0) {
+    return `${years} an${years > 1 ? 's' : ''}`;
+  } else if (months > 0) {
+    return `${months} mois`;
+  } else {
+    return 'Moins d\'un mois';
+  }
+};
 
 export function HumanResources() {
   const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
@@ -76,18 +133,22 @@ export function HumanResources() {
   const departments = [...new Set(employees.map(e => e.department))];
   const totalEmployees = employees.length;
   const activeEmployees = employees.filter(e => e.status === 'Actif').length;
-  const totalSalary = employees.reduce((acc, e) => acc + e.baseSalary, 0);
+  const totalSalary = employees.reduce((acc, e) => acc + e.salary, 0);
 
   const handleAddEmployee = (data: any) => {
     const newEmployee: Employee = {
       id: Date.now().toString(),
       firstName: data.firstName || 'Prénom',
       lastName: data.lastName || 'Nom',
+      dateOfBirth: data.dateOfBirth || '',
       position: data.position || 'Poste',
       department: data.department || 'Administration',
-      baseSalary: parseFloat(data.baseSalary) || 0,
+      salary: parseFloat(data.salary) || 0,
       status: data.status || 'Actif',
-      hireDate: data.hireDate || new Date().toISOString().split('T')[0],
+      entryDate: data.entryDate || '',
+      contractType: data.contractType || '',
+      experience: data.experience || '',
+      retirementDate: data.retirementDate || '',
       email: data.email || 'email@lespoupons.mg',
       phone: data.phone || '+261 34 00 000 00'
     };
@@ -101,7 +162,7 @@ export function HumanResources() {
         e.id === selectedEmployee.id ? { 
           ...e, 
           ...data, 
-          baseSalary: parseFloat(data.baseSalary) || 0 
+          salary: parseFloat(data.salary) || 0 
         } : e
       ));
       setShowEditForm(false);
@@ -186,9 +247,12 @@ export function HumanResources() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="text-left py-3 px-6 font-medium text-gray-900">EMPLOYÉ</th>
+                <th className="text-left py-3 px-6 font-medium text-gray-900">ÂGE</th>
                 <th className="text-left py-3 px-6 font-medium text-gray-900">POSTE</th>
                 <th className="text-left py-3 px-6 font-medium text-gray-900">DÉPARTEMENT</th>
-                <th className="text-left py-3 px-6 font-medium text-gray-900">SALAIRE DE BASE</th>
+                <th className="text-left py-3 px-6 font-medium text-gray-900">EXPÉRIENCE</th>
+                <th className="text-left py-3 px-6 font-medium text-gray-900">CONTRAT</th>
+                <th className="text-left py-3 px-6 font-medium text-gray-900">SALAIRE</th>
                 <th className="text-left py-3 px-6 font-medium text-gray-900">STATUT</th>
                 <th className="text-left py-3 px-6 font-medium text-gray-900">ACTIONS</th>
               </tr>
@@ -205,8 +269,27 @@ export function HumanResources() {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">{employee.firstName} {employee.lastName}</p>
-                        <p className="text-sm text-gray-500">Depuis le {new Date(employee.hireDate).toLocaleDateString('fr-FR')}</p>
+                        <p className="text-sm text-gray-500">
+                          {employee.entryDate ? 
+                            `Depuis le ${new Date(employee.entryDate).toLocaleDateString('fr-FR')}` : 
+                            'Date d\'entrée non renseignée'
+                          }
+                        </p>
                       </div>
+                    </div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <div className="text-sm">
+                      {employee.dateOfBirth ? (
+                        <>
+                          <p className="font-medium text-gray-900">{calculateAge(employee.dateOfBirth)} ans</p>
+                          <p className="text-xs text-gray-500">
+                            Né(e) le {new Date(employee.dateOfBirth).toLocaleDateString('fr-FR')}
+                          </p>
+                        </>
+                      ) : (
+                        <span className="text-gray-500">Non renseigné</span>
+                      )}
                     </div>
                   </td>
                   <td className="py-4 px-6">
@@ -224,7 +307,36 @@ export function HumanResources() {
                     </span>
                   </td>
                   <td className="py-4 px-6">
-                    <p className="text-lg font-bold text-gray-900">{employee.baseSalary.toLocaleString()} MGA</p>
+                    <div className="text-sm">
+                      {employee.entryDate ? (
+                        <>
+                          <p className="font-medium text-gray-900">{calculateExperience(employee.entryDate)}</p>
+                          <p className="text-xs text-gray-500">
+                            Depuis {new Date(employee.entryDate).toLocaleDateString('fr-FR')}
+                          </p>
+                        </>
+                      ) : (
+                        <span className="text-gray-500">Non renseigné</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-4 px-6">
+                    {employee.contractType ? (
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        employee.contractType === 'FRAM' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : employee.contractType === 'CDI'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-purple-100 text-purple-800'
+                      }`}>
+                        {employee.contractType}
+                      </span>
+                    ) : (
+                      <span className="text-gray-500 text-sm">Non renseigné</span>
+                    )}
+                  </td>
+                  <td className="py-4 px-6">
+                    <p className="text-lg font-bold text-gray-900">{employee.salary.toLocaleString()} MGA</p>
                   </td>
                   <td className="py-4 px-6">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -384,11 +496,39 @@ export function HumanResources() {
                     </div>
                   </div>
                   
+                  {selectedEmployee.dateOfBirth && (
+                    <div className="flex items-center space-x-3">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Date de naissance</p>
+                        <p className="text-sm text-gray-900">
+                          {new Date(selectedEmployee.dateOfBirth).toLocaleDateString('fr-FR')} 
+                          <span className="text-gray-500 ml-2">({calculateAge(selectedEmployee.dateOfBirth)} ans)</span>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {selectedEmployee.entryDate && (
+                    <div className="flex items-center space-x-3">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Date d'entrée</p>
+                        <p className="text-sm text-gray-900">
+                          {new Date(selectedEmployee.entryDate).toLocaleDateString('fr-FR')}
+                          <span className="text-gray-500 ml-2">({calculateExperience(selectedEmployee.entryDate)})</span>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center space-x-3">
-                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <Clock className="w-4 h-4 text-gray-400" />
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Date d'embauche</p>
-                      <p className="text-sm text-gray-900">{new Date(selectedEmployee.hireDate).toLocaleDateString('fr-FR')}</p>
+                      <p className="text-sm font-medium text-gray-700">Expérience</p>
+                      <p className="text-sm text-gray-900">
+                        {selectedEmployee.entryDate ? calculateExperience(selectedEmployee.entryDate) : 'Non calculée'}
+                      </p>
                     </div>
                   </div>
                   
@@ -432,27 +572,49 @@ export function HumanResources() {
                     </div>
                   </div>
                   
+                  {selectedEmployee.contractType && (
+                    <div className="flex items-center space-x-3">
+                      <Briefcase className="w-4 h-4 text-gray-400" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Type de contrat</p>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                          selectedEmployee.contractType === 'FRAM' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : selectedEmployee.contractType === 'CDI'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-purple-100 text-purple-800'
+                        }`}>
+                          {selectedEmployee.contractType}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {selectedEmployee.retirementDate && (
+                    <div className="flex items-center space-x-3">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Date de retraite prévue</p>
+                        <p className="text-sm text-gray-900">{new Date(selectedEmployee.retirementDate).toLocaleDateString('fr-FR')}</p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center space-x-3">
-                    <Clock className="w-4 h-4 text-gray-400" />
+                    <div className="w-4 h-4 flex items-center justify-center">
+                      <div className={`w-3 h-3 rounded-full ${
+                        selectedEmployee.status === 'Actif' ? 'bg-green-500' : 'bg-red-500'
+                      }`}></div>
+                    </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Ancienneté</p>
-                      <p className="text-sm text-gray-900">
-                        {(() => {
-                          const hireDate = new Date(selectedEmployee.hireDate);
-                          const now = new Date();
-                          const years = now.getFullYear() - hireDate.getFullYear();
-                          const months = now.getMonth() - hireDate.getMonth();
-                          const totalMonths = years * 12 + months;
-                          
-                          if (totalMonths < 12) {
-                            return `${totalMonths} mois`;
-                          } else {
-                            const fullYears = Math.floor(totalMonths / 12);
-                            const remainingMonths = totalMonths % 12;
-                            return remainingMonths > 0 ? `${fullYears} ans ${remainingMonths} mois` : `${fullYears} ans`;
-                          }
-                        })()}
-                      </p>
+                      <p className="text-sm font-medium text-gray-700">Statut</p>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                        selectedEmployee.status === 'Actif' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {selectedEmployee.status}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -465,24 +627,24 @@ export function HumanResources() {
               <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">Salaire de base:</span>
-                  <span className="text-lg font-bold text-blue-600">{selectedEmployee.baseSalary.toLocaleString()} MGA</span>
+                  <span className="text-lg font-bold text-blue-600">{selectedEmployee.salary.toLocaleString()} MGA</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">CNAPS (13%):</span>
-                  <span className="text-sm font-medium text-red-600">-{Math.round(selectedEmployee.baseSalary * 0.13).toLocaleString()} MGA</span>
+                  <span className="text-sm font-medium text-red-600">-{Math.round(selectedEmployee.salary * 0.13).toLocaleString()} MGA</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">OSTIE (5%):</span>
-                  <span className="text-sm font-medium text-red-600">-{Math.round(selectedEmployee.baseSalary * 0.05).toLocaleString()} MGA</span>
+                  <span className="text-sm font-medium text-red-600">-{Math.round(selectedEmployee.salary * 0.05).toLocaleString()} MGA</span>
                 </div>
                 
                 <div className="border-t border-gray-300 pt-3">
                   <div className="flex justify-between items-center">
                     <span className="text-base font-bold text-gray-900">Salaire net:</span>
                     <span className="text-xl font-bold text-green-600">
-                      {Math.round(selectedEmployee.baseSalary * 0.82).toLocaleString()} MGA
+                      {Math.round(selectedEmployee.salary * 0.82).toLocaleString()} MGA
                     </span>
                   </div>
                 </div>

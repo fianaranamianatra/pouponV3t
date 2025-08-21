@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { User, DollarSign, Calendar, FileText, Calculator, Wallet, TrendingUp, Building } from 'lucide-react';
+import { User, DollarSign, Calendar, FileText, Calculator, Wallet, TrendingUp, Building, Eye, History, Clock } from 'lucide-react';
 import { Avatar } from '../Avatar';
 import { IRSAService } from '../../lib/services/irsaService';
+import { Modal } from '../Modal';
+import { PayslipPreview } from '../payroll/PayslipPreview';
+import { SalaryHistoryModal } from '../modals/SalaryHistoryModal';
 
 interface SalaryFormProps {
   onSubmit: (data: any) => void;
@@ -18,6 +21,8 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
     employeeType: initialData?.employeeType || 'staff',
     position: initialData?.position || '',
     department: initialData?.department || '',
+    paymentMonth: initialData?.paymentMonth || new Date().getMonth() + 1,
+    paymentYear: initialData?.paymentYear || new Date().getFullYear(),
     baseSalary: initialData?.baseSalary || '',
     transportAllowance: initialData?.allowances?.transport || '',
     housingAllowance: initialData?.allowances?.housing || '',
@@ -31,6 +36,8 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
   });
 
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const [showPayslipPreview, setShowPayslipPreview] = useState(false);
+  const [showSalaryHistory, setShowSalaryHistory] = useState(false);
   const [calculatedValues, setCalculatedValues] = useState({
     totalGross: 0,
     cnaps: 0,
@@ -45,6 +52,50 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
   const allEmployees = [
     ...employees.map(emp => ({ ...emp, type: 'staff' })),
     ...teachers.map(teacher => ({ ...teacher, type: 'teacher' }))
+  ];
+
+  // Options pour les mois
+  const monthOptions = [
+    { value: 1, label: 'Janvier' },
+    { value: 2, label: 'Février' },
+    { value: 3, label: 'Mars' },
+    { value: 4, label: 'Avril' },
+    { value: 5, label: 'Mai' },
+    { value: 6, label: 'Juin' },
+    { value: 7, label: 'Juillet' },
+    { value: 8, label: 'Août' },
+    { value: 9, label: 'Septembre' },
+    { value: 10, label: 'Octobre' },
+    { value: 11, label: 'Novembre' },
+    { value: 12, label: 'Décembre' }
+  ];
+
+  // Options pour les années
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+
+  // Mock salary history data
+  const mockSalaryHistory = [
+    {
+      id: '1',
+      employeeId: selectedEmployee?.id || '',
+      previousSalary: 750000,
+      newSalary: 800000,
+      changeReason: 'Augmentation annuelle',
+      effectiveDate: '2024-01-01',
+      modifiedBy: 'Admin LES POUPONS',
+      createdAt: new Date('2024-01-01')
+    },
+    {
+      id: '2',
+      employeeId: selectedEmployee?.id || '',
+      previousSalary: 700000,
+      newSalary: 750000,
+      changeReason: 'Promotion',
+      effectiveDate: '2023-09-01',
+      modifiedBy: 'Directeur',
+      createdAt: new Date('2023-09-01')
+    }
   ];
 
   // Calculate salary components when values change
@@ -109,8 +160,55 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
     }
   };
 
+  const handlePreviewPayslip = () => {
+    if (!selectedEmployee || calculatedValues.totalGross === 0) {
+      alert('Veuillez sélectionner un employé et saisir un salaire pour voir l\'aperçu');
+      return;
+    }
+    setShowPayslipPreview(true);
+  };
+
+  const handleViewHistory = () => {
+    if (!selectedEmployee) {
+      alert('Veuillez sélectionner un employé pour voir son historique');
+      return;
+    }
+    setShowSalaryHistory(true);
+  };
+
+  // Préparer les données pour l'aperçu du bulletin
+  const payslipData = selectedEmployee ? {
+    employeeName: `${selectedEmployee.firstName} ${selectedEmployee.lastName}`,
+    position: formData.position,
+    department: formData.department,
+    paymentMonth: monthOptions.find(m => m.value === parseInt(formData.paymentMonth.toString()))?.label || '',
+    paymentYear: formData.paymentYear,
+    calculation: {
+      grossSalary: calculatedValues.totalGross,
+      cnaps: {
+        employeeContribution: calculatedValues.cnaps,
+        employerContribution: Math.round(calculatedValues.totalGross * 0.13)
+      },
+      ostie: {
+        employeeContribution: calculatedValues.ostie,
+        employerContribution: Math.round(calculatedValues.totalGross * 0.05)
+      },
+      irsa: calculatedValues.irsa,
+      totalDeductions: calculatedValues.totalDeductions,
+      netSalary: calculatedValues.netSalary,
+      allowances: {
+        transport: parseFloat(formData.transportAllowance) || 0,
+        housing: parseFloat(formData.housingAllowance) || 0,
+        meal: parseFloat(formData.mealAllowance) || 0,
+        performance: parseFloat(formData.performanceAllowance) || 0,
+        other: parseFloat(formData.otherAllowance) || 0
+      }
+    }
+  } : null;
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Employee Selection */}
         <div className="space-y-4">
@@ -123,28 +221,40 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Employé
             </label>
-            <select
-              value={formData.employeeId}
-              onChange={(e) => handleEmployeeSelection(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            >
-              <option value="">Sélectionner un employé</option>
-              <optgroup label="Personnel Administratif">
-                {employees.map(emp => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.firstName} {emp.lastName} - {emp.position}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Enseignants">
-                {teachers.map(teacher => (
-                  <option key={teacher.id} value={teacher.id}>
-                    {teacher.firstName} {teacher.lastName} - {teacher.subject}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
+            <div className="flex space-x-2">
+              <select
+                value={formData.employeeId}
+                onChange={(e) => handleEmployeeSelection(e.target.value)}
+                required
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="">Sélectionner un employé</option>
+                <optgroup label="Personnel Administratif">
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.firstName} {emp.lastName} - {emp.position}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Enseignants">
+                  {teachers.map(teacher => (
+                    <option key={teacher.id} value={teacher.id}>
+                      {teacher.firstName} {teacher.lastName} - {teacher.subject}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+              
+              <button
+                type="button"
+                onClick={handleViewHistory}
+                disabled={!selectedEmployee}
+                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Voir l'historique des salaires"
+              >
+                <History className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
           </div>
 
           {selectedEmployee && (
@@ -198,6 +308,62 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
           </div>
         </div>
 
+        {/* Payment Period Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-900 flex items-center">
+            <Clock className="w-5 h-5 mr-2" />
+            Période de Paiement
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mois de paiement
+              </label>
+              <select
+                name="paymentMonth"
+                value={formData.paymentMonth}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                {monthOptions.map(month => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Année de paiement
+              </label>
+              <select
+                name="paymentYear"
+                value={formData.paymentYear}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                {yearOptions.map(year => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-700">
+              <strong>Période sélectionnée:</strong> {monthOptions.find(m => m.value === parseInt(formData.paymentMonth.toString()))?.label} {formData.paymentYear}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Salary Components */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-gray-900 flex items-center">
@@ -305,101 +471,100 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
             />
           </div>
         </div>
-      </div>
 
-      {/* Salary Calculation Preview */}
-      {calculatedValues.totalGross > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-green-800 mb-4 flex items-center">
-            <Calculator className="w-5 h-5 mr-2" />
-            Calcul Automatique du Salaire
-          </h3>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Gross Salary Breakdown */}
-            <div className="space-y-3">
-              <h4 className="font-medium text-green-800">Composition Salaire Brut</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Salaire de base:</span>
-                  <span className="font-medium">{(parseFloat(formData.baseSalary) || 0).toLocaleString()} Ar</span>
-                </div>
-                {parseFloat(formData.transportAllowance) > 0 && (
+        {calculatedValues.totalGross > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-900 flex items-center">
+              <Calculator className="w-5 h-5 mr-2" />
+              Calcul Automatique du Salaire
+            </h3>
+            
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              {/* Gross Salary Breakdown */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-green-800">Composition Salaire Brut</h4>
+                <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span>Indemnité transport:</span>
-                    <span className="font-medium text-green-600">+{(parseFloat(formData.transportAllowance)).toLocaleString()} Ar</span>
+                    <span>Salaire de base:</span>
+                    <span className="font-medium">{(parseFloat(formData.baseSalary) || 0).toLocaleString()} Ar</span>
                   </div>
-                )}
-                {parseFloat(formData.housingAllowance) > 0 && (
-                  <div className="flex justify-between">
-                    <span>Indemnité logement:</span>
-                    <span className="font-medium text-green-600">+{(parseFloat(formData.housingAllowance)).toLocaleString()} Ar</span>
-                  </div>
-                )}
-                {parseFloat(formData.mealAllowance) > 0 && (
-                  <div className="flex justify-between">
-                    <span>Indemnité repas:</span>
-                    <span className="font-medium text-green-600">+{(parseFloat(formData.mealAllowance)).toLocaleString()} Ar</span>
-                  </div>
-                )}
-                {parseFloat(formData.performanceAllowance) > 0 && (
-                  <div className="flex justify-between">
-                    <span>Prime performance:</span>
-                    <span className="font-medium text-green-600">+{(parseFloat(formData.performanceAllowance)).toLocaleString()} Ar</span>
-                  </div>
-                )}
-                {parseFloat(formData.otherAllowance) > 0 && (
-                  <div className="flex justify-between">
-                    <span>Autres indemnités:</span>
-                    <span className="font-medium text-green-600">+{(parseFloat(formData.otherAllowance)).toLocaleString()} Ar</span>
-                  </div>
-                )}
-                <div className="border-t border-green-300 pt-2">
-                  <div className="flex justify-between font-bold">
-                    <span>Salaire Brut Total:</span>
-                    <span className="text-lg text-green-700">{calculatedValues.totalGross.toLocaleString()} Ar</span>
+                  {parseFloat(formData.transportAllowance) > 0 && (
+                    <div className="flex justify-between">
+                      <span>Indemnité transport:</span>
+                      <span className="font-medium text-green-600">+{(parseFloat(formData.transportAllowance)).toLocaleString()} Ar</span>
+                    </div>
+                  )}
+                  {parseFloat(formData.housingAllowance) > 0 && (
+                    <div className="flex justify-between">
+                      <span>Indemnité logement:</span>
+                      <span className="font-medium text-green-600">+{(parseFloat(formData.housingAllowance)).toLocaleString()} Ar</span>
+                    </div>
+                  )}
+                  {parseFloat(formData.mealAllowance) > 0 && (
+                    <div className="flex justify-between">
+                      <span>Indemnité repas:</span>
+                      <span className="font-medium text-green-600">+{(parseFloat(formData.mealAllowance)).toLocaleString()} Ar</span>
+                    </div>
+                  )}
+                  {parseFloat(formData.performanceAllowance) > 0 && (
+                    <div className="flex justify-between">
+                      <span>Prime performance:</span>
+                      <span className="font-medium text-green-600">+{(parseFloat(formData.performanceAllowance)).toLocaleString()} Ar</span>
+                    </div>
+                  )}
+                  {parseFloat(formData.otherAllowance) > 0 && (
+                    <div className="flex justify-between">
+                      <span>Autres indemnités:</span>
+                      <span className="font-medium text-green-600">+{(parseFloat(formData.otherAllowance)).toLocaleString()} Ar</span>
+                    </div>
+                  )}
+                  <div className="border-t border-green-300 pt-2">
+                    <div className="flex justify-between font-bold">
+                      <span>Salaire Brut Total:</span>
+                      <span className="text-lg text-green-700">{calculatedValues.totalGross.toLocaleString()} Ar</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Deductions and Net Salary */}
-            <div className="space-y-3">
-              <h4 className="font-medium text-green-800">Déductions et Salaire Net</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>CNAPS (1%):</span>
-                  <span className="font-medium text-red-600">-{calculatedValues.cnaps.toLocaleString()} Ar</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>OSTIE (1%):</span>
-                  <span className="font-medium text-red-600">-{calculatedValues.ostie.toLocaleString()} Ar</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Salaire imposable:</span>
-                  <span className="font-medium">{calculatedValues.taxableIncome.toLocaleString()} Ar</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>IRSA (Impôt):</span>
-                  <span className="font-medium text-red-600">-{calculatedValues.irsa.toLocaleString()} Ar</span>
-                </div>
-                <div className="border-t border-green-300 pt-2">
+              {/* Deductions and Net Salary */}
+              <div className="space-y-3 mt-4">
+                <h4 className="font-medium text-green-800">Déductions et Salaire Net</h4>
+                <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span>Total déductions:</span>
-                    <span className="font-medium text-red-600">-{calculatedValues.totalDeductions.toLocaleString()} Ar</span>
+                    <span>CNAPS (1%):</span>
+                    <span className="font-medium text-red-600">-{calculatedValues.cnaps.toLocaleString()} Ar</span>
                   </div>
-                </div>
-                <div className="border-t border-green-300 pt-2">
-                  <div className="flex justify-between font-bold">
-                    <span>Salaire Net:</span>
-                    <span className="text-xl text-green-700">{calculatedValues.netSalary.toLocaleString()} Ar</span>
+                  <div className="flex justify-between">
+                    <span>OSTIE (1%):</span>
+                    <span className="font-medium text-red-600">-{calculatedValues.ostie.toLocaleString()} Ar</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Salaire imposable:</span>
+                    <span className="font-medium">{calculatedValues.taxableIncome.toLocaleString()} Ar</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>IRSA (Impôt):</span>
+                    <span className="font-medium text-red-600">-{calculatedValues.irsa.toLocaleString()} Ar</span>
+                  </div>
+                  <div className="border-t border-green-300 pt-2">
+                    <div className="flex justify-between">
+                      <span>Total déductions:</span>
+                      <span className="font-medium text-red-600">-{calculatedValues.totalDeductions.toLocaleString()} Ar</span>
+                    </div>
+                  </div>
+                  <div className="border-t border-green-300 pt-2">
+                    <div className="flex justify-between font-bold">
+                      <span>Salaire Net:</span>
+                      <span className="text-xl text-green-700">{calculatedValues.netSalary.toLocaleString()} Ar</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Additional Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -460,12 +625,53 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
           Annuler
         </button>
         <button
+          type="button"
+          onClick={handlePreviewPayslip}
+          disabled={!selectedEmployee || calculatedValues.totalGross === 0}
+          className="flex-1 px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Eye className="w-4 h-4 mr-2 inline" />
+          Aperçu du Bulletin
+        </button>
+        <button
           type="submit"
           className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
           {initialData ? 'Modifier le Salaire' : 'Enregistrer le Salaire'}
         </button>
       </div>
-    </form>
+      </form>
+
+      {/* Payslip Preview Modal */}
+      {payslipData && (
+        <Modal
+          isOpen={showPayslipPreview}
+          onClose={() => setShowPayslipPreview(false)}
+          title="Aperçu du Bulletin de Paie"
+          size="lg"
+        >
+          <PayslipPreview
+            data={payslipData}
+            onClose={() => setShowPayslipPreview(false)}
+          />
+        </Modal>
+      )}
+
+      {/* Salary History Modal */}
+      {selectedEmployee && (
+        <SalaryHistoryModal
+          isOpen={showSalaryHistory}
+          onClose={() => setShowSalaryHistory(false)}
+          employee={{
+            employeeName: `${selectedEmployee.firstName} ${selectedEmployee.lastName}`,
+            position: formData.position,
+            department: formData.department,
+            baseSalary: parseFloat(formData.baseSalary) || 0,
+            netSalary: calculatedValues.netSalary
+          }}
+          history={mockSalaryHistory}
+        />
+      )}
+    </>
   );
 }

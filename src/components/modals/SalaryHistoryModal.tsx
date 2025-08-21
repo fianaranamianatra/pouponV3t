@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal } from '../Modal';
-import { History, TrendingUp, TrendingDown, Calendar, User, FileText } from 'lucide-react';
+import { History, TrendingUp, TrendingDown, Calendar, User, FileText, Wallet } from 'lucide-react';
 import { Avatar } from '../Avatar';
 
 interface SalaryHistory {

@@ -185,10 +185,18 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
           >
             <option value="">Sélectionner une période</option>
-            <option value="Trimestre 1">Trimestre 1</option>
-            <option value="Trimestre 2">Trimestre 2</option>
-            <option value="Trimestre 3">Trimestre 3</option>
-            <option value="Année complète">Année complète</option>
+            <option value="Janvier">Janvier</option>
+            <option value="Février">Février</option>
+            <option value="Mars">Mars</option>
+            <option value="Avril">Avril</option>
+            <option value="Mai">Mai</option>
+            <option value="Juin">Juin</option>
+            <option value="Juillet">Juillet</option>
+            <option value="Août">Août</option>
+            <option value="Septembre">Septembre</option>
+            <option value="Octobre">Octobre</option>
+            <option value="Novembre">Novembre</option>
+            <option value="Décembre">Décembre</option>
           </select>
         </div>
 

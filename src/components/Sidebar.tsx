@@ -34,11 +34,11 @@ const menuItems = [
   { id: 'teachers', label: 'Enseignants', icon: GraduationCap },
   { id: 'classes', label: 'Classes', icon: BookOpen },
   { id: 'subjects', label: 'Matières', icon: BookOpen },
+  { id: 'hr', label: 'Ressources Humaines', icon: UserCheck },
   { id: 'ecolage', label: 'Gestion Écolage', icon: CreditCard },
   { id: 'payroll', label: 'Gestion de la Paie', icon: Calculator },
   { id: 'transactions', label: 'Encaissements et Décaissements', icon: DollarSign },
   { id: 'reports', label: 'Rapports', icon: BarChart3 },
-  { id: 'hr', label: 'Ressources Humaines', icon: UserCheck },
   { id: 'import', label: 'Import de Données', icon: Upload }
 ] as const;
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, Filter, Edit, Trash2, Eye, Users, DollarSign, UserCheck, Building } from 'lucide-react';
+import { Search, Plus, Filter, Edit, Trash2, Eye, Users, DollarSign, UserCheck, Building, User, Calendar, Briefcase, Clock, Calculator } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { EmployeeForm } from '../components/forms/EmployeeForm';
 import { Avatar } from '../components/Avatar';
@@ -372,32 +372,144 @@ export function HumanResources() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Informations Personnelles */}
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Informations personnelles</h4>
-                <div className="space-y-2 text-sm">
-                  <p><span className="font-medium">Email:</span> {selectedEmployee.email}</p>
-                  <p><span className="font-medium">Téléphone:</span> {selectedEmployee.phone}</p>
-                  <p><span className="font-medium">Date d'embauche:</span> {new Date(selectedEmployee.hireDate).toLocaleDateString('fr-FR')}</p>
+                <h4 className="font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Informations Personnelles</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Nom complet</p>
+                      <p className="text-sm text-gray-900">{selectedEmployee.firstName} {selectedEmployee.lastName}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Date d'embauche</p>
+                      <p className="text-sm text-gray-900">{new Date(selectedEmployee.hireDate).toLocaleDateString('fr-FR')}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <div className="w-4 h-4 flex items-center justify-center">
+                      <div className={`w-3 h-3 rounded-full ${
+                        selectedEmployee.status === 'Actif' ? 'bg-green-500' : 'bg-red-500'
+                      }`}></div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Statut</p>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                        selectedEmployee.status === 'Actif' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {selectedEmployee.status}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
               
+              {/* Informations Professionnelles */}
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Informations professionnelles</h4>
-                <div className="space-y-2 text-sm">
-                  <p><span className="font-medium">Poste:</span> {selectedEmployee.position}</p>
-                  <p><span className="font-medium">Département:</span> {selectedEmployee.department}</p>
-                  <p><span className="font-medium">Salaire de base:</span> {selectedEmployee.baseSalary.toLocaleString()} MGA</p>
-                  <p><span className="font-medium">Statut:</span> 
-                    <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                      selectedEmployee.status === 'Actif' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {selectedEmployee.status}
-                    </span>
-                  </p>
+                <h4 className="font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Informations Professionnelles</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <Briefcase className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Poste</p>
+                      <p className="text-sm text-gray-900">{selectedEmployee.position}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <Building className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Département</p>
+                      <p className="text-sm text-gray-900">{selectedEmployee.department}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Ancienneté</p>
+                      <p className="text-sm text-gray-900">
+                        {(() => {
+                          const hireDate = new Date(selectedEmployee.hireDate);
+                          const now = new Date();
+                          const years = now.getFullYear() - hireDate.getFullYear();
+                          const months = now.getMonth() - hireDate.getMonth();
+                          const totalMonths = years * 12 + months;
+                          
+                          if (totalMonths < 12) {
+                            return `${totalMonths} mois`;
+                          } else {
+                            const fullYears = Math.floor(totalMonths / 12);
+                            const remainingMonths = totalMonths % 12;
+                            return remainingMonths > 0 ? `${fullYears} ans ${remainingMonths} mois` : `${fullYears} ans`;
+                          }
+                        })()}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
+            
+            {/* Informations Salariales */}
+            <div>
+              <h4 className="font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Informations Salariales</h4>
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Salaire de base:</span>
+                  <span className="text-lg font-bold text-blue-600">{selectedEmployee.baseSalary.toLocaleString()} MGA</span>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">CNAPS (13%):</span>
+                  <span className="text-sm font-medium text-red-600">-{Math.round(selectedEmployee.baseSalary * 0.13).toLocaleString()} MGA</span>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">OSTIE (5%):</span>
+                  <span className="text-sm font-medium text-red-600">-{Math.round(selectedEmployee.baseSalary * 0.05).toLocaleString()} MGA</span>
+                </div>
+                
+                <div className="border-t border-gray-300 pt-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-base font-bold text-gray-900">Salaire net:</span>
+                    <span className="text-xl font-bold text-green-600">
+                      {Math.round(selectedEmployee.baseSalary * 0.82).toLocaleString()} MGA
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Actions */}
+            <div className="flex space-x-3 pt-4 border-t border-gray-200">
+              <button
+                onClick={() => {
+                  alert(`Génération du bulletin de paie pour ${selectedEmployee.firstName} ${selectedEmployee.lastName}...`);
+                }}
+                className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Calculator className="w-4 h-4 mr-2" />
+                Générer Bulletin
+              </button>
+              <button
+                onClick={() => {
+                  setShowViewModal(false);
+                  handleEditClick(selectedEmployee);
+                }}
+                className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Modifier Informations
+              </button>
             </div>
           </div>
         )}

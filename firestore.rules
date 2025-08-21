@@ -1,0 +1,185 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Règles générales - Lecture libre, écriture authentifiée
+    match /{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Règles spécifiques pour les élèves
+    match /students/{studentId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateStudent(request.resource.data);
+      allow update: if request.auth != null && validateStudent(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les enseignants
+    match /teachers/{teacherId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateTeacher(request.resource.data);
+      allow update: if request.auth != null && validateTeacher(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les classes
+    match /classes/{classId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateClass(request.resource.data);
+      allow update: if request.auth != null && validateClass(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les matières
+    match /subjects/{subjectId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateSubject(request.resource.data);
+      allow update: if request.auth != null && validateSubject(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les notes
+    match /grades/{gradeId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateGrade(request.resource.data);
+      allow update: if request.auth != null && validateGrade(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les paiements (écolage)
+    match /fees/{feeId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateFee(request.resource.data);
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour l'emploi du temps
+    match /schedules/{scheduleId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateSchedule(request.resource.data);
+      allow update: if request.auth != null && validateSchedule(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les finances
+    match /finances/{financeId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour la hiérarchie
+    match /hierarchy/{employeeId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les communications
+    match /communications/{messageId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les rapports
+    match /reports/{reportId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les finances avancées
+    match /advanced_finances/{financeId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les profils utilisateurs
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Fonctions de validation
+    function validateStudent(data) {
+      return data.keys().hasAll(['firstName', 'lastName', 'dateOfBirth', 'class', 'address', 'phone', 'parentName', 'status'])
+        && data.firstName is string && data.firstName.size() >= 2 && data.firstName.size() <= 50
+        && data.lastName is string && data.lastName.size() >= 2 && data.lastName.size() <= 50
+        && data.class is string && data.class.size() >= 1
+        && data.address is string && data.address.size() >= 10 && data.address.size() <= 200
+        && data.phone is string
+        && data.parentName is string && data.parentName.size() >= 2 && data.parentName.size() <= 100
+        && data.status in ['active', 'inactive'];
+    }
+    
+    function validateTeacher(data) {
+      return data.keys().hasAll(['firstName', 'lastName', 'email', 'phone', 'subject', 'experience', 'status'])
+        && data.firstName is string && data.firstName.size() >= 2 && data.firstName.size() <= 50
+        && data.lastName is string && data.lastName.size() >= 2 && data.lastName.size() <= 50
+        && data.email is string && data.email.matches('.*@.*\\..*')
+        && data.phone is string
+        && data.subject is string && data.subject.size() >= 2
+        && data.experience is number && data.experience >= 0 && data.experience <= 50
+        && data.status in ['active', 'inactive'];
+    }
+    
+    function validateClass(data) {
+      return data.keys().hasAll(['name', 'level', 'teacher', 'maxCapacity', 'room', 'status'])
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 20
+        && data.level is string && data.level.size() >= 2
+        && data.teacher is string && data.teacher.size() >= 2
+        && data.maxCapacity is number && data.maxCapacity >= 5 && data.maxCapacity <= 35
+        && data.room is string && data.room.size() >= 2 && data.room.size() <= 50
+        && data.status in ['active', 'inactive'];
+    }
+    
+    function validateSubject(data) {
+      return data.keys().hasAll(['name', 'code', 'hoursPerWeek', 'status'])
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 50
+        && data.code is string && data.code.size() >= 2 && data.code.size() <= 10
+        && data.hoursPerWeek is number && data.hoursPerWeek >= 1 && data.hoursPerWeek <= 10
+        && data.status in ['active', 'inactive'];
+    }
+    
+    function validateGrade(data) {
+      return data.keys().hasAll(['studentName', 'subject', 'assignment', 'grade', 'maxGrade', 'teacher', 'type'])
+        && data.studentName is string && data.studentName.size() >= 2
+        && data.subject is string && data.subject.size() >= 2
+        && data.assignment is string && data.assignment.size() >= 2 && data.assignment.size() <= 100
+        && data.grade is number && data.grade >= 0
+        && data.maxGrade is number && data.maxGrade > 0 && data.maxGrade <= 100
+        && data.grade <= data.maxGrade
+        && data.teacher is string && data.teacher.size() >= 2
+        && data.type in ['exam', 'homework', 'quiz', 'project'];
+    }
+    
+    function validateFee(data) {
+      return data.keys().hasAll(['studentName', 'class', 'amount', 'paymentMethod', 'period', 'reference'])
+        && data.studentName is string && data.studentName.size() >= 2
+        && data.class is string && data.class.size() >= 1
+        && data.amount is number && data.amount >= 1000 && data.amount <= 10000000
+        && data.paymentMethod is string
+        && data.period is string
+        && data.reference is string && data.reference.size() >= 3 && data.reference.size() <= 50;
+    }
+    
+    function validateSchedule(data) {
+      return data.keys().hasAll(['class', 'subject', 'teacher', 'day', 'startTime', 'endTime'])
+        && data.class is string && data.class.size() >= 1
+        && data.subject is string && data.subject.size() >= 2
+        && data.teacher is string && data.teacher.size() >= 2
+        && data.day is string
+        && data.startTime is string
+        && data.endTime is string;
+    }
+  }
+}

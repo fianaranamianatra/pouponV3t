@@ -1,119 +1,81 @@
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDocs, 
-  getDoc,
-  query,
-  orderBy,
-  where,
-  CollectionReference,
-  DocumentReference
-} from 'firebase/firestore';
-import { db } from './firebase';
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
+  getDoc
+} from "firebase/firestore";
+import { db } from "../firebase";
 
-// Generic Firebase service class
-class FirebaseService<T> {
-  private collectionName: string;
-
-  constructor(collectionName: string) {
+class FirebaseService {
+  constructor(collectionName) {
     this.collectionName = collectionName;
+    this.collectionRef = collection(db, collectionName);
   }
 
-  getCollectionRef(): CollectionReference {
-    return collection(db, this.collectionName);
-  }
-
-  getDocRef(id: string): DocumentReference {
-    return doc(db, this.collectionName, id);
-  }
-
-  async create(data: Omit<T, 'id'>): Promise<string> {
+  async create(data) {
     try {
-      const docRef = await addDoc(this.getCollectionRef(), {
-        ...data,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-      console.log(`✅ Document created in ${this.collectionName} with ID:`, docRef.id);
+      const docRef = await addDoc(this.collectionRef, data);
       return docRef.id;
     } catch (error) {
-      console.error(`❌ Error creating document in ${this.collectionName}:`, error);
+      console.error("Error adding document: ", error);
       throw error;
     }
   }
 
-  async update(id: string, data: Partial<T>): Promise<void> {
+  async getAll() {
     try {
-      const docRef = this.getDocRef(id);
-      await updateDoc(docRef, {
-        ...data,
-        updatedAt: new Date()
+      const querySnapshot = await getDocs(this.collectionRef);
+      const documents = [];
+      querySnapshot.forEach((doc) => {
+        documents.push({ id: doc.id, ...doc.data() });
       });
-      console.log(`✅ Document updated in ${this.collectionName} with ID:`, id);
+      return documents;
     } catch (error) {
-      console.error(`❌ Error updating document in ${this.collectionName}:`, error);
+      console.error("Error getting documents: ", error);
       throw error;
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async getById(id) {
     try {
-      const docRef = this.getDocRef(id);
-      await deleteDoc(docRef);
-      console.log(`✅ Document deleted from ${this.collectionName} with ID:`, id);
-    } catch (error) {
-      console.error(`❌ Error deleting document from ${this.collectionName}:`, error);
-      throw error;
-    }
-  }
-
-  async getAll(): Promise<T[]> {
-    try {
-      const querySnapshot = await getDocs(this.getCollectionRef());
-      const items = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as T[];
-      console.log(`✅ Retrieved ${items.length} documents from ${this.collectionName}`);
-      return items;
-    } catch (error) {
-      console.error(`❌ Error getting documents from ${this.collectionName}:`, error);
-      throw error;
-    }
-  }
-
-  async getById(id: string): Promise<T | null> {
-    try {
-      const docRef = this.getDocRef(id);
+      const docRef = doc(db, this.collectionName, id);
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
-        return {
-          id: docSnap.id,
-          ...docSnap.data()
-        } as T;
+        return { id: docSnap.id, ...docSnap.data() };
       } else {
         return null;
       }
     } catch (error) {
-      console.error(`❌ Error getting document from ${this.collectionName}:`, error);
+      console.error("Error getting document: ", error);
+      throw error;
+    }
+  }
+
+  async update(id, data) {
+    try {
+      const docRef = doc(db, this.collectionName, id);
+      await updateDoc(docRef, data);
+      return true;
+    } catch (error) {
+      console.error("Error updating document: ", error);
+      throw error;
+    }
+  }
+
+  async delete(id) {
+    try {
+      const docRef = doc(db, this.collectionName, id);
+      await deleteDoc(docRef);
+      return true;
+    } catch (error) {
+      console.error("Error deleting document: ", error);
       throw error;
     }
   }
 }
 
-// Service instances
-export const studentsService = new FirebaseService('students');
-export const teachersService = new FirebaseService('teachers');
-export const classesService = new FirebaseService('classes');
-export const subjectsService = new FirebaseService('subjects');
-export const gradesService = new FirebaseService('grades');
-export const feesService = new FirebaseService('fees');
-export const schedulesService = new FirebaseService('schedules');
-export const financesService = new FirebaseService('finances');
-export const hierarchyService = new FirebaseService('hierarchy');
-export const communicationsService = new FirebaseService('communications');
-export const reportsService = new FirebaseService('reports');
+export default FirebaseService;

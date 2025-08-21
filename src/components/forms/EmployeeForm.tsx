@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, Mail, Phone, Briefcase, Building, Users, DollarSign, Calendar, Shield, Calculator, Clock } from 'lucide-react';
 import { useFirebaseCollection } from '../../hooks/useFirebaseCollection';
-import { hierarchyService } from '../../lib/firebase/firebaseService';
+import { hierarchyService, teachersService } from '../../lib/firebase/firebaseService';
 
 interface EmployeeFormProps {
   onSubmit: (data: any) => void;
@@ -12,6 +12,8 @@ interface EmployeeFormProps {
 export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormProps) {
   // Hook Firebase pour charger les employés existants (pour la liste des superviseurs)
   const { data: employees, loading: employeesLoading } = useFirebaseCollection(hierarchyService, true);
+  // Hook Firebase pour charger les enseignants existants
+  const { data: teachers, loading: teachersLoading } = useFirebaseCollection(teachersService, true);
 
   const [formData, setFormData] = useState({
     firstName: initialData?.firstName || '',
@@ -30,6 +32,9 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
     retirementDate: initialData?.retirementDate || '',
     status: initialData?.status || 'active'
   });
+
+  const [selectedTeacher, setSelectedTeacher] = useState('');
+  const [isTeacherPosition, setIsTeacherPosition] = useState(false);
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -190,6 +195,46 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
     }));
   }, [formData.dateOfBirth, formData.entryDate, formData.contractType]);
 
+  // Effet pour détecter si le poste sélectionné est "Enseignant"
+  React.useEffect(() => {
+    const isTeacher = formData.position.toLowerCase().includes('enseignant') || 
+                     formData.position.toLowerCase().includes('professeur') ||
+                     formData.position.toLowerCase().includes('instituteur') ||
+                     formData.position.toLowerCase().includes('institutrice');
+    setIsTeacherPosition(isTeacher);
+    
+    // Réinitialiser la sélection d'enseignant si ce n'est plus un poste d'enseignant
+    if (!isTeacher) {
+      setSelectedTeacher('');
+    }
+  }, [formData.position]);
+
+  // Fonction pour pré-remplir le formulaire avec les données de l'enseignant sélectionné
+  const handleTeacherSelection = (teacherId: string) => {
+    setSelectedTeacher(teacherId);
+    
+    if (teacherId) {
+      const teacher = teachers.find(t => t.id === teacherId);
+      if (teacher) {
+        console.log('🔄 Pré-remplissage avec les données de l\'enseignant:', teacher);
+        
+        setFormData(prev => ({
+          ...prev,
+          firstName: teacher.firstName || prev.firstName,
+          lastName: teacher.lastName || prev.lastName,
+          email: teacher.email || prev.email,
+          phone: teacher.phone || prev.phone,
+          dateOfBirth: teacher.dateOfBirth || prev.dateOfBirth,
+          entryDate: teacher.entryDate || prev.entryDate,
+          contractType: teacher.status || prev.contractType,
+          // Garder le poste et département déjà sélectionnés
+          // position et department restent inchangés
+        }));
+        
+        console.log('✅ Formulaire pré-rempli avec succès');
+      }
+    }
+  };
   // Options pour les départements
   const departmentOptions = [
     { value: 'Direction', label: 'Direction', icon: '👑' },
@@ -407,6 +452,7 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
               {positionOptions.filter(pos => pos.department === 'Enseignement').map(pos => (
                 <option key={pos.value} value={pos.value}>{pos.label}</option>
               ))}
+              <option value="Enseignant">Enseignant (Sélectionner depuis la liste existante)</option>
             </optgroup>
             <optgroup label="Service">
               {positionOptions.filter(pos => pos.department === 'Service').map(pos => (
@@ -418,6 +464,46 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
             <p className="text-red-600 text-xs mt-1">{errors.position}</p>
           )}
         </div>
+
+        {/* Sélection d'enseignant existant - Affiché uniquement si poste = Enseignant */}
+        {isTeacherPosition && (
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <User className="w-4 h-4 inline mr-2" />
+              Sélectionner un enseignant existant
+            </label>
+            <select
+              value={selectedTeacher}
+              onChange={(e) => handleTeacherSelection(e.target.value)}
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-blue-50"
+            >
+              <option value="">Choisir un enseignant existant (optionnel)</option>
+              {teachersLoading ? (
+                <option disabled>Chargement des enseignants...</option>
+              ) : (
+                teachers.map(teacher => (
+                  <option key={teacher.id} value={teacher.id}>
+                    {teacher.firstName} {teacher.lastName} - {teacher.subject}
+                    {teacher.experience ? ` (${teacher.experience} ans d'exp.)` : ''}
+                  </option>
+                ))
+              )}
+            </select>
+            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>💡 Astuce :</strong> Sélectionnez un enseignant existant pour pré-remplir automatiquement 
+                les champs du formulaire avec ses informations. Vous pourrez ensuite les modifier si nécessaire.
+              </p>
+            </div>
+            {selectedTeacher && (
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-700">
+                  ✅ Formulaire pré-rempli avec les données de l'enseignant sélectionné
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -640,6 +726,31 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
               {calculatedValues.calculatedRetirementDate && (
                 <p><strong>Retraite prévue:</strong> {new Date(calculatedValues.calculatedRetirementDate).toLocaleDateString('fr-FR')}</p>
               )}
+            </div>
+          </div>
+        )}
+        
+        {/* Informations sur l'enseignant sélectionné */}
+        {isTeacherPosition && selectedTeacher && (
+          <div className="md:col-span-2">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+              <h4 className="font-medium text-emerald-800 mb-2 flex items-center">
+                <User className="w-4 h-4 mr-2" />
+                Enseignant sélectionné
+              </h4>
+              {(() => {
+                const teacher = teachers.find(t => t.id === selectedTeacher);
+                return teacher ? (
+                  <div className="text-sm text-emerald-700 space-y-1">
+                    <p><strong>Nom complet:</strong> {teacher.firstName} {teacher.lastName}</p>
+                    <p><strong>Matière:</strong> {teacher.subject}</p>
+                    <p><strong>Expérience:</strong> {teacher.experience} ans</p>
+                    <p><strong>Statut:</strong> {teacher.status}</p>
+                    {teacher.email && <p><strong>Email:</strong> {teacher.email}</p>}
+                    {teacher.phone && <p><strong>Téléphone:</strong> {teacher.phone}</p>}
+                  </div>
+                ) : null;
+              })()}
             </div>
           </div>
         )}

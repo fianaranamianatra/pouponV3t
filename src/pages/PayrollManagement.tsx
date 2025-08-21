@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Filter, Calculator, Users, Download, Eye, Edit, Trash2, DollarSign, TrendingUp, AlertTriangle, FileText } from 'lucide-react';
+import { Search, Plus, Filter, Calculator, Users, Download, Eye, Edit, Trash2, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
-import { PayslipA5Modal } from '../components/payroll/PayslipA5Modal';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { hierarchyService } from '../lib/firebase/firebaseService';
 import { PayrollService, PayrollSummary, PayrollCalculation } from '../lib/services/payrollService';
@@ -33,7 +32,6 @@ export function PayrollManagement() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [showCalculationModal, setShowCalculationModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
-  const [showPayslipModal, setShowPayslipModal] = useState(false);
   const [payrollCalculation, setPayrollCalculation] = useState<PayrollCalculation | null>(null);
   const [bulkPayroll, setBulkPayroll] = useState<PayrollSummary[]>([]);
   const [financialSettings, setFinancialSettings] = useState<FinancialSetting | null>(null);
@@ -216,11 +214,6 @@ export function PayrollManagement() {
     link.download = `paie-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-  };
-
-  const handleShowPayslip = (employee: Employee) => {
-    setSelectedEmployee(employee);
-    setShowPayslipModal(true);
   };
 
   if (loading) {
@@ -775,14 +768,6 @@ export function PayrollManagement() {
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => handleShowPayslip(employee)}
-                        className="inline-flex items-center px-3 py-1.5 border border-blue-300 text-blue-700 text-sm rounded-lg hover:bg-blue-50 transition-colors ml-2"
-                        title="Bulletin de paie A5"
-                      >
-                        <FileText className="w-4 h-4 mr-1" />
-                        Bulletin A5
-                      </button>
                     </td>
                   </tr>
                 ))}
@@ -812,18 +797,6 @@ export function PayrollManagement() {
           </div>
         </div>
       </Modal>
-
-      {/* Payslip A5 Modal */}
-      {selectedEmployee && (
-        <PayslipA5Modal
-          isOpen={showPayslipModal}
-          onClose={() => {
-            setShowPayslipModal(false);
-            setSelectedEmployee(null);
-          }}
-          employee={selectedEmployee}
-        />
-      )}
     </div>
   );
 }

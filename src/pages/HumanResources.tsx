@@ -624,10 +624,14 @@ export function HumanResources() {
             {/* Informations Salariales */}
             <div>
               <h4 className="font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Informations Salariales</h4>
-              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">Salaire de base:</span>
                   <span className="text-lg font-bold text-blue-600">{selectedEmployee.salary.toLocaleString()} MGA</span>
+                </div>
+                
+                <div className="border-t border-gray-300 pt-2">
+                  <p className="text-xs font-medium text-gray-600 mb-2">COTISATIONS SOCIALES</p>
                 </div>
                 
                 <div className="flex justify-between items-center">
@@ -640,11 +644,62 @@ export function HumanResources() {
                   <span className="text-sm font-medium text-red-600">-{Math.round(selectedEmployee.salary * 0.05).toLocaleString()} MGA</span>
                 </div>
                 
+                <div className="border-t border-gray-300 pt-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Salaire imposable:</span>
+                    <span className="text-sm font-bold text-gray-900">
+                      {Math.round(selectedEmployee.salary * 0.82).toLocaleString()} MGA
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="border-t border-gray-300 pt-2">
+                  <p className="text-xs font-medium text-gray-600 mb-2">IMPÔTS</p>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">IRSA (Impôt sur revenus):</span>
+                  <span className="text-sm font-medium text-red-600">
+                    -{(() => {
+                      const salaireImposable = Math.round(selectedEmployee.salary * 0.82);
+                      // Calcul IRSA simplifié pour l'affichage
+                      let irsa = 0;
+                      if (salaireImposable > 350000) {
+                        if (salaireImposable <= 400000) {
+                          irsa = Math.round((salaireImposable - 350000) * 0.05);
+                        } else if (salaireImposable <= 500000) {
+                          irsa = Math.round(50000 * 0.05 + (salaireImposable - 400000) * 0.10);
+                        } else if (salaireImposable <= 600000) {
+                          irsa = Math.round(50000 * 0.05 + 100000 * 0.10 + (salaireImposable - 500000) * 0.15);
+                        } else {
+                          irsa = Math.round(50000 * 0.05 + 100000 * 0.10 + 100000 * 0.15 + (salaireImposable - 600000) * 0.20);
+                        }
+                      }
+                      return irsa.toLocaleString();
+                    })()} MGA
+                  </span>
+                </div>
+                
                 <div className="border-t border-gray-300 pt-3">
                   <div className="flex justify-between items-center">
                     <span className="text-base font-bold text-gray-900">Salaire net:</span>
                     <span className="text-xl font-bold text-green-600">
-                      {Math.round(selectedEmployee.salary * 0.82).toLocaleString()} MGA
+                      {(() => {
+                        const salaireImposable = Math.round(selectedEmployee.salary * 0.82);
+                        let irsa = 0;
+                        if (salaireImposable > 350000) {
+                          if (salaireImposable <= 400000) {
+                            irsa = Math.round((salaireImposable - 350000) * 0.05);
+                          } else if (salaireImposable <= 500000) {
+                            irsa = Math.round(50000 * 0.05 + (salaireImposable - 400000) * 0.10);
+                          } else if (salaireImposable <= 600000) {
+                            irsa = Math.round(50000 * 0.05 + 100000 * 0.10 + (salaireImposable - 500000) * 0.15);
+                          } else {
+                            irsa = Math.round(50000 * 0.05 + 100000 * 0.10 + 100000 * 0.15 + (salaireImposable - 600000) * 0.20);
+                          }
+                        }
+                        return (salaireImposable - irsa).toLocaleString();
+                      })()} MGA
                     </span>
                   </div>
                 </div>

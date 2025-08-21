@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, Mail, Phone, Briefcase, Building, Users, DollarSign, Calendar, Shield, Calculator, Clock } from 'lucide-react';
 import { useFirebaseCollection } from '../../hooks/useFirebaseCollection';
 import { hierarchyService, teachersService } from '../../lib/firebase/firebaseService';
+import { IRSAService } from '../../lib/services/irsaService';
 
 interface EmployeeFormProps {
   onSubmit: (data: any) => void;
@@ -42,7 +43,10 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
     age: 0,
     calculatedExperience: 0,
     experienceText: '',
-    calculatedRetirementDate: ''
+    calculatedRetirementDate: '',
+    salaireImposable: 0,
+    irsa: 0,
+    salaireNet: 0
   });
 
   // Options prédéfinies pour les postes
@@ -180,11 +184,22 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
     const experienceData = calculateExperience(formData.entryDate);
     const calculatedRetirementDate = calculateRetirementDate(formData.dateOfBirth, formData.contractType);
     
+    // Calculs salariaux
+    const salary = parseFloat(formData.salary) || 0;
+    const cnaps = Math.round(salary * 0.01); // 1% salarié
+    const ostie = Math.round(salary * 0.01); // 1% salarié
+    const salaireImposable = salary - cnaps - ostie;
+    const irsaCalculation = IRSAService.calculerIRSA(salaireImposable);
+    const salaireNet = salaireImposable - irsaCalculation.montantTotal;
+    
     setCalculatedValues({
       age,
       calculatedExperience: experienceData.years,
       experienceText: experienceData.text,
-      calculatedRetirementDate
+      calculatedRetirementDate,
+      salaireImposable,
+      irsa: irsaCalculation.montantTotal,
+      salaireNet
     });
     
     // Mettre à jour automatiquement l'expérience et la date de retraite dans le formulaire
@@ -193,7 +208,7 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
       experience: experienceData.years.toString(),
       retirementDate: calculatedRetirementDate
     }));
-  }, [formData.dateOfBirth, formData.entryDate, formData.contractType]);
+  }, [formData.dateOfBirth, formData.entryDate, formData.contractType, formData.salary]);
 
   // Effet pour détecter si le poste sélectionné est "Enseignant"
   React.useEffect(() => {
@@ -710,21 +725,33 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
         </div>
         
         {/* Résumé des calculs */}
-        {(calculatedValues.age > 0 || calculatedValues.experienceText || calculatedValues.calculatedRetirementDate) && (
+        {(calculatedValues.age > 0 || calculatedValues.experienceText || calculatedValues.calculatedRetirementDate || calculatedValues.salaireNet > 0) && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <h4 className="font-medium text-green-800 mb-2 flex items-center">
               <Calculator className="w-4 h-4 mr-2" />
-              Calculs automatiques
+              Calculs automatiques (Personnel & Salaire)
             </h4>
-            <div className="text-sm text-green-700 space-y-1">
-              {calculatedValues.age > 0 && (
-                <p><strong>Âge actuel:</strong> {calculatedValues.age} ans</p>
-              )}
-              {calculatedValues.experienceText && (
-                <p><strong>Expérience:</strong> {calculatedValues.experienceText}</p>
-              )}
-              {calculatedValues.calculatedRetirementDate && (
-                <p><strong>Retraite prévue:</strong> {new Date(calculatedValues.calculatedRetirementDate).toLocaleDateString('fr-FR')}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="text-sm text-green-700 space-y-1">
+                <h5 className="font-medium text-green-800 mb-1">Informations personnelles</h5>
+                {calculatedValues.age > 0 && (
+                  <p><strong>Âge actuel:</strong> {calculatedValues.age} ans</p>
+                )}
+                {calculatedValues.experienceText && (
+                  <p><strong>Expérience:</strong> {calculatedValues.experienceText}</p>
+                )}
+                {calculatedValues.calculatedRetirementDate && (
+                  <p><strong>Retraite prévue:</strong> {new Date(calculatedValues.calculatedRetirementDate).toLocaleDateString('fr-FR')}</p>
+                )}
+              </div>
+              
+              {calculatedValues.salaireNet > 0 && (
+                <div className="text-sm text-green-700 space-y-1">
+                  <h5 className="font-medium text-green-800 mb-1">Calculs salariaux</h5>
+                  <p><strong>Salaire imposable:</strong> {calculatedValues.salaireImposable.toLocaleString()} MGA</p>
+                  <p><strong>IRSA (Impôt):</strong> -{calculatedValues.irsa.toLocaleString()} MGA</p>
+                  <p><strong>Salaire net estimé:</strong> {calculatedValues.salaireNet.toLocaleString()} MGA</p>
+                </div>
               )}
             </div>
           </div>

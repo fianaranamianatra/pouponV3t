@@ -1,4 +1,6 @@
 // Firebase collection type definitions
+import { IRSABareme } from '../services/irsaService';
+
 export interface FinancialSetting {
   id?: string;
   cnaps: {
@@ -13,6 +15,7 @@ export interface FinancialSetting {
     ceiling: number;
     isActive: boolean;
   };
+  irsa: IRSABareme;
   createdAt?: Date;
   updatedAt?: Date;
 }

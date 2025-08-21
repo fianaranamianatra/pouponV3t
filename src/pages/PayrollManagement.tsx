@@ -6,6 +6,9 @@ import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { hierarchyService } from '../lib/firebase/firebaseService';
 import { PayrollService, PayrollSummary, PayrollCalculation } from '../lib/services/payrollService';
 import { FinancialSettingsService } from '../lib/services/financialSettingsService';
+import { IRSAService } from '../lib/services/irsaService';
+import { IRSACalculator } from '../components/IRSACalculator';
+import { IRSABaremeDisplay } from '../components/IRSABaremeDisplay';
 import type { FinancialSetting } from '../lib/firebase/collections';
 
 interface Employee {
@@ -317,7 +320,7 @@ export function PayrollManagement() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4">Paramètres de Cotisation Actuels</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 className="font-bold text-blue-800 mb-2">CNAPS</h3>
             <div className="space-y-1 text-sm text-blue-700">
@@ -335,6 +338,11 @@ export function PayrollManagement() {
               <p>Statut: {financialSettings.ostie.isActive ? '✅ Actif' : '❌ Inactif'}</p>
             </div>
           </div>
+        </div>
+        
+        {/* Barème IRSA détaillé */}
+        <div className="mt-6">
+          <IRSABaremeDisplay />
         </div>
       </div>
 
@@ -461,7 +469,12 @@ export function PayrollManagement() {
                 {filteredEmployees.map((employee) => {
                   const estimatedContributions = financialSettings ? 
                     Math.round(employee.salary * (financialSettings.cnaps.employeeRate + financialSettings.ostie.employeeRate) / 100) : 0;
-                  const estimatedNetSalary = employee.salary - estimatedContributions;
+                  
+                  // Estimation IRSA
+                  const salaireImposableEstime = employee.salary - estimatedContributions;
+                  const irsaEstime = IRSAService.calculerIRSA(salaireImposableEstime).montantTotal;
+                  const totalDeductions = estimatedContributions + irsaEstime;
+                  const estimatedNetSalary = employee.salary - totalDeductions;
                   
                   return (
                     <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
@@ -498,9 +511,15 @@ export function PayrollManagement() {
                         <p className="text-lg font-bold text-gray-900">{employee.salary.toLocaleString()} Ar</p>
                       </td>
                       <td className="py-4 px-6">
-                        <p className="text-sm font-medium text-red-600">-{estimatedContributions.toLocaleString()} Ar</p>
+                        <div className="text-xs space-y-1">
+                          <div className="text-blue-600">CNAPS+OSTIE: -{estimatedContributions.toLocaleString()}</div>
+                          <div className="text-purple-600">IRSA: -{irsaEstime.toLocaleString()}</div>
+                          <div className="font-medium text-red-600 border-t border-gray-300 pt-1 mt-1">
+                            Total: -{totalDeductions.toLocaleString()}
+                          </div>
+                        </div>
                         <p className="text-xs text-gray-500">
-                          CNAPS + OSTIE ({((financialSettings.cnaps.employeeRate + financialSettings.ostie.employeeRate)).toFixed(1)}%)
+                          Cotisations sociales + Impôt IRSA
                         </p>
                       </td>
                       <td className="py-4 px-6">

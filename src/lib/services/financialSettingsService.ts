@@ -1,4 +1,6 @@
 // Financial settings service
+import { IRSABareme } from './irsaService';
+
 export interface FinancialSetting {
   cnaps: {
     employeeRate: number;
@@ -12,12 +14,15 @@ export interface FinancialSetting {
     ceiling: number;
     isActive: boolean;
   };
+  irsa: IRSABareme;
   updatedAt: Date;
 }
 
 export class FinancialSettingsService {
   static async get(): Promise<FinancialSetting> {
     // Mock settings - in real app, this would come from Firebase
+    const { IRSAService } = await import('./irsaService');
+    
     return {
       cnaps: {
         employeeRate: 1,
@@ -31,6 +36,7 @@ export class FinancialSettingsService {
         ceiling: 8000000,
         isActive: true
       },
+      irsa: IRSAService.getBareme(),
       updatedAt: new Date()
     };
   }

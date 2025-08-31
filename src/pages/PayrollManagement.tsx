@@ -9,6 +9,7 @@ import { FinancialSettingsService } from '../lib/services/financialSettingsServi
 import { IRSAService } from '../lib/services/irsaService';
 import { IRSACalculator } from '../components/IRSACalculator';
 import { IRSABaremeDisplay } from '../components/IRSABaremeDisplay';
+import { FinancialIntegrationService } from '../lib/services/financialIntegrationService';
 import type { FinancialSetting } from '../lib/firebase/collections';
 
 interface Employee {
@@ -114,6 +115,31 @@ export function PayrollManagement() {
       
       const calculations = await PayrollService.calculateBulkPayroll(employeesToCalculate);
       console.log('✅ Calculs terminés avec succès');
+      
+      // Créer automatiquement les transactions financières pour chaque salaire
+      try {
+        for (const calculation of calculations) {
+          const salaryRecord = {
+            id: calculation.employeeId,
+            employeeName: calculation.employeeName,
+            position: calculation.position,
+            department: calculation.department,
+            netSalary: calculation.calculation.netSalary,
+            employeeId: calculation.employeeId
+          };
+          
+          const result = await FinancialIntegrationService.createSalaryTransaction(salaryRecord);
+          if (result.success) {
+            console.log(`✅ Transaction créée pour ${calculation.employeeName}: ${result.transactionId}`);
+          } else {
+            console.warn(`⚠️ Erreur transaction pour ${calculation.employeeName}: ${result.error}`);
+          }
+        }
+        console.log('✅ Toutes les transactions de salaire ont été créées');
+      } catch (transactionError) {
+        console.warn('⚠️ Erreur lors de la création des transactions automatiques:', transactionError);
+        // Ne pas bloquer le processus principal
+      }
       
       setBulkPayroll(calculations);
       setShowBulkModal(true);

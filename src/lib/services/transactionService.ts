@@ -1,55 +1,40 @@
 // Service de gestion des transactions financières
 import { transactionsService } from '../firebase/firebaseService';
+import { FinancialIntegrationService } from './financialIntegrationService';
 import type { Transaction } from '../firebase/collections';
 
 export class TransactionService {
   /**
    * Créer une transaction automatique depuis un paiement d'écolage
+   * @deprecated Utiliser FinancialIntegrationService.createEcolageTransaction à la place
    */
   static async createFromEcolagePayment(payment: any): Promise<string> {
-    try {
-      const transactionData: Omit<Transaction, 'id'> = {
-        type: 'Encaissement',
-        category: 'Écolages',
-        description: `Paiement écolage ${payment.studentName} - ${payment.period}`,
-        amount: payment.amount,
-        date: payment.paymentDate,
-        paymentMethod: payment.paymentMethod,
-        status: 'Validé',
-        reference: payment.reference,
-        relatedModule: 'ecolage',
-        relatedId: payment.id
-      };
-
-      return await transactionsService.create(transactionData);
-    } catch (error) {
-      console.error('Erreur lors de la création de transaction depuis écolage:', error);
-      throw error;
+    console.warn('⚠️ TransactionService.createFromEcolagePayment est déprécié. Utilisez FinancialIntegrationService.createEcolageTransaction');
+    const result = await FinancialIntegrationService.createEcolageTransaction(payment);
+    if (result.success && result.transactionId) {
+      return result.transactionId;
+    } else {
+      throw new Error(result.error || 'Erreur lors de la création de transaction');
     }
   }
 
   /**
    * Créer une transaction automatique depuis un paiement de salaire
+   * @deprecated Utiliser FinancialIntegrationService.createSalaryTransaction à la place
    */
   static async createFromSalaryPayment(employee: any, salaryAmount: number): Promise<string> {
-    try {
-      const transactionData: Omit<Transaction, 'id'> = {
-        type: 'Décaissement',
-        category: 'Salaires',
-        description: `Salaire ${employee.firstName} ${employee.lastName} - ${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`,
-        amount: salaryAmount,
-        date: new Date().toISOString().split('T')[0],
-        paymentMethod: 'Virement',
-        status: 'Validé',
-        reference: `SAL-${new Date().getFullYear()}-${employee.id?.substring(0, 3)}`,
-        relatedModule: 'salary',
-        relatedId: employee.id
-      };
-
-      return await transactionsService.create(transactionData);
-    } catch (error) {
-      console.error('Erreur lors de la création de transaction depuis salaire:', error);
-      throw error;
+    console.warn('⚠️ TransactionService.createFromSalaryPayment est déprécié. Utilisez FinancialIntegrationService.createSalaryTransaction');
+    const salaryRecord = {
+      id: employee.id,
+      employeeId: employee.id,
+      employeeName: `${employee.firstName} ${employee.lastName}`,
+      netSalary: salaryAmount
+    };
+    const result = await FinancialIntegrationService.createSalaryTransaction(salaryRecord);
+    if (result.success && result.transactionId) {
+      return result.transactionId;
+    } else {
+      throw new Error(result.error || 'Erreur lors de la création de transaction');
     }
   }
 

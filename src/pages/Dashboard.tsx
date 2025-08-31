@@ -1,6 +1,7 @@
 import React from 'react';
 import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCircle, AlertTriangle, Plus } from 'lucide-react';
 // import { DataInitializer } from '../components/admin/DataInitializer';
+import { FinancialSyncStatus } from '../components/financial/FinancialSyncStatus';
 
 const stats = [
   {
@@ -270,6 +271,12 @@ export function Dashboard() {
             <span className="text-sm font-medium text-gray-600 group-hover:text-purple-600">Envoyer Message</span>
           </button>
         </div>
+      </div>
+
+      {/* Quick Financial Sync Status */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">État de Synchronisation Financière</h2>
+        <FinancialSyncStatus compact={false} showActions={true} />
       </div>
     </div>
   );

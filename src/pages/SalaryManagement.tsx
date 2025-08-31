@@ -4,8 +4,10 @@ import { Modal } from '../components/Modal';
 import { SalaryForm } from '../components/forms/SalaryForm';
 import { SalaryHistoryModal } from '../components/modals/SalaryHistoryModal';
 import { Avatar } from '../components/Avatar';
+import { TransactionSyncIndicator } from '../components/financial/TransactionSyncIndicator';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { hierarchyService, teachersService, salariesService } from '../lib/firebase/firebaseService';
+import { FinancialIntegrationService } from '../lib/services/financialIntegrationService';
 
 interface SalaryRecord {
   id?: string;
@@ -206,6 +208,23 @@ export function SalaryManagement() {
       const salaryId = await create(newRecord);
       console.log('✅ Salaire créé avec l\'ID:', salaryId);
       
+      // Créer automatiquement une transaction financière
+      try {
+        const result = await FinancialIntegrationService.createSalaryTransaction({
+          ...newRecord,
+          id: salaryId
+        });
+        
+        if (result.success) {
+          console.log('✅ Transaction de salaire créée automatiquement:', result.transactionId);
+        } else {
+          console.warn('⚠️ Erreur lors de la création de la transaction automatique:', result.error);
+        }
+      } catch (transactionError) {
+        console.warn('⚠️ Erreur lors de la création de la transaction automatique:', transactionError);
+        // Ne pas bloquer le processus principal
+      }
+      
       setShowAddForm(false);
       
       // Message de succès
@@ -281,6 +300,22 @@ export function SalaryManagement() {
         await update(selectedRecord.id, updateData);
         console.log('✅ Salaire modifié avec succès');
         
+        // Synchroniser avec les transactions financières si le salaire change
+        try {
+          if (updateData.netSalary !== selectedRecord.netSalary) {
+            const result = await FinancialIntegrationService.createSalaryTransaction({
+              ...updateData,
+              id: selectedRecord.id
+            });
+            
+            if (result.success) {
+              console.log('✅ Transaction de salaire mise à jour automatiquement');
+            }
+          }
+        } catch (syncError) {
+          console.warn('⚠️ Erreur lors de la synchronisation:', syncError);
+        }
+        
       setShowEditForm(false);
       setSelectedRecord(null);
         
@@ -297,6 +332,15 @@ export function SalaryManagement() {
     if (confirm('Êtes-vous sûr de vouloir supprimer cet enregistrement salarial ?')) {
       try {
         console.log('🗑️ Suppression du salaire ID:', id);
+        
+        // Supprimer les transactions liées avant de supprimer le salaire
+        try {
+          await FinancialIntegrationService.deleteRelatedTransactions('salary', id);
+          console.log('✅ Transactions liées supprimées');
+        } catch (syncError) {
+          console.warn('⚠️ Erreur lors de la suppression des transactions liées:', syncError);
+        }
+        
         await remove(id);
         console.log('✅ Salaire supprimé avec succès');
         alert('✅ Salaire supprimé avec succès !');
@@ -522,6 +566,12 @@ export function SalaryManagement() {
                           <div>
                             <p className="font-medium text-gray-900">{record.employeeName}</p>
                             <p className="text-sm text-gray-500">{record.position}</p>
+                            <TransactionSyncIndicator
+                              module="salary"
+                              recordId={record.id || ''}
+                              recordName={record.employeeName}
+                              className="mt-1"
+                            />
                           </div>
                         </div>
                       </td>

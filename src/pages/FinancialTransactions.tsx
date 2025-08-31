@@ -4,7 +4,8 @@ import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { Modal } from '../components/Modal';
 import { TransactionForm } from '../components/forms/TransactionForm';
 import { transactionsService } from '../lib/firebase/firebaseService';
-import { TransactionService } from '../lib/services/transactionService';
+import { FinancialIntegrationService } from '../lib/services/financialIntegrationService';
+import { FinancialIntegrationPanel } from '../components/financial/FinancialIntegrationPanel';
 
 interface Transaction {
   id?: string;
@@ -100,6 +101,17 @@ export default function FinancialTransactions() {
       const transactionId = await create(transactionData);
       console.log('✅ Transaction créée avec l\'ID:', transactionId);
       
+      // Synchroniser avec les modules liés si applicable
+      try {
+        await FinancialIntegrationService.syncTransactionWithModules({
+          ...transactionData,
+          id: transactionId
+        });
+        console.log('✅ Synchronisation avec les modules liés effectuée');
+      } catch (syncError) {
+        console.warn('⚠️ Erreur lors de la synchronisation:', syncError);
+      }
+      
       setShowAddForm(false);
       
       // Message de succès
@@ -123,6 +135,17 @@ export default function FinancialTransactions() {
         
         await update(selectedTransaction.id, updateData);
         console.log('✅ Transaction modifiée avec succès');
+        
+        // Synchroniser les modifications avec les modules liés
+        try {
+          await FinancialIntegrationService.syncTransactionWithModules({
+            ...updateData,
+            id: selectedTransaction.id
+          });
+          console.log('✅ Modifications synchronisées avec les modules liés');
+        } catch (syncError) {
+          console.warn('⚠️ Erreur lors de la synchronisation:', syncError);
+        }
         
         setShowEditForm(false);
         setSelectedTransaction(null);
@@ -166,7 +189,22 @@ export default function FinancialTransactions() {
       return;
     }
 
-    const csvContent = TransactionService.exportToCSV(transactions);
+    // Utiliser la méthode d'export du service d'intégration
+    const csvContent = [
+      'Date,Type,Catégorie,Description,Montant,Mode de Paiement,Statut,Référence,Module Lié',
+      ...transactions.map(t => [
+        t.date,
+        t.type,
+        t.category,
+        t.description,
+        t.amount,
+        t.paymentMethod,
+        t.status,
+        t.reference || '',
+        t.relatedModule || 'Manuel'
+      ].join(','))
+    ].join('\n');
+    
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -235,6 +273,9 @@ export default function FinancialTransactions() {
           </button>
         </div>
       </div>
+
+      {/* Financial Integration Panel */}
+      <FinancialIntegrationPanel />
 
       {/* Navigation Tabs */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -428,6 +469,11 @@ export default function FinancialTransactions() {
                       {transaction.reference && (
                         <p className="text-xs text-gray-500">Réf: {transaction.reference}</p>
                       )}
+                      {transaction.relatedModule && (
+                        <p className="text-xs text-blue-500">
+                          🔗 Lié au module: {transaction.relatedModule === 'ecolage' ? 'Écolage' : 'Salaires'}
+                        </p>
+                      )}
                     </td>
                     <td className="py-4 px-6">
                       <p className={`text-lg font-bold ${
@@ -578,6 +624,13 @@ export default function FinancialTransactions() {
                   )}
                   {selectedTransaction.notes && (
                     <p><span className="font-medium">Notes:</span> {selectedTransaction.notes}</p>
+                  )}
+                  {selectedTransaction.relatedModule && (
+                    <p><span className="font-medium">Module lié:</span> 
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                        {selectedTransaction.relatedModule === 'ecolage' ? 'Écolage' : 'Salaires'}
+                      </span>
+                    </p>
                   )}
                 </div>
               </div>

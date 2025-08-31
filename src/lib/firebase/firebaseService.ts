@@ -109,4 +109,7 @@ export const feesService = new FirebaseService('fees');
 export const reportsService = new FirebaseService('reports');
 export const hierarchyService = new FirebaseService('hierarchy');
 
+// Service pour la gestion des salaires
+export const salariesService = new FirebaseService('salaries');
+
 export default FirebaseService;

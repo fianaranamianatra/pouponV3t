@@ -12,9 +12,10 @@ interface SalaryFormProps {
   initialData?: any;
   employees?: any[];
   teachers?: any[];
+  isSubmitting?: boolean;
 }
 
-export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], teachers = [] }: SalaryFormProps) {
+export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], teachers = [], isSubmitting = false }: SalaryFormProps) {
   const [formData, setFormData] = useState({
     employeeId: initialData?.employeeId || '',
     employeeName: initialData?.employeeName || '',
@@ -132,10 +133,20 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
+    
+    // Validation de base
+    if (!formData.employeeId || !formData.baseSalary) {
+      alert('Veuillez sélectionner un employé et saisir un salaire');
+      return;
+    }
+    
+    const submitData = {
       ...formData,
       ...calculatedValues
-    });
+    };
+    
+    console.log('📤 Soumission des données de salaire:', submitData);
+    onSubmit(submitData);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -635,9 +646,17 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
         </button>
         <button
           type="submit"
+          disabled={isSubmitting}
           className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
-          {initialData ? 'Modifier le Salaire' : 'Enregistrer le Salaire'}
+          {isSubmitting ? (
+            <div className="flex items-center justify-center">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              {initialData ? 'Modification...' : 'Enregistrement...'}
+            </div>
+          ) : (
+            initialData ? 'Modifier le Salaire' : 'Enregistrer le Salaire'
+          )}
         </button>
       </div>
       </form>

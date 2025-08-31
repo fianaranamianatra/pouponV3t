@@ -5,7 +5,7 @@ import { SalaryForm } from '../components/forms/SalaryForm';
 import { SalaryHistoryModal } from '../components/modals/SalaryHistoryModal';
 import { Avatar } from '../components/Avatar';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
-import { hierarchyService, teachersService } from '../lib/firebase/firebaseService';
+import { hierarchyService, teachersService, salariesService } from '../lib/firebase/firebaseService';
 
 interface SalaryRecord {
   id?: string;
@@ -106,7 +106,6 @@ const mockSalaryHistory: SalaryHistory[] = [
 ];
 
 export function SalaryManagement() {
-  const [salaryRecords, setSalaryRecords] = useState<SalaryRecord[]>(mockSalaryRecords);
   const [salaryHistory, setSalaryHistory] = useState<SalaryHistory[]>(mockSalaryHistory);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -120,6 +119,19 @@ export function SalaryManagement() {
   // Hook Firebase pour charger les employés
   const { data: employees, loading: employeesLoading } = useFirebaseCollection(hierarchyService, true);
   const { data: teachers, loading: teachersLoading } = useFirebaseCollection(teachersService, true);
+  
+  // Hook Firebase pour la gestion des salaires avec synchronisation temps réel
+  const {
+    data: salaryRecords,
+    loading: salariesLoading,
+    error: salariesError,
+    creating,
+    updating,
+    deleting,
+    create,
+    update,
+    remove
+  } = useFirebaseCollection<SalaryRecord>(salariesService, true);
 
   const filteredRecords = salaryRecords.filter(record => {
     const matchesSearch = record.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -135,60 +147,81 @@ export function SalaryManagement() {
   const totalDeductions = salaryRecords.reduce((acc, r) => acc + r.totalDeductions, 0);
   const averageSalary = salaryRecords.length > 0 ? totalNetSalaries / salaryRecords.length : 0;
 
-  const handleAddSalary = (data: any) => {
-    const newRecord: SalaryRecord = {
-      id: Date.now().toString(),
-      employeeId: data.employeeId || 'emp' + Date.now(),
-      employeeName: data.employeeName,
-      employeeType: data.employeeType,
-      position: data.position,
-      department: data.department,
-      baseSalary: parseFloat(data.baseSalary) || 0,
-      allowances: {
+  const handleAddSalary = async (data: any) => {
+    try {
+      console.log('🚀 Ajout de salaire - Données reçues:', data);
+      
+      // Calculer les totaux
+      const baseSalary = parseFloat(data.baseSalary) || 0;
+      const allowances = {
         transport: parseFloat(data.transportAllowance) || 0,
         housing: parseFloat(data.housingAllowance) || 0,
         meal: parseFloat(data.mealAllowance) || 0,
         performance: parseFloat(data.performanceAllowance) || 0,
         other: parseFloat(data.otherAllowance) || 0
-      },
-      totalGross: 0, // Will be calculated
-      cnaps: 0,
-      ostie: 0,
-      irsa: 0,
-      totalDeductions: 0,
-      netSalary: 0,
+      };
+      
+      const totalAllowances = Object.values(allowances).reduce((sum, val) => sum + val, 0);
+      const totalGross = baseSalary + totalAllowances;
+      const cnaps = Math.round(totalGross * 0.01);
+      const ostie = Math.round(totalGross * 0.01);
+      
+      // Calcul IRSA
+      const taxableIncome = totalGross - cnaps - ostie;
+      let irsa = 0;
+      if (taxableIncome > 350000) {
+        if (taxableIncome <= 400000) {
+          irsa = Math.round((taxableIncome - 350000) * 0.05);
+        } else if (taxableIncome <= 500000) {
+          irsa = Math.round(50000 * 0.05 + (taxableIncome - 400000) * 0.10);
+        } else {
+          irsa = Math.round(50000 * 0.05 + 100000 * 0.10 + (taxableIncome - 500000) * 0.15);
+        }
+      }
+      
+      const totalDeductions = cnaps + ostie + irsa;
+      const netSalary = totalGross - totalDeductions;
+      
+      const newRecord = {
+      employeeId: data.employeeId || 'emp' + Date.now(),
+      employeeName: data.employeeName,
+      employeeType: data.employeeType,
+      position: data.position,
+      department: data.department,
+      baseSalary,
+      allowances,
+      totalGross,
+      cnaps,
+      ostie,
+      irsa,
+      totalDeductions,
+      netSalary,
       effectiveDate: data.effectiveDate,
       status: data.status || 'active',
       notes: data.notes
-    };
-
-    // Calculate totals
-    const totalAllowances = Object.values(newRecord.allowances).reduce((sum, val) => sum + (val || 0), 0);
-    newRecord.totalGross = newRecord.baseSalary + totalAllowances;
-    newRecord.cnaps = Math.round(newRecord.totalGross * 0.01);
-    newRecord.ostie = Math.round(newRecord.totalGross * 0.01);
-    
-    // Simple IRSA calculation
-    const taxableIncome = newRecord.totalGross - newRecord.cnaps - newRecord.ostie;
-    if (taxableIncome > 350000) {
-      if (taxableIncome <= 400000) {
-        newRecord.irsa = Math.round((taxableIncome - 350000) * 0.05);
-      } else if (taxableIncome <= 500000) {
-        newRecord.irsa = Math.round(50000 * 0.05 + (taxableIncome - 400000) * 0.10);
-      } else {
-        newRecord.irsa = Math.round(50000 * 0.05 + 100000 * 0.10 + (taxableIncome - 500000) * 0.15);
-      }
+      };
+      
+      console.log('📝 Données formatées pour Firebase:', newRecord);
+      
+      const salaryId = await create(newRecord);
+      console.log('✅ Salaire créé avec l\'ID:', salaryId);
+      
+      setShowAddForm(false);
+      
+      // Message de succès
+      alert('✅ Salaire enregistré avec succès !');
+      
+    } catch (error: any) {
+      console.error('❌ Erreur lors de l\'ajout du salaire:', error);
+      alert('❌ Erreur lors de l\'ajout du salaire: ' + error.message);
     }
-    
-    newRecord.totalDeductions = newRecord.cnaps + newRecord.ostie + newRecord.irsa;
-    newRecord.netSalary = newRecord.totalGross - newRecord.totalDeductions;
-
-    setSalaryRecords([...salaryRecords, newRecord]);
-    setShowAddForm(false);
   };
 
-  const handleEditSalary = (data: any) => {
-    if (selectedRecord) {
+  const handleEditSalary = async (data: any) => {
+    if (selectedRecord?.id) {
+      try {
+        console.log('🔄 Modification de salaire - Données:', data);
+        
       // Add to history
       const historyEntry: SalaryHistory = {
         id: Date.now().toString(),
@@ -202,17 +235,75 @@ export function SalaryManagement() {
       };
       setSalaryHistory([historyEntry, ...salaryHistory]);
 
-      // Update record
-      const updatedRecord = { ...selectedRecord, ...data };
-      setSalaryRecords(salaryRecords.map(r => r.id === selectedRecord.id ? updatedRecord : r));
+        // Recalculer les totaux
+        const baseSalary = parseFloat(data.baseSalary) || 0;
+        const allowances = {
+          transport: parseFloat(data.transportAllowance) || 0,
+          housing: parseFloat(data.housingAllowance) || 0,
+          meal: parseFloat(data.mealAllowance) || 0,
+          performance: parseFloat(data.performanceAllowance) || 0,
+          other: parseFloat(data.otherAllowance) || 0
+        };
+        
+        const totalAllowances = Object.values(allowances).reduce((sum, val) => sum + val, 0);
+        const totalGross = baseSalary + totalAllowances;
+        const cnaps = Math.round(totalGross * 0.01);
+        const ostie = Math.round(totalGross * 0.01);
+        
+        // Calcul IRSA
+        const taxableIncome = totalGross - cnaps - ostie;
+        let irsa = 0;
+        if (taxableIncome > 350000) {
+          if (taxableIncome <= 400000) {
+            irsa = Math.round((taxableIncome - 350000) * 0.05);
+          } else if (taxableIncome <= 500000) {
+            irsa = Math.round(50000 * 0.05 + (taxableIncome - 400000) * 0.10);
+          } else {
+            irsa = Math.round(50000 * 0.05 + 100000 * 0.10 + (taxableIncome - 500000) * 0.15);
+          }
+        }
+        
+        const totalDeductions = cnaps + ostie + irsa;
+        const netSalary = totalGross - totalDeductions;
+        
+        const updateData = {
+          ...data,
+          baseSalary,
+          allowances,
+          totalGross,
+          cnaps,
+          ostie,
+          irsa,
+          totalDeductions,
+          netSalary
+        };
+        
+        await update(selectedRecord.id, updateData);
+        console.log('✅ Salaire modifié avec succès');
+        
       setShowEditForm(false);
       setSelectedRecord(null);
+        
+        alert('✅ Salaire modifié avec succès !');
+        
+      } catch (error: any) {
+        console.error('❌ Erreur lors de la modification:', error);
+        alert('❌ Erreur lors de la modification: ' + error.message);
+      }
     }
   };
 
-  const handleDeleteRecord = (id: string) => {
+  const handleDeleteRecord = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer cet enregistrement salarial ?')) {
-      setSalaryRecords(salaryRecords.filter(r => r.id !== id));
+      try {
+        console.log('🗑️ Suppression du salaire ID:', id);
+        await remove(id);
+        console.log('✅ Salaire supprimé avec succès');
+        alert('✅ Salaire supprimé avec succès !');
+      } catch (error: any) {
+        console.error('❌ Erreur lors de la suppression:', error);
+        alert('❌ Erreur lors de la suppression: ' + error.message);
+      }
     }
   };
 
@@ -235,6 +326,33 @@ export function SalaryManagement() {
     alert('Export des données salariales en cours...');
   };
 
+  // Afficher le loading pendant le chargement des salaires
+  if (salariesLoading || employeesLoading || teachersLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement des données salariales...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Afficher les erreurs
+  if (salariesError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-600">Erreur: {salariesError}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -254,10 +372,15 @@ export function SalaryManagement() {
           </button>
           <button
             onClick={() => setShowAddForm(true)}
+            disabled={creating}
             className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Nouveau Salaire
+            {creating ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+            ) : (
+              <Plus className="w-4 h-4 mr-2" />
+            )}
+            {creating ? 'Enregistrement...' : 'Nouveau Salaire'}
           </button>
         </div>
       </div>
@@ -458,6 +581,7 @@ export function SalaryManagement() {
                           </button>
                           <button 
                             onClick={() => handleEditClick(record)}
+                            disabled={updating}
                             className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                             title="Modifier"
                           >
@@ -472,6 +596,7 @@ export function SalaryManagement() {
                           </button>
                           <button 
                             onClick={() => record.id && handleDeleteRecord(record.id)}
+                            disabled={deleting}
                             className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Supprimer"
                           >
@@ -500,6 +625,7 @@ export function SalaryManagement() {
           onCancel={() => setShowAddForm(false)}
           employees={employees}
           teachers={teachers}
+          isSubmitting={creating}
         />
       </Modal>
 
@@ -523,6 +649,7 @@ export function SalaryManagement() {
             initialData={selectedRecord}
             employees={employees}
             teachers={teachers}
+            isSubmitting={updating}
           />
         )}
       </Modal>

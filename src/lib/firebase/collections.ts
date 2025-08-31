@@ -123,3 +123,31 @@ export interface Employee {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface SalaryRecord {
+  id?: string;
+  employeeId: string;
+  employeeName: string;
+  employeeType: 'teacher' | 'staff';
+  position: string;
+  department: string;
+  baseSalary: number;
+  allowances: {
+    transport?: number;
+    housing?: number;
+    meal?: number;
+    performance?: number;
+    other?: number;
+  };
+  totalGross: number;
+  cnaps: number;
+  ostie: number;
+  irsa: number;
+  totalDeductions: number;
+  netSalary: number;
+  effectiveDate: string;
+  status: 'active' | 'inactive' | 'pending';
+  notes?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}

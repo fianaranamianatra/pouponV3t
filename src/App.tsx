@@ -31,6 +31,7 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isMobile, setIsMobile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user } = useAuth();
 
   // Détecter la taille d'écran
@@ -38,9 +39,10 @@ function App() {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Sur mobile, la sidebar est fermée par défaut
+      // Sur mobile, fermer le menu par défaut
       if (mobile) {
         setSidebarCollapsed(true);
+        setMobileMenuOpen(false);
       }
     };
     
@@ -48,6 +50,15 @@ function App() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Gérer l'ouverture/fermeture du menu mobile
+  const handleToggleSidebar = () => {
+    if (isMobile) {
+      setMobileMenuOpen(!mobileMenuOpen);
+    } else {
+      setSidebarCollapsed(!sidebarCollapsed);
+    }
+  };
 
   // Gérer l'état de connectivité
   useEffect(() => {
@@ -187,22 +198,25 @@ function App() {
         <Route path="/access-denied" element={<AccessDenied />} />
         <Route path="/profile" element={
           <AuthGuard>
-            <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
+            <div className="min-h-screen bg-gray-50 flex flex-col">
               <Sidebar 
                 currentPage={currentPage}
                 onPageChange={setCurrentPage}
                 collapsed={sidebarCollapsed}
-                onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+                onToggleCollapse={handleToggleSidebar}
               />
-              <div className={`flex-1 transition-all duration-300 ${
+              <div className={`flex-1 flex flex-col transition-all duration-300 ${
                 isMobile 
                   ? 'ml-0' 
                   : sidebarCollapsed 
                     ? 'ml-16' 
                     : 'ml-64'
               }`}>
-                <Header onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
-                <main className={`${isMobile ? 'p-4' : 'p-6'}`}>
+                <Header 
+                  onToggleSidebar={handleToggleSidebar} 
+                  isMobile={isMobile}
+                />
+                <main className={`flex-1 ${isMobile ? 'p-4' : 'p-6'}`}>
                   <UserProfile />
                 </main>
               </div>
@@ -211,22 +225,25 @@ function App() {
         } />
         <Route path="/" element={
           <AuthGuard>
-            <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
+            <div className="min-h-screen bg-gray-50 flex flex-col">
               <Sidebar 
                 currentPage={currentPage}
                 onPageChange={setCurrentPage}
                 collapsed={sidebarCollapsed}
-                onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+                onToggleCollapse={handleToggleSidebar}
               />
-              <div className={`flex-1 transition-all duration-300 ${
+              <div className={`flex-1 flex flex-col transition-all duration-300 ${
                 isMobile 
                   ? 'ml-0' 
                   : sidebarCollapsed 
                     ? 'ml-16' 
                     : 'ml-64'
               }`}>
-                <Header onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
-                <main className={`${isMobile ? 'p-4' : 'p-6'}`}>
+                <Header 
+                  onToggleSidebar={handleToggleSidebar} 
+                  isMobile={isMobile}
+                />
+                <main className={`flex-1 ${isMobile ? 'p-4' : 'p-6'}`}>
                   {renderPage()}
                 </main>
               </div>

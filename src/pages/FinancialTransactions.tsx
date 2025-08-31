@@ -236,6 +236,42 @@ export default function FinancialTransactions() {
         </div>
       </div>
 
+      {/* Navigation Tabs */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="flex space-x-1">
+          <button
+            onClick={() => setSelectedType('')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              selectedType === '' 
+                ? 'bg-blue-600 text-white border-2 border-blue-600' 
+                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 border-2 border-transparent'
+            }`}
+          >
+            Toutes les Transactions
+          </button>
+          <button
+            onClick={() => setSelectedType('Encaissement')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              selectedType === 'Encaissement' 
+                ? 'bg-blue-600 text-white border-2 border-blue-600' 
+                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 border-2 border-transparent'
+            }`}
+          >
+            Encaissements
+          </button>
+          <button
+            onClick={() => setSelectedType('Décaissement')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              selectedType === 'Décaissement' 
+                ? 'bg-blue-600 text-white border-2 border-blue-600' 
+                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 border-2 border-transparent'
+            }`}
+          >
+            Décaissements
+          </button>
+        </div>
+      </div>
+
       {/* Filters and Search */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex flex-col lg:flex-row gap-4">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Zap, Users, TrendingUp, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Zap, Users, TrendingUp, RefreshCw, CheckCircle, AlertTriangle, DollarSign } from 'lucide-react';
 import { useEcolageSync } from '../../hooks/useEcolageSync';
 import { useFirebaseCollection } from '../../hooks/useFirebaseCollection';
 import { studentsService } from '../../lib/firebase/firebaseService';

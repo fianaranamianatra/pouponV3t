@@ -21,15 +21,22 @@ import FinancialTransactions from './pages/FinancialTransactions';
 import { StudentEcolageSyncService } from './lib/services/studentEcolageSync';
 import { BidirectionalSyncService } from './lib/services/bidirectionalSync';
 import { USER_ROLES } from './lib/roles';
+import { useAuth } from './hooks/useAuth';
 
 export type Page = 'dashboard' | 'students' | 'teachers' | 'classes' | 'subjects' | 'ecolage' | 'payroll' | 'salary-management' | 'financial-transactions' | 'reports' | 'hr' | 'import';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { user } = useAuth();
 
-  // Initialiser la synchronisation bidirectionnelle au démarrage de l'app
+  // Initialiser la synchronisation bidirectionnelle seulement après authentification
   React.useEffect(() => {
+    // Ne pas initialiser la synchronisation si l'utilisateur n'est pas connecté
+    if (!user) {
+      return;
+    }
+
     console.log('🚀 Initialisation de la synchronisation bidirectionnelle Écolage ↔ Profils');
     
     const initializeSync = async () => {
@@ -47,7 +54,7 @@ function App() {
     return () => {
       BidirectionalSyncService.cleanup();
     };
-  }, []);
+  }, [user]);
 
   const renderPage = () => {
     switch (currentPage) {

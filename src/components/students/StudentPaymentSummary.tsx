@@ -7,6 +7,7 @@ interface StudentPaymentSummaryProps {
   studentClass: string;
   compact?: boolean;
   showActions?: boolean;
+  conditionalDisplay?: boolean;
   onViewDetails?: () => void;
   onAddPayment?: () => void;
 }
@@ -16,6 +17,7 @@ export function StudentPaymentSummary({
   studentClass, 
   compact = false, 
   showActions = true,
+  conditionalDisplay = false,
   onViewDetails,
   onAddPayment
 }: StudentPaymentSummaryProps) {
@@ -84,6 +86,107 @@ export function StudentPaymentSummary({
   };
 
   const statusConfig = getStatusConfig();
+
+  // Logique d'affichage conditionnel
+  if (conditionalDisplay) {
+    // Ne rien afficher si aucun paiement n'existe
+    if (paymentData.payments.length === 0) {
+      return (
+        <div className="text-xs text-gray-400 italic">
+          Aucun paiement
+        </div>
+      );
+    }
+
+    // Affichage minimal pour les élèves à jour
+    if (paymentData.status === 'up_to_date') {
+      return (
+        <div className="flex items-center space-x-2">
+          <CheckCircle className="w-4 h-4 text-green-600" />
+          <span className="text-xs text-green-700 font-medium">À jour</span>
+          <span className="text-xs text-gray-500">
+            ({paymentData.totalPaid.toLocaleString()} Ar)
+          </span>
+        </div>
+      );
+    }
+
+    // Affichage détaillé pour les cas problématiques
+    if (paymentData.status === 'overdue' || paymentData.status === 'critical') {
+      return (
+        <div className="space-y-1">
+          <div className="flex items-center space-x-2">
+            <AlertTriangle className={`w-4 h-4 ${
+              paymentData.status === 'critical' ? 'text-red-600' : 'text-yellow-600'
+            }`} />
+            <span className={`text-xs font-medium ${
+              paymentData.status === 'critical' ? 'text-red-700' : 'text-yellow-700'
+            }`}>
+              {paymentData.status === 'critical' ? 'Critique' : 'En retard'}
+            </span>
+          </div>
+          <div className="text-xs space-y-0.5">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Payé:</span>
+              <span className="text-green-600 font-medium">{paymentData.totalPaid.toLocaleString()} Ar</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Restant:</span>
+              <span className="text-red-600 font-medium">{paymentData.remainingBalance.toLocaleString()} Ar</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Taux:</span>
+              <span className={`font-medium ${
+                paymentData.paymentRate >= 70 ? 'text-blue-600' : 'text-red-600'
+              }`}>
+                {paymentData.paymentRate.toFixed(1)}%
+              </span>
+            </div>
+            {paymentData.overduePayments.length > 0 && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">En retard:</span>
+                <span className="text-red-600 font-medium">{paymentData.overduePayments.length}</span>
+              </div>
+            )}
+          </div>
+          {/* Barre de progression pour les cas problématiques */}
+          <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+            <div 
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                paymentData.paymentRate >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+              }`}
+              style={{ width: `${Math.min(paymentData.paymentRate, 100)}%` }}
+            ></div>
+          </div>
+        </div>
+      );
+    }
+
+    // Affichage intermédiaire pour les paiements partiels
+    if (paymentData.status === 'partial') {
+      return (
+        <div className="space-y-1">
+          <div className="flex items-center space-x-2">
+            <Clock className="w-4 h-4 text-blue-600" />
+            <span className="text-xs text-blue-700 font-medium">Partiel</span>
+            <span className="text-xs text-blue-600">
+              {paymentData.paymentRate.toFixed(1)}%
+            </span>
+          </div>
+          <div className="text-xs text-gray-600">
+            {paymentData.totalPaid.toLocaleString()} / {paymentData.totalDue.toLocaleString()} Ar
+          </div>
+          {/* Barre de progression simplifiée */}
+          <div className="w-full bg-gray-200 rounded-full h-1.5">
+            <div 
+              className="h-1.5 rounded-full bg-blue-500 transition-all duration-300"
+              style={{ width: `${Math.min(paymentData.paymentRate, 100)}%` }}
+            ></div>
+          </div>
+        </div>
+      );
+    }
+  }
 
   if (compact) {
     return (

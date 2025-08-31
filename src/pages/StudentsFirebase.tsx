@@ -398,22 +398,24 @@ export function StudentsFirebase() {
                             {student.address.split(',')[0]}
                           </div>
                         </div>
-                        {/* Résumé des paiements synchronisé en temps réel */}
-                        <div className="mt-2">
-                          <StudentPaymentSummary
-                            studentName={`${student.firstName} ${student.lastName}`}
-                            studentClass={student.class}
-                            compact={true}
-                            showActions={false}
-                          />
-                        </div>
-                        {/* Indicateur de synchronisation */}
-                        <div className="mt-1">
+                      </div>
+                      {/* Affichage conditionnel des informations de paiement */}
+                      <div className="ml-auto">
+                        <StudentPaymentSummary
+                          studentName={`${student.firstName} ${student.lastName}`}
+                          studentClass={student.class}
+                          compact={true}
+                          showActions={false}
+                          conditionalDisplay={true}
+                        />
+                        {/* Indicateur de synchronisation conditionnel */}
+                        <div className="mt-1 text-right">
                           <StudentSyncIndicator
                             studentName={`${student.firstName} ${student.lastName}`}
                             studentClass={student.class}
                             size="sm"
-                            showDetails={true}
+                            showDetails={false}
+                            conditionalDisplay={true}
                           />
                         </div>
                       </div>

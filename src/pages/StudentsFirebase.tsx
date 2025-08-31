@@ -479,13 +479,6 @@ export function StudentsFirebase() {
                         >
                           <FileText className="w-4 h-4" />
                         </button>
-                        <button 
-                          onClick={() => handleViewPaymentDetails(student)}
-                          className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                          title="Détails des paiements"
-                        >
-                          <DollarSign className="w-4 h-4" />
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -593,16 +586,7 @@ export function StudentsFirebase() {
                 studentName={`${selectedStudent.firstName} ${selectedStudent.lastName}`}
                 studentClass={selectedStudent.class}
                 compact={false}
-                showActions={true}
-                onViewDetails={() => {
-                  setShowViewModal(false);
-                  handleViewPaymentDetails(selectedStudent);
-                }}
-                onAddPayment={() => {
-                  setShowViewModal(false);
-                  // Rediriger vers l'ajout de paiement avec cet élève pré-sélectionné
-                  alert('Redirection vers l\'ajout de paiement...');
-                }}
+                showActions={false}
               />
             </div>
             

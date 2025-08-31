@@ -4,6 +4,8 @@ import { Modal } from '../components/Modal';
 import { StudentFormFirebase } from '../components/forms/StudentFormFirebase';
 import { CertificateModal } from '../components/certificates/CertificateModal';
 import { StudentPaymentDetails } from '../components/ecolage/StudentPaymentDetails';
+import { StudentPaymentSummary } from '../components/students/StudentPaymentSummary';
+import { StudentSyncIndicator } from '../components/students/StudentSyncIndicator';
 import { Avatar } from '../components/Avatar';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { studentsService } from '../lib/firebase/firebaseService';
@@ -396,6 +398,24 @@ export function StudentsFirebase() {
                             {student.address.split(',')[0]}
                           </div>
                         </div>
+                        {/* Résumé des paiements synchronisé en temps réel */}
+                        <div className="mt-2">
+                          <StudentPaymentSummary
+                            studentName={`${student.firstName} ${student.lastName}`}
+                            studentClass={student.class}
+                            compact={true}
+                            showActions={false}
+                          />
+                        </div>
+                        {/* Indicateur de synchronisation */}
+                        <div className="mt-1">
+                          <StudentSyncIndicator
+                            studentName={`${student.firstName} ${student.lastName}`}
+                            studentClass={student.class}
+                            size="sm"
+                            showDetails={true}
+                          />
+                        </div>
                       </div>
                     </td>
                     <td className="py-4 px-6">
@@ -564,6 +584,26 @@ export function StudentsFirebase() {
                   </p>
                 </div>
               </div>
+            </div>
+            
+            {/* Résumé financier synchronisé */}
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <h4 className="font-medium text-gray-900 mb-3">Situation Financière (Temps Réel)</h4>
+              <StudentPaymentSummary
+                studentName={`${selectedStudent.firstName} ${selectedStudent.lastName}`}
+                studentClass={selectedStudent.class}
+                compact={false}
+                showActions={true}
+                onViewDetails={() => {
+                  setShowViewModal(false);
+                  handleViewPaymentDetails(selectedStudent);
+                }}
+                onAddPayment={() => {
+                  setShowViewModal(false);
+                  // Rediriger vers l'ajout de paiement avec cet élève pré-sélectionné
+                  alert('Redirection vers l\'ajout de paiement...');
+                }}
+              />
             </div>
             
             {/* Actions rapides */}

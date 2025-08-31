@@ -18,6 +18,8 @@ import { UserProfile } from './pages/UserProfile';
 import { AccessDenied } from './pages/AccessDenied';
 import { SalaryManagement } from './pages/SalaryManagement';
 import FinancialTransactions from './pages/FinancialTransactions';
+import { StudentEcolageSyncService } from './lib/services/studentEcolageSync';
+import { BidirectionalSyncService } from './lib/services/bidirectionalSync';
 import { USER_ROLES } from './lib/roles';
 
 export type Page = 'dashboard' | 'students' | 'teachers' | 'classes' | 'subjects' | 'ecolage' | 'payroll' | 'salary-management' | 'financial-transactions' | 'reports' | 'hr' | 'import';
@@ -25,6 +27,27 @@ export type Page = 'dashboard' | 'students' | 'teachers' | 'classes' | 'subjects
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Initialiser la synchronisation bidirectionnelle au démarrage de l'app
+  React.useEffect(() => {
+    console.log('🚀 Initialisation de la synchronisation bidirectionnelle Écolage ↔ Profils');
+    
+    const initializeSync = async () => {
+      try {
+        await BidirectionalSyncService.initializeAllSync();
+        console.log('✅ Toutes les synchronisations bidirectionnelles sont actives');
+      } catch (error) {
+        console.error('❌ Erreur lors de l\'initialisation de la synchronisation:', error);
+      }
+    };
+
+    initializeSync();
+
+    // Nettoyer les listeners au démontage
+    return () => {
+      BidirectionalSyncService.cleanup();
+    };
+  }, []);
 
   const renderPage = () => {
     switch (currentPage) {

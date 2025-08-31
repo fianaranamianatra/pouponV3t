@@ -6,6 +6,7 @@ import { Avatar } from '../components/Avatar';
 import { TransactionSyncIndicator } from '../components/financial/TransactionSyncIndicator';
 import { PaymentDashboard } from '../components/ecolage/PaymentDashboard';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
+import { useEcolageSync } from '../hooks/useEcolageSync';
 import { feesService, studentsService, classesService } from '../lib/firebase/firebaseService';
 import { FinancialIntegrationService } from '../lib/services/financialIntegrationService';
 
@@ -54,6 +55,9 @@ export function EcolageFirebase() {
   const [selectedPeriod, setSelectedPeriod] = useState('');
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [showDashboard, setShowDashboard] = useState(false);
+
+  // Hook de synchronisation globale Écolage
+  const ecolageSyncData = useEcolageSync();
 
   // Hook Firebase avec synchronisation temps réel
   const {
@@ -141,6 +145,7 @@ export function EcolageFirebase() {
         
         if (result.success) {
           console.log('✅ Transaction financière créée automatiquement avec l\'ID:', result.transactionId);
+          console.log('🔄 Synchronisation automatique avec profils étudiants activée');
         } else {
           console.warn('⚠️ Erreur lors de la création de la transaction automatique:', result.error);
         }
@@ -252,6 +257,11 @@ export function EcolageFirebase() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Gestion de l'Écolage</h1>
           <p className="text-gray-600">Suivi des paiements et frais scolaires</p>
+          {!ecolageSyncData.loading && (
+            <p className="text-xs text-blue-600 mt-1">
+              🔄 Synchronisé en temps réel • Dernière MAJ: {ecolageSyncData.lastUpdated.toLocaleTimeString('fr-FR')}
+            </p>
+          )}
         </div>
         
         <div className="flex gap-2">
@@ -436,6 +446,11 @@ export function EcolageFirebase() {
                             recordName={payment.studentName}
                             className="mt-1"
                           />
+                          <div className="mt-1">
+                            <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                              🔄 Synchronisé avec profil étudiant
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </td>

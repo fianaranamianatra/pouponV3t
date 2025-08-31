@@ -1,8 +1,10 @@
 import React from 'react';
-import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCircle, AlertTriangle, Plus, DollarSign } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCircle, AlertTriangle, Plus, DollarSign, Zap, Activity } from 'lucide-react';
 // import { DataInitializer } from '../components/admin/DataInitializer';
 import { FinancialSyncStatus } from '../components/financial/FinancialSyncStatus';
 import { PaymentAlerts } from '../components/ecolage/PaymentAlerts';
+import { EcolageStudentSync } from '../components/ecolage/EcolageStudentSync';
+import { GlobalSyncStatus } from '../components/sync/GlobalSyncStatus';
 
 const stats = [
   {
@@ -287,6 +289,24 @@ export function Dashboard() {
           Alertes de Paiement
         </h2>
         <PaymentAlerts />
+      </div>
+
+      {/* Synchronisation Écolage-Profils */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+          <Zap className="w-5 h-5 mr-2 text-green-600" />
+          Synchronisation Écolage ↔ Profils Étudiants
+        </h2>
+        <EcolageStudentSync />
+      </div>
+
+      {/* Statut de Synchronisation Globale */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+          <Activity className="w-5 h-5 mr-2 text-purple-600" />
+          Statut de Synchronisation Globale
+        </h2>
+        <GlobalSyncStatus />
       </div>
     </div>
   );

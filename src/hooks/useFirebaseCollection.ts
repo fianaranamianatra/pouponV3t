@@ -47,19 +47,44 @@ export function useFirebaseCollection<T extends { id?: string }>(
             },
             (err) => {
               console.error('Firebase real-time error:', err);
-              setError(err.message);
+              
+              // Gestion spécifique des erreurs de connectivité
+              if (err.code === 'unavailable' || err.message.includes('offline')) {
+                console.warn('Mode hors ligne détecté, utilisation des données en cache');
+                setError("Mode hors ligne: Les données peuvent ne pas être à jour");
+                // Ne pas bloquer l'application, garder les données existantes
+              } else {
+                setError(err.message);
+              }
               setLoading(false);
             }
           );
         } else {
           // One-time fetch
-          const items = await service.getAll();
-          setData(items);
+          try {
+            const items = await service.getAll();
+            setData(items);
+          } catch (fetchError: any) {
+            if (fetchError.code === 'unavailable' || fetchError.message.includes('offline')) {
+              console.warn('Impossible de récupérer les données, mode hors ligne');
+              setError("Mode hors ligne: Impossible de charger les nouvelles données");
+              // Garder un tableau vide plutôt que de planter
+              setData([]);
+            } else {
+              throw fetchError;
+            }
+          }
           setLoading(false);
         }
       } catch (err: any) {
         console.error('Firebase collection error:', err);
-        setError(err.message);
+        
+        // Gestion améliorée des erreurs
+        if (err.code === 'unavailable' || err.message.includes('offline')) {
+          setError("Mode hors ligne: Les données ne peuvent pas être chargées");
+        } else {
+          setError(err.message);
+        }
         setLoading(false);
       }
     };

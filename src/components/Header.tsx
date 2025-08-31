@@ -1,13 +1,24 @@
 import React from 'react';
-import { Search, Bell, User, Settings, LogOut } from 'lucide-react';
+import { Search, Bell, User, Settings, LogOut, Wifi, WifiOff } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { logout } from '../lib/auth';
+import { OfflineHandler } from '../lib/firebase/offlineHandler';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
 }
 
 export function Header({ onToggleSidebar }: HeaderProps) {
+  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+
+  React.useEffect(() => {
+    const removeListener = OfflineHandler.addConnectionListener((online) => {
+      setIsOnline(online);
+    });
+
+    return removeListener;
+  }, []);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -33,6 +44,20 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       </div>
       {/* Right Actions */}
       <div className="flex items-center space-x-4">
+        {/* Connection Status */}
+        <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${
+          isOnline 
+            ? 'bg-green-100 text-green-800' 
+            : 'bg-yellow-100 text-yellow-800'
+        }`}>
+          {isOnline ? (
+            <Wifi className="w-3 h-3" />
+          ) : (
+            <WifiOff className="w-3 h-3" />
+          )}
+          <span>{isOnline ? 'En ligne' : 'Hors ligne'}</span>
+        </div>
+        
         {/* Notifications */}
         <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
           <Bell className="w-5 h-5" />

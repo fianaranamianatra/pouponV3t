@@ -46,12 +46,33 @@ export const useAuth = () => {
               loading: false,
               error: "Votre compte a été désactivé. Veuillez contacter l'administrateur."
             });
+          } else if (errorMessage.includes('offline') || errorMessage.includes('unavailable')) {
+            console.warn("Mode hors ligne détecté, utilisation du profil temporaire");
+            // Créer un profil temporaire pour le mode hors ligne
+            const offlineProfile = {
+              uid: user.uid,
+              email: user.email || 'offline@user.local',
+              firstName: 'Utilisateur',
+              lastName: 'Hors ligne',
+              role: 'admin',
+              permissions: ['all_data_access'],
+              isActive: true,
+              createdAt: new Date(),
+              lastLogin: new Date()
+            };
+            
+            setAuthState({
+              user,
+              profile: offlineProfile,
+              loading: false,
+              error: "Mode hors ligne: Certaines fonctionnalités peuvent être limitées."
+            });
           } else {
             setAuthState({
               user: null,
               profile: null,
               loading: false,
-              error: "Erreur lors du chargement du profil utilisateur. Veuillez vous reconnecter."
+              error: "Erreur de connectivité. L'application fonctionne en mode hors ligne."
             });
           }
         }

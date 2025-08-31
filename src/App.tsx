@@ -22,18 +22,29 @@ import { StudentEcolageSyncService } from './lib/services/studentEcolageSync';
 import { BidirectionalSyncService } from './lib/services/bidirectionalSync';
 import { USER_ROLES } from './lib/roles';
 import { useAuth } from './hooks/useAuth';
+import { OfflineHandler } from './lib/firebase/offlineHandler';
 
 export type Page = 'dashboard' | 'students' | 'teachers' | 'classes' | 'subjects' | 'ecolage' | 'payroll' | 'salary-management' | 'financial-transactions' | 'reports' | 'hr' | 'import';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const { user } = useAuth();
+
+  // Gérer l'état de connectivité
+  useEffect(() => {
+    const removeListener = OfflineHandler.addConnectionListener((online) => {
+      setIsOnline(online);
+    });
+
+    return removeListener;
+  }, []);
 
   // Initialiser la synchronisation bidirectionnelle seulement après authentification
   React.useEffect(() => {
     // Ne pas initialiser la synchronisation si l'utilisateur n'est pas connecté
-    if (!user) {
+    if (!user || !isOnline) {
       return;
     }
 
@@ -48,13 +59,16 @@ function App() {
       }
     };
 
-    initializeSync();
+    // Seulement si en ligne
+    if (isOnline) {
+      initializeSync();
+    }
 
     // Nettoyer les listeners au démontage
     return () => {
       BidirectionalSyncService.cleanup();
     };
-  }, [user]);
+  }, [user, isOnline]);
 
   const renderPage = () => {
     switch (currentPage) {

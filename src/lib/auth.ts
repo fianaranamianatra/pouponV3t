@@ -132,9 +132,32 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
   } catch (error) {
     console.error("Erreur lors de la récupération du profil:", error);
     
+    // Gestion spécifique des erreurs de connectivité
+    if (error.code === 'unavailable' || error.message.includes('offline')) {
+      console.warn("Mode hors ligne détecté, création d'un profil temporaire");
+      // Retourner un profil temporaire en mode hors ligne
+      return {
+        uid,
+        email: 'offline@user.local',
+        firstName: 'Utilisateur',
+        lastName: 'Hors ligne',
+        role: 'admin', // Rôle par défaut en mode hors ligne
+        permissions: ['all_data_access'],
+        isActive: true,
+        createdAt: new Date(),
+        lastLogin: new Date()
+      } as UserProfile;
+    }
+    
     // Si c'est une erreur de permissions, on lance une erreur spécifique
     if (error.code === 'permission-denied') {
       throw new Error("FIRESTORE_PERMISSION_DENIED");
+    }
+    
+    // Autres erreurs Firebase
+    if (error.code === 'failed-precondition') {
+      console.warn("Firestore en mode hors ligne, tentative de récupération...");
+      return null;
     }
     
     return null;

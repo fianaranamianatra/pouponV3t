@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { onSnapshot, query, where, orderBy } from 'firebase/firestore';
+import { onSnapshot, query, where } from 'firebase/firestore';
 import { feesService } from '../lib/firebase/firebaseService';
 
 export interface StudentPaymentData {
@@ -40,8 +40,7 @@ export function useStudentPayments(studentName: string, studentClass: string) {
     const collectionRef = feesService.getCollectionRef();
     const studentQuery = query(
       collectionRef,
-      where('studentName', '==', studentName),
-      orderBy('paymentDate', 'desc')
+      where('studentName', '==', studentName)
     );
 
     // Écouter les changements en temps réel
@@ -53,7 +52,12 @@ export function useStudentPayments(studentName: string, studentClass: string) {
         const payments = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        }));
+        })).sort((a, b) => {
+          // Trier par date de paiement décroissante en JavaScript
+          const dateA = new Date(a.paymentDate || 0).getTime();
+          const dateB = new Date(b.paymentDate || 0).getTime();
+          return dateB - dateA;
+        });
 
         // Calculer les statistiques
         const calculatedData = calculatePaymentStatistics(payments, studentClass);

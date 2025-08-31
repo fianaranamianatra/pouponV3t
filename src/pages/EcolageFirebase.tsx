@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Filter, CreditCard, DollarSign, AlertTriangle, CheckCircle, Clock, Download, Eye, Edit, BarChart3 } from 'lucide-react';
+import { Search, Plus, Filter, CreditCard, DollarSign, AlertTriangle, CheckCircle, Clock, Download, Eye, Edit, Trash2, BarChart3 } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { PaymentForm } from '../components/forms/PaymentForm';
 import { Avatar } from '../components/Avatar';
@@ -215,6 +215,20 @@ export function EcolageFirebase() {
   const handleEditClick = (payment: Payment) => {
     setSelectedPayment(payment);
     setShowEditForm(true);
+  };
+
+  const handleDeletePayment = async (id: string) => {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce paiement ?')) {
+      try {
+        console.log('🗑️ Suppression du paiement ID:', id);
+        await remove(id);
+        console.log('✅ Paiement supprimé avec succès');
+        alert('✅ Paiement supprimé avec succès !');
+      } catch (error: any) {
+        console.error('❌ Erreur lors de la suppression:', error);
+        alert('❌ Erreur lors de la suppression: ' + error.message);
+      }
+    }
   };
 
   const handleExport = () => {
@@ -440,17 +454,6 @@ export function EcolageFirebase() {
                         />
                         <div>
                           <p className="font-medium text-gray-900">{payment.studentName}</p>
-                          <TransactionSyncIndicator
-                            module="ecolage"
-                            recordId={payment.id || ''}
-                            recordName={payment.studentName}
-                            className="mt-1"
-                          />
-                          <div className="mt-1">
-                            <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                              🔄 Synchronisé avec profil étudiant
-                            </span>
-                          </div>
                         </div>
                       </div>
                     </td>
@@ -495,8 +498,17 @@ export function EcolageFirebase() {
                           onClick={() => handleEditClick(payment)}
                           disabled={updating}
                           className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                          title="Modifier"
                         >
                           <Edit className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => payment.id && handleDeletePayment(payment.id)}
+                          disabled={deleting}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>

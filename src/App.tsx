@@ -12,16 +12,15 @@ import { SubjectsFirebase } from './pages/SubjectsFirebase';
 import { StudentsFirebase } from './pages/StudentsFirebase';
 import { EcolageFirebase } from './pages/EcolageFirebase';
 import { PayrollManagement } from './pages/PayrollManagement';
-import { FinancialTransactions } from './pages/FinancialTransactions';
 import { ReportsFirebase } from './pages/ReportsFirebase';
 import { HumanResources } from './pages/HumanResources';
 import { UserProfile } from './pages/UserProfile';
 import { AccessDenied } from './pages/AccessDenied';
 import { SalaryManagement } from './pages/SalaryManagement';
-import { ExpensesManagement } from './pages/ExpensesManagement';
+import { FinancialTransactions } from './pages/FinancialTransactions';
 import { USER_ROLES } from './lib/roles';
 
-export type Page = 'dashboard' | 'students' | 'teachers' | 'classes' | 'subjects' | 'ecolage' | 'payroll' | 'transactions' | 'salary-management' | 'expenses' | 'reports' | 'hr' | 'import';
+export type Page = 'dashboard' | 'students' | 'teachers' | 'classes' | 'subjects' | 'ecolage' | 'payroll' | 'salary-management' | 'financial-transactions' | 'reports' | 'hr' | 'import';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
@@ -73,13 +72,7 @@ function App() {
             <SalaryManagement />
           </RoleBasedRoute>
         );
-      case 'expenses':
-        return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]}>
-            <ExpensesManagement />
-          </RoleBasedRoute>
-        );
-      case 'transactions':
+      case 'financial-transactions':
         return (
           <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]}>
             <FinancialTransactions />

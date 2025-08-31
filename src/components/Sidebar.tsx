@@ -47,9 +47,8 @@ const menuItems = [
 
 const financialMenuItems = [
   { id: 'ecolage', label: 'Gestion Écolage', icon: CreditCard },
-  { id: 'transactions', label: 'Encaissements et Décaissements', icon: DollarSign },
+  { id: 'financial-transactions', label: 'Encaissements & Décaissements', icon: TrendingUp },
   { id: 'salary-management', label: 'Gestion des Salaires', icon: Wallet },
-  { id: 'expenses', label: 'Charges et Dépenses', icon: TrendingUp },
   { id: 'payroll', label: 'Bulletins de Paie', icon: Receipt }
 ] as const;
 export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse }: SidebarProps) {
@@ -93,9 +92,9 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
       switch (item.id) {
         case 'ecolage':
           return can('manage_fees') || can('view_all_fees') || can('view_child_fees');
-        case 'transactions':
+        case 'financial-transactions':
+          return can('manage_finances') || can('view_finances') || is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]);
         case 'salary-management':
-        case 'expenses':
         case 'payroll':
           return can('manage_finances') || can('view_finances') || is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]);
         default:

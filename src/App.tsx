@@ -53,10 +53,11 @@ function App() {
 
   // Gérer l'ouverture/fermeture du menu mobile
   const handleToggleSidebar = () => {
-    console.log('🔘 handleToggleSidebar appelé - isMobile:', isMobile, 'mobileMenuOpen:', mobileMenuOpen);
+    console.log('🔘 handleToggleSidebar appelé - isMobile:', isMobile, 'sidebarCollapsed:', sidebarCollapsed);
     if (isMobile) {
-      setMobileMenuOpen(!mobileMenuOpen);
-      console.log('📱 Menu mobile togglé:', !mobileMenuOpen);
+      // Pour mobile, on utilise la prop onToggleCollapse du Sidebar
+      setSidebarCollapsed(!sidebarCollapsed);
+      console.log('📱 Menu mobile togglé via sidebar collapsed:', !sidebarCollapsed);
     } else {
       setSidebarCollapsed(!sidebarCollapsed);
       console.log('🖥️ Sidebar desktop togglé:', !sidebarCollapsed);
@@ -217,7 +218,7 @@ function App() {
               }`}>
                 <Header 
                   onToggleSidebar={() => {
-                    console.log('🔘 onToggleSidebar appelé depuis Header (route /)');
+                    console.log('🔘 onToggleSidebar appelé depuis Header');
                     handleToggleSidebar();
                   }} 
                   isMobile={isMobile}
@@ -268,7 +269,3 @@ function App() {
 }
 
 export default App;
-                onToggleCollapse={() => {
-                  console.log('🔘 onToggleCollapse appelé depuis Sidebar (route /)');
-                  handleToggleSidebar();
-                }}

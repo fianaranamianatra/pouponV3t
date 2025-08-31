@@ -48,10 +48,10 @@ export function Header({ onToggleSidebar, isMobile = false }: HeaderProps) {
       {actualIsMobile && (
         <button
           onClick={() => {
-            console.log('🔘 Clic sur le bouton menu dans Header');
+            console.log('🔘 Clic sur le bouton menu dans Header - déclenchement onToggleSidebar');
             onToggleSidebar();
           }}
-          className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors mr-3"
+          className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors mr-3 touch-manipulation"
           aria-label="Ouvrir le menu"
         >
           <Menu className="w-6 h-6" />

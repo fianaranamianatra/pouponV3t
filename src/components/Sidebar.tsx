@@ -337,10 +337,10 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
       {isMobile && (
         <button
           onClick={() => {
-            console.log('🔘 Clic sur le bouton hamburger mobile');
-            setMobileMenuOpen(!mobileMenuOpen);
+            console.log('🔘 Clic sur le bouton hamburger mobile - état actuel:', mobileMenuOpen);
+            handleMobileMenuToggle();
           }}
-          className="fixed top-4 left-4 z-60 p-3 bg-white border border-gray-200 rounded-lg shadow-lg hover:bg-gray-50 transition-colors"
+          className="fixed top-4 left-4 z-60 p-3 bg-white border border-gray-200 rounded-lg shadow-lg hover:bg-gray-50 transition-colors touch-manipulation"
           aria-label="Ouvrir le menu"
         >
           <Menu className="w-6 h-6 text-gray-600" />

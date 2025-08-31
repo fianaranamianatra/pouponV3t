@@ -5,9 +5,10 @@ interface TransactionFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
   initialData?: any;
+  isSubmitting?: boolean;
 }
 
-export function TransactionForm({ onSubmit, onCancel, initialData }: TransactionFormProps) {
+export function TransactionForm({ onSubmit, onCancel, initialData, isSubmitting = false }: TransactionFormProps) {
   const [formData, setFormData] = useState({
     type: initialData?.type || 'Encaissement',
     category: initialData?.category || '',
@@ -70,6 +71,7 @@ export function TransactionForm({ onSubmit, onCancel, initialData }: Transaction
       return;
     }
     
+    console.log('📤 Soumission des données de transaction:', formData);
     onSubmit(formData);
   };
 
@@ -310,15 +312,24 @@ export function TransactionForm({ onSubmit, onCancel, initialData }: Transaction
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          disabled={isSubmitting}
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
           Annuler
         </button>
         <button
           type="submit"
-          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          disabled={isSubmitting}
+          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
         >
-          {initialData ? 'Modifier' : 'Enregistrer'}
+          {isSubmitting ? (
+            <div className="flex items-center justify-center">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              {initialData ? 'Modification...' : 'Enregistrement...'}
+            </div>
+          ) : (
+            initialData ? 'Modifier' : 'Enregistrer'
+          )}
         </button>
       </div>
     </form>

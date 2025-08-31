@@ -5,6 +5,7 @@ import { PaymentForm } from '../components/forms/PaymentForm';
 import { Avatar } from '../components/Avatar';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { feesService, studentsService, classesService } from '../lib/firebase/firebaseService';
+import { TransactionService } from '../lib/services/transactionService';
 
 interface Payment {
   id?: string;
@@ -127,6 +128,18 @@ export function EcolageFirebase() {
       
       const paymentId = await create(paymentData);
       console.log('✅ Paiement créé avec l\'ID:', paymentId);
+      
+      // Créer automatiquement une transaction financière
+      try {
+        const transactionId = await TransactionService.createFromEcolagePayment({
+          ...paymentData,
+          id: paymentId
+        });
+        console.log('✅ Transaction financière créée automatiquement avec l\'ID:', transactionId);
+      } catch (transactionError) {
+        console.warn('⚠️ Erreur lors de la création de la transaction automatique:', transactionError);
+        // Ne pas bloquer le processus principal si la transaction échoue
+      }
       
       setShowAddForm(false);
       

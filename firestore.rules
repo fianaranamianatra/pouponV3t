@@ -117,6 +117,14 @@ service cloud.firestore {
       allow delete: if request.auth != null;
     }
     
+    // Règles pour les transactions financières
+    match /transactions/{transactionId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateTransaction(request.resource.data);
+      allow update: if request.auth != null && validateTransaction(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
     // Fonctions de validation
     function validateStudent(data) {
       return data.keys().hasAll(['firstName', 'lastName', 'dateOfBirth', 'class', 'address', 'phone', 'parentName', 'status'])
@@ -198,6 +206,17 @@ service cloud.firestore {
         && data.baseSalary is number && data.baseSalary >= 100000 && data.baseSalary <= 10000000
         && data.effectiveDate is string
         && data.status in ['active', 'inactive', 'pending'];
+    }
+    
+    function validateTransaction(data) {
+      return data.keys().hasAll(['type', 'category', 'description', 'amount', 'date', 'paymentMethod', 'status'])
+        && data.type in ['Encaissement', 'Décaissement']
+        && data.category is string && data.category.size() >= 2 && data.category.size() <= 50
+        && data.description is string && data.description.size() >= 5 && data.description.size() <= 200
+        && data.amount is number && data.amount > 0 && data.amount <= 100000000
+        && data.date is string
+        && data.paymentMethod is string && data.paymentMethod.size() >= 2
+        && data.status in ['Validé', 'En attente', 'Annulé'];
     }
   }
 }

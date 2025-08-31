@@ -151,3 +151,20 @@ export interface SalaryRecord {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface Transaction {
+  id?: string;
+  type: 'Encaissement' | 'Décaissement';
+  category: string;
+  description: string;
+  amount: number;
+  date: string;
+  paymentMethod: string;
+  status: 'Validé' | 'En attente' | 'Annulé';
+  reference?: string;
+  relatedModule?: 'ecolage' | 'salary' | 'other';
+  relatedId?: string;
+  notes?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}

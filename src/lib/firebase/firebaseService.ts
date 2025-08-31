@@ -112,4 +112,7 @@ export const hierarchyService = new FirebaseService('hierarchy');
 // Service pour la gestion des salaires
 export const salariesService = new FirebaseService('salaries');
 
+// Service pour la gestion des transactions financières
+export const transactionsService = new FirebaseService('transactions');
+
 export default FirebaseService;

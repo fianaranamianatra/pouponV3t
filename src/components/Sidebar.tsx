@@ -54,6 +54,18 @@ const financialMenuItems = [
 export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse }: SidebarProps) {
   const { can, is } = usePermissions();
   const [financialMenuOpen, setFinancialMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Détecter si on est sur mobile
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Filter menu items based on user permissions
   const getFilteredMenuItems = () => {
@@ -117,34 +129,51 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
   }, [isFinancialPage]);
   
   return (
-    <div className={`fixed left-0 top-0 h-full bg-white shadow-lg transition-all duration-300 z-30 ${
-      collapsed ? 'w-16' : 'w-64'
-    }`}>
+    <>
+      {/* Mobile Overlay */}
+      {isMobile && !collapsed && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          onClick={onToggleCollapse}
+        />
+      )}
+      
+      <div className={`fixed left-0 top-0 h-full bg-white shadow-lg transition-all duration-300 z-30 ${
+        isMobile 
+          ? collapsed 
+            ? '-translate-x-full' 
+            : 'w-80'
+          : collapsed 
+            ? 'w-16' 
+            : 'w-64'
+      }`}>
       {/* Header */}
-      <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4">
-        {!collapsed && (
+      <div className={`h-16 border-b border-gray-200 flex items-center justify-between ${
+        isMobile ? 'px-6' : 'px-4'
+      }`}>
+        {(!collapsed || isMobile) && (
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <School className="w-5 h-5 text-white" />
+            <div className={`${isMobile ? 'w-10 h-10' : 'w-8 h-8'} bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center`}>
+              <School className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'} text-white`} />
             </div>
             <div>
-              <h1 className="font-bold text-gray-900 text-sm">LES POUPONS</h1>
-              <p className="text-xs text-gray-500">Gestion Scolaire</p>
+              <h1 className={`font-bold text-gray-900 ${isMobile ? 'text-base' : 'text-sm'}`}>LES POUPONS</h1>
+              <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-gray-500`}>Gestion Scolaire</p>
             </div>
           </div>
         )}
         
         <button
           onClick={onToggleCollapse}
-          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+          className={`${isMobile ? 'p-2' : 'p-1.5'} rounded-lg hover:bg-gray-100 transition-colors`}
         >
-          {collapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
+          {(collapsed && !isMobile) ? <Menu className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'}`} /> : <X className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'}`} />}
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="mt-6">
-        <ul className="space-y-1 px-3">
+      <nav className={`${isMobile ? 'mt-8' : 'mt-6'} overflow-y-auto flex-1`}>
+        <ul className={`space-y-1 ${isMobile ? 'px-6' : 'px-3'}`}>
           {filteredMenuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.id;
@@ -153,17 +182,17 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
               <li key={item.id} className="relative">
                 <button
                   onClick={() => onPageChange(item.id as Page)}
-                  className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 group ${
+                  className={`w-full flex items-center space-x-3 ${isMobile ? 'px-4 py-3' : 'px-3 py-2.5'} rounded-lg text-left transition-all duration-200 group ${
                     isActive
                       ? 'bg-blue-50 text-blue-600 shadow-sm'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 transition-colors ${
+                  <Icon className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'} transition-colors ${
                     isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
                   }`} />
-                  {!collapsed && (
-                    <span className="font-medium text-sm">{item.label}</span>
+                  {(!collapsed || isMobile) && (
+                    <span className={`font-medium ${isMobile ? 'text-base' : 'text-sm'}`}>{item.label}</span>
                   )}
                 </button>
               </li>
@@ -175,30 +204,30 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
             <li className="relative">
               <button
                 onClick={() => setFinancialMenuOpen(!financialMenuOpen)}
-                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 group ${
+                className={`w-full flex items-center space-x-3 ${isMobile ? 'px-4 py-3' : 'px-3 py-2.5'} rounded-lg text-left transition-all duration-200 group ${
                   isFinancialPage
                     ? 'bg-green-50 text-green-600 shadow-sm'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                <Wallet className={`w-5 h-5 transition-colors ${
+                <Wallet className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'} transition-colors ${
                   isFinancialPage ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600'
                 }`} />
-                {!collapsed && (
+                {(!collapsed || isMobile) && (
                   <>
-                    <span className="font-medium text-sm flex-1">Gestion Financière</span>
+                    <span className={`font-medium ${isMobile ? 'text-base' : 'text-sm'} flex-1`}>Gestion Financière</span>
                     {financialMenuOpen ? (
-                      <ChevronDown className="w-4 h-4" />
+                      <ChevronDown className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />
                     ) : (
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronRight className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />
                     )}
                   </>
                 )}
               </button>
               
               {/* Financial Submenu */}
-              {!collapsed && financialMenuOpen && (
-                <ul className="mt-1 ml-8 space-y-1">
+              {(!collapsed || isMobile) && financialMenuOpen && (
+                <ul className={`mt-1 ${isMobile ? 'ml-10' : 'ml-8'} space-y-1`}>
                   {filteredFinancialItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = currentPage === item.id;
@@ -207,16 +236,16 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
                       <li key={item.id}>
                         <button
                           onClick={() => onPageChange(item.id as Page)}
-                          className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-all duration-200 group ${
+                          className={`w-full flex items-center space-x-3 ${isMobile ? 'px-4 py-2.5' : 'px-3 py-2'} rounded-lg text-left transition-all duration-200 group ${
                             isActive
                               ? 'bg-green-100 text-green-700 shadow-sm'
                               : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                           }`}
                         >
-                          <Icon className={`w-4 h-4 transition-colors ${
+                          <Icon className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} transition-colors ${
                             isActive ? 'text-green-700' : 'text-gray-400 group-hover:text-gray-600'
                           }`} />
-                          <span className="font-medium text-xs">{item.label}</span>
+                          <span className={`font-medium ${isMobile ? 'text-sm' : 'text-xs'}`}>{item.label}</span>
                         </button>
                       </li>
                     );
@@ -230,11 +259,11 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
           <li>
             <Link
               to="/profile"
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 group text-gray-600 hover:bg-gray-50 hover:text-gray-900`}
+              className={`w-full flex items-center space-x-3 ${isMobile ? 'px-4 py-3' : 'px-3 py-2.5'} rounded-lg text-left transition-all duration-200 group text-gray-600 hover:bg-gray-50 hover:text-gray-900`}
             >
-              <User className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
-              {!collapsed && (
-                <span className="font-medium text-sm">Mon Profil</span>
+              <User className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'} text-gray-400 group-hover:text-gray-600`} />
+              {(!collapsed || isMobile) && (
+                <span className={`font-medium ${isMobile ? 'text-base' : 'text-sm'}`}>Mon Profil</span>
               )}
             </Link>
           </li>
@@ -242,19 +271,20 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
       </nav>
 
       {/* Footer */}
-      {!collapsed && (
-        <div className="absolute bottom-4 left-4 right-4">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
-            <h3 className="font-semibold text-sm">Support</h3>
-            <p className="text-xs text-blue-100 mt-1">
+      {(!collapsed || isMobile) && (
+        <div className={`absolute bottom-4 ${isMobile ? 'left-6 right-6' : 'left-4 right-4'}`}>
+          <div className={`bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg ${isMobile ? 'p-5' : 'p-4'} text-white`}>
+            <h3 className={`font-semibold ${isMobile ? 'text-base' : 'text-sm'}`}>Support</h3>
+            <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-blue-100 mt-1`}>
               Besoin d'aide ? Contactez notre équipe.
             </p>
-            <button className="mt-2 text-xs bg-white text-blue-600 px-3 py-1 rounded-md hover:bg-blue-50 transition-colors">
+            <button className={`mt-2 ${isMobile ? 'text-sm px-4 py-2' : 'text-xs px-3 py-1'} bg-white text-blue-600 rounded-md hover:bg-blue-50 transition-colors`}>
               Contacter
             </button>
           </div>
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -30,7 +30,24 @@ function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isMobile, setIsMobile] = useState(false);
   const { user } = useAuth();
+
+  // Détecter la taille d'écran
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      // Sur mobile, la sidebar est fermée par défaut
+      if (mobile) {
+        setSidebarCollapsed(true);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Gérer l'état de connectivité
   useEffect(() => {
@@ -170,16 +187,22 @@ function App() {
         <Route path="/access-denied" element={<AccessDenied />} />
         <Route path="/profile" element={
           <AuthGuard>
-            <div className="min-h-screen bg-gray-50 flex">
+            <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
               <Sidebar 
                 currentPage={currentPage}
                 onPageChange={setCurrentPage}
                 collapsed={sidebarCollapsed}
                 onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
               />
-              <div className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
+              <div className={`flex-1 transition-all duration-300 ${
+                isMobile 
+                  ? 'ml-0' 
+                  : sidebarCollapsed 
+                    ? 'ml-16' 
+                    : 'ml-64'
+              }`}>
                 <Header onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
-                <main className="p-6">
+                <main className={`${isMobile ? 'p-4' : 'p-6'}`}>
                   <UserProfile />
                 </main>
               </div>
@@ -188,16 +211,22 @@ function App() {
         } />
         <Route path="/" element={
           <AuthGuard>
-            <div className="min-h-screen bg-gray-50 flex">
+            <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
               <Sidebar 
                 currentPage={currentPage}
                 onPageChange={setCurrentPage}
                 collapsed={sidebarCollapsed}
                 onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
               />
-              <div className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
+              <div className={`flex-1 transition-all duration-300 ${
+                isMobile 
+                  ? 'ml-0' 
+                  : sidebarCollapsed 
+                    ? 'ml-16' 
+                    : 'ml-64'
+              }`}>
                 <Header onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
-                <main className="p-6">
+                <main className={`${isMobile ? 'p-4' : 'p-6'}`}>
                   {renderPage()}
                 </main>
               </div>

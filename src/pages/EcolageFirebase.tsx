@@ -55,6 +55,17 @@ export function EcolageFirebase() {
   const [selectedPeriod, setSelectedPeriod] = useState('');
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Hook de synchronisation globale Écolage
   const ecolageSyncData = useEcolageSync();
@@ -267,37 +278,37 @@ export function EcolageFirebase() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className={`flex ${isMobile ? 'flex-col gap-3' : 'flex-col sm:flex-row sm:items-center sm:justify-between gap-4'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestion de l'Écolage</h1>
-          <p className="text-gray-600">Suivi des paiements et frais scolaires</p>
+          <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900`}>Gestion de l'Écolage</h1>
+          <p className={`${isMobile ? 'text-sm' : ''} text-gray-600`}>Suivi des paiements et frais scolaires</p>
           {!ecolageSyncData.loading && (
-            <p className="text-xs text-blue-600 mt-1">
+            <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-blue-600 mt-1`}>
               🔄 Synchronisé en temps réel • Dernière MAJ: {ecolageSyncData.lastUpdated.toLocaleTimeString('fr-FR')}
             </p>
           )}
         </div>
         
-        <div className="flex gap-2">
+        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'gap-2'}`}>
           <button 
             onClick={handleSendReminder}
-            className="inline-flex items-center px-4 py-2 border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors"
+            className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors`}
           >
-            <AlertTriangle className="w-4 h-4 mr-2" />
+            <AlertTriangle className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
             Rappels
           </button>
           <button 
             onClick={() => setShowDashboard(true)}
-            className="inline-flex items-center px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors"
+            className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors`}
           >
-            <BarChart3 className="w-4 h-4 mr-2" />
+            <BarChart3 className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
             Tableau de Bord
           </button>
           <button 
             onClick={handleExport}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className={`${isMobile ? 'hidden sm:inline-flex' : 'inline-flex'} items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors`}
           >
-            <Download className="w-4 h-4 mr-2" />
+            <Download className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
             Exporter
           </button>
           <button
@@ -306,12 +317,12 @@ export function EcolageFirebase() {
               setShowAddForm(true);
             }}
             disabled={creating}
-            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+            className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50`}
           >
             {creating ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              <div className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} border-2 border-white border-t-transparent rounded-full animate-spin mr-2`}></div>
             ) : (
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
             )}
             Nouveau Paiement
           </button>
@@ -319,26 +330,26 @@ export function EcolageFirebase() {
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex flex-col lg:flex-row gap-4">
+      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
+        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'flex-col lg:flex-row gap-4'}`}>
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 ${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />
               <input
                 type="text"
                 placeholder="Rechercher par élève, classe ou référence..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className={`w-full ${isMobile ? 'pl-12 pr-4 py-3 text-base' : 'pl-10 pr-4 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
               />
             </div>
           </div>
           
-          <div className="flex gap-2">
+          <div className={`flex ${isMobile ? 'flex-col gap-2' : 'gap-2'}`}>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className={`${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
             >
               <option value="">Tous les statuts</option>
               <option value="paid">Payé</option>
@@ -349,7 +360,7 @@ export function EcolageFirebase() {
             <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className={`${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
             >
               <option value="">Toutes les périodes</option>
               <option value="Trimestre 1">Trimestre 1</option>
@@ -358,8 +369,8 @@ export function EcolageFirebase() {
               <option value="Année complète">Année complète</option>
             </select>
             
-            <button className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <Filter className="w-4 h-4 mr-2" />
+            <button className={`${isMobile ? 'hidden sm:inline-flex' : 'inline-flex'} items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors`}>
+              <Filter className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
               Filtres
             </button>
           </div>
@@ -367,38 +378,38 @@ export function EcolageFirebase() {
       </div>
 
       {/* Payment Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-4 gap-4'}`}>
         <div className="bg-white rounded-lg p-4 border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Collecté</p>
-              <p className="text-2xl font-bold text-gray-900">{paidAmount.toLocaleString()} Ar</p>
+              <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>Total Collecté</p>
+              <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-gray-900`}>{paidAmount.toLocaleString()} Ar</p>
             </div>
-            <DollarSign className="w-8 h-8 text-green-600" />
+            <DollarSign className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-green-600`} />
           </div>
         </div>
         
         <div className="bg-white rounded-lg p-4 border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">En Attente</p>
-              <p className="text-2xl font-bold text-yellow-600">{pendingAmount.toLocaleString()} Ar</p>
+              <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>En Attente</p>
+              <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-yellow-600`}>{pendingAmount.toLocaleString()} Ar</p>
             </div>
-            <Clock className="w-8 h-8 text-yellow-600" />
+            <Clock className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-yellow-600`} />
           </div>
         </div>
         
-        <div className="bg-white rounded-lg p-4 border border-gray-100">
+        <div className={`bg-white rounded-lg p-4 border border-gray-100 ${isMobile ? 'col-span-2' : ''}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">En Retard</p>
-              <p className="text-2xl font-bold text-red-600">{overdueCount}</p>
+              <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>En Retard</p>
+              <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-red-600`}>{overdueCount}</p>
             </div>
-            <AlertTriangle className="w-8 h-8 text-red-600" />
+            <AlertTriangle className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-red-600`} />
           </div>
         </div>
         
-        <div className="bg-white rounded-lg p-4 border border-gray-100">
+        <div className={`bg-white rounded-lg p-4 border border-gray-100 ${isMobile ? 'hidden' : ''}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Taux de Collecte</p>
@@ -412,17 +423,17 @@ export function EcolageFirebase() {
       </div>
 
       {/* Payments Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className={`bg-white ${isMobile ? 'rounded-lg' : 'rounded-xl'} shadow-sm border border-gray-100 overflow-hidden`}>
         {payments.length === 0 ? (
-          <div className="text-center py-12">
-            <CreditCard className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun paiement enregistré</h3>
-            <p className="text-gray-500 mb-6">Commencez par enregistrer votre premier paiement d'écolage.</p>
+          <div className={`text-center ${isMobile ? 'py-8' : 'py-12'}`}>
+            <CreditCard className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} text-gray-300 mx-auto mb-4`} />
+            <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-medium text-gray-900 mb-2`}>Aucun paiement enregistré</h3>
+            <p className={`${isMobile ? 'text-sm' : ''} text-gray-500 mb-6`}>Commencez par enregistrer votre premier paiement d'écolage.</p>
             <button
               onClick={() => setShowAddForm(true)}
-              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className={`inline-flex items-center ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2'} bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors`}
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
               Nouveau Paiement
             </button>
           </div>
@@ -431,85 +442,113 @@ export function EcolageFirebase() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Élève</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Classe</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Montant</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Période</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Mode de Paiement</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Date</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Statut</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Actions</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm' : 'py-3 px-6'} font-medium text-gray-900`}>Élève</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden sm:table-cell' : 'py-3 px-6'} font-medium text-gray-900`}>Classe</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm' : 'py-3 px-6'} font-medium text-gray-900`}>Montant</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden md:table-cell' : 'py-3 px-6'} font-medium text-gray-900`}>Période</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden lg:table-cell' : 'py-3 px-6'} font-medium text-gray-900`}>Mode de Paiement</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden xl:table-cell' : 'py-3 px-6'} font-medium text-gray-900`}>Date</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden sm:table-cell' : 'py-3 px-6'} font-medium text-gray-900`}>Statut</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm' : 'py-3 px-6'} font-medium text-gray-900`}>Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredPayments.map((payment) => (
                   <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-4 px-6">
+                    <td className={`${isMobile ? 'py-3 px-3' : 'py-4 px-6'}`}>
                       <div className="flex items-center space-x-3">
                         <Avatar 
                           firstName={payment.studentName.split(' ')[0] || ''} 
                           lastName={payment.studentName.split(' ')[1] || ''} 
-                          size="sm" 
+                          size={isMobile ? "sm" : "sm"}
                           showPhoto={true}
                         />
                         <div>
-                          <p className="font-medium text-gray-900">{payment.studentName}</p>
+                          <p className={`font-medium text-gray-900 ${isMobile ? 'text-sm' : ''}`}>{payment.studentName}</p>
+                          {/* Afficher la classe sur mobile */}
+                          {isMobile && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">
+                              {payment.class}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-6">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <td className={`${isMobile ? 'py-3 px-3 hidden sm:table-cell' : 'py-4 px-6'}`}>
+                      <span className={`inline-flex items-center ${isMobile ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-0.5 text-xs'} font-medium bg-blue-100 text-blue-800 rounded-full`}>
                         {payment.class}
                       </span>
                     </td>
-                    <td className="py-4 px-6">
-                      <p className="text-sm font-bold text-gray-900">{payment.amount.toLocaleString()} Ar</p>
+                    <td className={`${isMobile ? 'py-3 px-3' : 'py-4 px-6'}`}>
+                      <p className={`${isMobile ? 'text-sm' : 'text-sm'} font-bold text-gray-900`}>{payment.amount.toLocaleString()} Ar</p>
                     </td>
-                    <td className="py-4 px-6">
-                      <p className="text-sm text-gray-600">{payment.period}</p>
+                    <td className={`${isMobile ? 'py-3 px-3 hidden md:table-cell' : 'py-4 px-6'}`}>
+                      <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>{payment.period}</p>
                     </td>
-                    <td className="py-4 px-6">
+                    <td className={`${isMobile ? 'py-3 px-3 hidden lg:table-cell' : 'py-4 px-6'}`}>
                       <div className="flex items-center space-x-2">
-                        <CreditCard className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">
+                        <CreditCard className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-gray-400`} />
+                        <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>
                           {paymentMethodLabels[payment.paymentMethod as keyof typeof paymentMethodLabels] || payment.paymentMethod}
                         </span>
                       </div>
                     </td>
-                    <td className="py-4 px-6">
-                      <p className="text-sm text-gray-600">
+                    <td className={`${isMobile ? 'py-3 px-3 hidden xl:table-cell' : 'py-4 px-6'}`}>
+                      <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>
                         {new Date(payment.paymentDate).toLocaleDateString('fr-FR')}
                       </p>
                     </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[payment.status]}`}>
+                    <td className={`${isMobile ? 'py-3 px-3 hidden sm:table-cell' : 'py-4 px-6'}`}>
+                      <span className={`inline-flex items-center ${isMobile ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-0.5 text-xs'} font-medium rounded-full ${statusColors[payment.status]}`}>
                         {statusLabels[payment.status]}
                       </span>
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-2">
+                    <td className={`${isMobile ? 'py-3 px-3' : 'py-4 px-6'}`}>
+                      <div className={`flex items-center ${isMobile ? 'space-x-1' : 'space-x-2'}`}>
                         <button 
                           onClick={() => handleViewPayment(payment)}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className={`${isMobile ? 'p-2' : 'p-1.5'} text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors`}
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className={`${isMobile ? 'w-4 h-4' : 'w-4 h-4'}`} />
                         </button>
-                        <button 
-                          onClick={() => handleEditClick(payment)}
-                          disabled={updating}
-                          className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
-                          title="Modifier"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => payment.id && handleDeletePayment(payment.id)}
-                          disabled={deleting}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                          title="Supprimer"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {!isMobile && (
+                          <>
+                            <button 
+                              onClick={() => handleEditClick(payment)}
+                              disabled={updating}
+                              className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                              title="Modifier"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => payment.id && handleDeletePayment(payment.id)}
+                              disabled={deleting}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                        {/* Menu mobile pour les actions supplémentaires */}
+                        {isMobile && (
+                          <button 
+                            onClick={() => {
+                              const actions = ['Modifier', 'Supprimer'];
+                              const choice = confirm(`Actions: ${actions.join(' | ')}. Modifier le paiement ?`);
+                              if (choice) {
+                                handleEditClick(payment);
+                              }
+                            }}
+                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                            title="Plus d'actions"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -525,7 +564,7 @@ export function EcolageFirebase() {
         isOpen={showAddForm}
         onClose={() => setShowAddForm(false)}
         title="Nouveau Paiement"
-        size="lg"
+        size={isMobile ? "xl" : "lg"}
       >
         <PaymentForm
           onSubmit={handleAddPayment}
@@ -543,7 +582,7 @@ export function EcolageFirebase() {
           setSelectedPayment(null);
         }}
         title="Modifier le Paiement"
-        size="lg"
+        size={isMobile ? "xl" : "lg"}
       >
         {selectedPayment && (
           <PaymentForm
@@ -567,24 +606,24 @@ export function EcolageFirebase() {
           setSelectedPayment(null);
         }}
         title="Détails du Paiement"
-        size="lg"
+        size={isMobile ? "xl" : "lg"}
       >
         {selectedPayment && (
           <div className="space-y-6">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center">
-                <CreditCard className="w-8 h-8 text-white" />
+              <div className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center`}>
+                <CreditCard className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-white`} />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">{selectedPayment.reference}</h3>
-                <p className="text-gray-600">{selectedPayment.studentName} - {selectedPayment.class}</p>
+                <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-gray-900`}>{selectedPayment.reference}</h3>
+                <p className={`${isMobile ? 'text-sm' : ''} text-gray-600`}>{selectedPayment.studentName} - {selectedPayment.class}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-1 md:grid-cols-2 gap-6'}`}>
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Informations de paiement</h4>
-                <div className="space-y-2 text-sm">
+                <h4 className={`font-medium text-gray-900 ${isMobile ? 'text-sm mb-2' : 'mb-2'}`}>Informations de paiement</h4>
+                <div className={`space-y-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
                   <p><span className="font-medium">Montant:</span> {selectedPayment.amount.toLocaleString()} Ar</p>
                   <p><span className="font-medium">Période:</span> {selectedPayment.period}</p>
                   <p><span className="font-medium">Mode de paiement:</span> {paymentMethodLabels[selectedPayment.paymentMethod as keyof typeof paymentMethodLabels] || selectedPayment.paymentMethod}</p>
@@ -593,10 +632,10 @@ export function EcolageFirebase() {
               </div>
               
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Statut et notes</h4>
-                <div className="space-y-2 text-sm">
+                <h4 className={`font-medium text-gray-900 ${isMobile ? 'text-sm mb-2' : 'mb-2'}`}>Statut et notes</h4>
+                <div className={`space-y-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
                   <p><span className="font-medium">Statut:</span> 
-                    <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${statusColors[selectedPayment.status]}`}>
+                    <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded ${isMobile ? 'text-xs' : 'text-xs'} font-medium ${statusColors[selectedPayment.status]}`}>
                       {statusLabels[selectedPayment.status]}
                     </span>
                   </p>
@@ -616,7 +655,7 @@ export function EcolageFirebase() {
         isOpen={showDashboard}
         onClose={() => setShowDashboard(false)}
         title="Tableau de Bord des Paiements"
-        size="xl"
+        size={isMobile ? "xl" : "xl"}
       >
         <PaymentDashboard />
       </Modal>

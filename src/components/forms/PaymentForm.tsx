@@ -15,6 +15,17 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
   // Hooks Firebase pour charger les données en temps réel si pas fournies
   const { data: firebaseStudents, loading: studentsLoading } = useFirebaseCollection(studentsService, true);
   const { data: firebaseClasses, loading: classesLoading } = useFirebaseCollection(classesService, true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Utiliser les données fournies ou celles de Firebase
   const finalStudents = students.length > 0 ? students : firebaseStudents;
@@ -57,11 +68,11 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit} className={`${isMobile ? 'space-y-4' : 'space-y-6'}`}>
+      <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 md:grid-cols-2 gap-4'}`}>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <User className="w-4 h-4 inline mr-2" />
+          <label className={`block ${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-700 mb-2`}>
+            <User className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} inline mr-2`} />
             Élève
           </label>
           {finalStudents.length > 0 ? (
@@ -70,7 +81,7 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
               value={formData.studentName}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
             >
               <option value="">Sélectionner un élève</option>
               {finalStudents.map(student => (
@@ -85,7 +96,7 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
               value={formData.studentName}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
             >
               <option value="">{studentsLoading ? 'Chargement des élèves...' : 'Aucun élève disponible'}</option>
             </select>
@@ -93,7 +104,7 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className={`block ${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-700 mb-2`}>
             Classe
           </label>
           {finalClasses.length > 0 ? (
@@ -102,7 +113,7 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
               value={formData.class}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
             >
               <option value="">Sélectionner une classe</option>
               {finalClasses.map(classItem => (
@@ -117,7 +128,7 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
               value={formData.class}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
             >
               <option value="">{classesLoading ? 'Chargement des classes...' : 'Aucune classe disponible'}</option>
             </select>
@@ -125,8 +136,8 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <DollarSign className="w-4 h-4 inline mr-2" />
+          <label className={`block ${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-700 mb-2`}>
+            <DollarSign className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} inline mr-2`} />
             Montant (Ariary)
           </label>
           <input
@@ -136,20 +147,20 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
             onChange={handleChange}
             placeholder="ex: 500000"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <CreditCard className="w-4 h-4 inline mr-2" />
+          <label className={`block ${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-700 mb-2`}>
+            <CreditCard className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} inline mr-2`} />
             Mode de paiement
           </label>
           <select
             name="paymentMethod"
             value={formData.paymentMethod}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
           >
             <option value="cash">Espèces</option>
             <option value="bank_transfer">Virement bancaire</option>
@@ -159,8 +170,8 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <Calendar className="w-4 h-4 inline mr-2" />
+          <label className={`block ${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-700 mb-2`}>
+            <Calendar className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} inline mr-2`} />
             Date de paiement
           </label>
           <input
@@ -169,12 +180,12 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
             value={formData.paymentDate}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className={`block ${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-700 mb-2`}>
             Période
           </label>
           <select
@@ -182,7 +193,7 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
             value={formData.period}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
           >
             <option value="">Sélectionner une période</option>
             <option value="Janvier">Janvier</option>
@@ -201,8 +212,8 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <FileText className="w-4 h-4 inline mr-2" />
+          <label className={`block ${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-700 mb-2`}>
+            <FileText className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} inline mr-2`} />
             Référence
           </label>
           <input
@@ -212,36 +223,36 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
             onChange={handleChange}
             placeholder="ex: PAY-2024-001"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
           />
         </div>
 
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className={`${isMobile ? '' : 'md:col-span-2'}`}>
+          <label className={`block ${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-700 mb-2`}>
             Notes
           </label>
           <textarea
             name="notes"
             value={formData.notes}
             onChange={handleChange}
-            rows={3}
+            rows={isMobile ? 2 : 3}
             placeholder="Notes additionnelles..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
           />
         </div>
       </div>
 
-      <div className="flex space-x-3 pt-4">
+      <div className={`flex ${isMobile ? 'flex-col gap-3 pt-4' : 'space-x-3 pt-4'}`}>
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className={`${isMobile ? 'w-full px-4 py-3 text-base' : 'flex-1 px-4 py-2'} border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors`}
         >
           Annuler
         </button>
         <button
           type="submit"
-          className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          className={`${isMobile ? 'w-full px-4 py-3 text-base' : 'flex-1 px-4 py-2'} bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors`}
         >
           {initialData ? 'Modifier' : 'Enregistrer'}
         </button>

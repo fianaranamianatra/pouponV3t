@@ -44,6 +44,17 @@ export default function FinancialTransactions() {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Hook Firebase avec synchronisation temps réel
   const {
@@ -242,18 +253,18 @@ export default function FinancialTransactions() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className={`flex ${isMobile ? 'flex-col gap-3' : 'flex-col sm:flex-row sm:items-center sm:justify-between gap-4'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Encaissements et Décaissements</h1>
-          <p className="text-gray-600">Suivi des flux financiers de l'établissement</p>
+          <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900`}>Encaissements et Décaissements</h1>
+          <p className={`${isMobile ? 'text-sm' : ''} text-gray-600`}>Suivi des flux financiers de l'établissement</p>
         </div>
         
-        <div className="flex gap-2">
+        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'gap-2'}`}>
           <button 
             onClick={handleExport}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className={`${isMobile ? 'hidden sm:inline-flex' : 'inline-flex'} items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors`}
           >
-            <Download className="w-4 h-4 mr-2" />
+            <Download className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
             Exporter
           </button>
           <button
@@ -262,12 +273,12 @@ export default function FinancialTransactions() {
               setShowAddForm(true);
             }}
             disabled={creating}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50`}
           >
             {creating ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              <div className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} border-2 border-white border-t-transparent rounded-full animate-spin mr-2`}></div>
             ) : (
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
             )}
             Nouvelle Transaction
           </button>
@@ -278,11 +289,11 @@ export default function FinancialTransactions() {
       <FinancialIntegrationPanel />
 
       {/* Navigation Tabs */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex space-x-1">
+      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
+        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'space-x-1'}`}>
           <button
             onClick={() => setSelectedType('')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2 text-sm'} rounded-lg font-medium transition-colors ${
               selectedType === '' 
                 ? 'bg-blue-600 text-white border-2 border-blue-600' 
                 : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 border-2 border-transparent'
@@ -292,7 +303,7 @@ export default function FinancialTransactions() {
           </button>
           <button
             onClick={() => setSelectedType('Encaissement')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2 text-sm'} rounded-lg font-medium transition-colors ${
               selectedType === 'Encaissement' 
                 ? 'bg-blue-600 text-white border-2 border-blue-600' 
                 : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 border-2 border-transparent'
@@ -302,7 +313,7 @@ export default function FinancialTransactions() {
           </button>
           <button
             onClick={() => setSelectedType('Décaissement')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2 text-sm'} rounded-lg font-medium transition-colors ${
               selectedType === 'Décaissement' 
                 ? 'bg-blue-600 text-white border-2 border-blue-600' 
                 : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 border-2 border-transparent'
@@ -314,26 +325,26 @@ export default function FinancialTransactions() {
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex flex-col lg:flex-row gap-4">
+      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
+        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'flex-col lg:flex-row gap-4'}`}>
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 ${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />
               <input
                 type="text"
                 placeholder="Rechercher une transaction..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full ${isMobile ? 'pl-12 pr-4 py-3 text-base' : 'pl-10 pr-4 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
               />
             </div>
           </div>
           
-          <div className="flex gap-2">
+          <div className={`flex ${isMobile ? 'flex-col gap-2' : 'gap-2'}`}>
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
             >
               <option value="">Tous les types</option>
               <option value="Encaissement">Encaissements</option>
@@ -343,7 +354,7 @@ export default function FinancialTransactions() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
             >
               <option value="">Toutes les catégories</option>
               {categories.map(category => (
@@ -354,7 +365,7 @@ export default function FinancialTransactions() {
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
             >
               <option value="">Tous les statuts</option>
               <option value="Validé">Validé</option>
@@ -362,8 +373,8 @@ export default function FinancialTransactions() {
               <option value="Annulé">Annulé</option>
             </select>
             
-            <button className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <Filter className="w-4 h-4 mr-2" />
+            <button className={`${isMobile ? 'hidden sm:inline-flex' : 'inline-flex'} items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors`}>
+              <Filter className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
               Filtres
             </button>
           </div>
@@ -371,40 +382,40 @@ export default function FinancialTransactions() {
       </div>
 
       {/* Financial Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-4 gap-4'}`}>
         <div className="bg-white rounded-lg p-4 border border-gray-100">
           <div className="flex items-center">
             <div>
-              <p className="text-sm text-gray-600">Total Encaissements</p>
-              <p className="text-2xl font-bold text-green-600">{totalEncaissements.toLocaleString()} Ar</p>
+              <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>Total Encaissements</p>
+              <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-green-600`}>{totalEncaissements.toLocaleString()} Ar</p>
             </div>
-            <TrendingUp className="w-8 h-8 text-green-600 ml-auto" />
+            <TrendingUp className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-green-600 ml-auto`} />
           </div>
         </div>
 
         <div className="bg-white rounded-lg p-4 border border-gray-100">
           <div className="flex items-center">
             <div>
-              <p className="text-sm text-gray-600">Total Décaissements</p>
-              <p className="text-2xl font-bold text-red-600">{totalDecaissements.toLocaleString()} Ar</p>
+              <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>Total Décaissements</p>
+              <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-red-600`}>{totalDecaissements.toLocaleString()} Ar</p>
             </div>
-            <TrendingDown className="w-8 h-8 text-red-600 ml-auto" />
+            <TrendingDown className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-red-600 ml-auto`} />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg p-4 border border-gray-100">
+        <div className={`bg-white rounded-lg p-4 border border-gray-100 ${isMobile ? 'col-span-2' : ''}`}>
           <div className="flex items-center">
             <div>
-              <p className="text-sm text-gray-600">Solde</p>
-              <p className={`text-2xl font-bold ${solde >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+              <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>Solde</p>
+              <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold ${solde >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                 {solde.toLocaleString()} Ar
               </p>
             </div>
-            <DollarSign className={`w-8 h-8 ml-auto ${solde >= 0 ? 'text-blue-600' : 'text-red-600'}`} />
+            <DollarSign className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} ml-auto ${solde >= 0 ? 'text-blue-600' : 'text-red-600'}`} />
           </div>
         </div>
         
-        <div className="bg-white rounded-lg p-4 border border-gray-100">
+        <div className={`bg-white rounded-lg p-4 border border-gray-100 ${isMobile ? 'hidden' : ''}`}>
           <div className="flex items-center">
             <div>
               <p className="text-sm text-gray-600">En Attente</p>
@@ -416,105 +427,132 @@ export default function FinancialTransactions() {
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className={`bg-white ${isMobile ? 'rounded-lg' : 'rounded-xl'} shadow-sm border border-gray-100 overflow-hidden`}>
         {transactions.length === 0 ? (
-          <div className="text-center py-12">
-            <DollarSign className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune transaction enregistrée</h3>
-            <p className="text-gray-500 mb-6">Commencez par enregistrer votre première transaction financière.</p>
+          <div className={`text-center ${isMobile ? 'py-8' : 'py-12'}`}>
+            <DollarSign className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} text-gray-300 mx-auto mb-4`} />
+            <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-medium text-gray-900 mb-2`}>Aucune transaction enregistrée</h3>
+            <p className={`${isMobile ? 'text-sm' : ''} text-gray-500 mb-6`}>Commencez par enregistrer votre première transaction financière.</p>
             <button
               onClick={() => setShowAddForm(true)}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className={`inline-flex items-center ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2'} bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors`}
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
               Nouvelle Transaction
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className={`overflow-x-auto ${isMobile ? 'mobile-table-scroll' : ''}`}>
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Date</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Type</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Catégorie</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Description</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Montant</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Mode de Paiement</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Statut</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-900">Actions</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm' : 'py-3 px-6'} font-medium text-gray-900`}>Date</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm' : 'py-3 px-6'} font-medium text-gray-900`}>Type</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden sm:table-cell' : 'py-3 px-6'} font-medium text-gray-900`}>Catégorie</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden md:table-cell' : 'py-3 px-6'} font-medium text-gray-900`}>Description</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm' : 'py-3 px-6'} font-medium text-gray-900`}>Montant</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden lg:table-cell' : 'py-3 px-6'} font-medium text-gray-900`}>Mode de Paiement</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden sm:table-cell' : 'py-3 px-6'} font-medium text-gray-900`}>Statut</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm' : 'py-3 px-6'} font-medium text-gray-900`}>Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredTransactions.map((transaction) => (
                   <tr key={transaction.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <Calendar className="w-4 h-4 mr-2 text-gray-400" />
+                    <td className={`${isMobile ? 'py-3 px-3' : 'py-4 px-6'}`}>
+                      <div className={`flex items-center ${isMobile ? 'text-xs' : 'text-sm'} text-gray-900`}>
+                        <Calendar className={`${isMobile ? 'w-3 h-3 mr-1' : 'w-4 h-4 mr-2'} text-gray-400`} />
                         {new Date(transaction.date).toLocaleDateString('fr-FR')}
                       </div>
                     </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${typeColors[transaction.type]}`}>
+                    <td className={`${isMobile ? 'py-3 px-3' : 'py-4 px-6'}`}>
+                      <span className={`inline-flex items-center ${isMobile ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-0.5 text-xs'} font-medium rounded-full ${typeColors[transaction.type]}`}>
                         {transaction.type}
                       </span>
                     </td>
-                    <td className="py-4 px-6">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <td className={`${isMobile ? 'py-3 px-3 hidden sm:table-cell' : 'py-4 px-6'}`}>
+                      <span className={`inline-flex items-center ${isMobile ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-0.5 text-xs'} font-medium bg-gray-100 text-gray-800 rounded-full`}>
                         {transaction.category}
                       </span>
                     </td>
-                    <td className="py-4 px-6">
-                      <p className="text-sm font-medium text-gray-900">{transaction.description}</p>
+                    <td className={`${isMobile ? 'py-3 px-3 hidden md:table-cell' : 'py-4 px-6'}`}>
+                      <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-900`}>{transaction.description}</p>
                       {transaction.reference && (
-                        <p className="text-xs text-gray-500">Réf: {transaction.reference}</p>
+                        <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500`}>Réf: {transaction.reference}</p>
                       )}
                       {transaction.relatedModule && (
-                        <p className="text-xs text-blue-500">
+                        <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-blue-500`}>
                           🔗 Lié au module: {transaction.relatedModule === 'ecolage' ? 'Écolage' : 'Salaires'}
                         </p>
                       )}
                     </td>
-                    <td className="py-4 px-6">
-                      <p className={`text-lg font-bold ${
+                    <td className={`${isMobile ? 'py-3 px-3' : 'py-4 px-6'}`}>
+                      <p className={`${isMobile ? 'text-sm' : 'text-lg'} font-bold ${
                         transaction.type === 'Encaissement' ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {transaction.type === 'Encaissement' ? '+' : '-'}{transaction.amount.toLocaleString()} Ar
                       </p>
+                      {/* Afficher la catégorie sur mobile */}
+                      {isMobile && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mt-1">
+                          {transaction.category}
+                        </span>
+                      )}
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <CreditCard className="w-4 h-4 mr-2 text-gray-400" />
+                    <td className={`${isMobile ? 'py-3 px-3 hidden lg:table-cell' : 'py-4 px-6'}`}>
+                      <div className={`flex items-center ${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>
+                        <CreditCard className={`${isMobile ? 'w-3 h-3 mr-1' : 'w-4 h-4 mr-2'} text-gray-400`} />
                         {transaction.paymentMethod}
                       </div>
                     </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[transaction.status]}`}>
+                    <td className={`${isMobile ? 'py-3 px-3 hidden sm:table-cell' : 'py-4 px-6'}`}>
+                      <span className={`inline-flex items-center ${isMobile ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-0.5 text-xs'} font-medium rounded-full ${statusColors[transaction.status]}`}>
                         {transaction.status}
                       </span>
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-2">
+                    <td className={`${isMobile ? 'py-3 px-3' : 'py-4 px-6'}`}>
+                      <div className={`flex items-center ${isMobile ? 'space-x-1' : 'space-x-2'}`}>
                         <button 
                           onClick={() => handleViewTransaction(transaction)}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className={`${isMobile ? 'p-2' : 'p-1.5'} text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors`}
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className={`${isMobile ? 'w-4 h-4' : 'w-4 h-4'}`} />
                         </button>
-                        <button 
-                          onClick={() => handleEditClick(transaction)}
-                          disabled={updating}
-                          className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => transaction.id && handleDeleteTransaction(transaction.id)}
-                          disabled={deleting}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {!isMobile && (
+                          <>
+                            <button 
+                              onClick={() => handleEditClick(transaction)}
+                              disabled={updating}
+                              className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => transaction.id && handleDeleteTransaction(transaction.id)}
+                              disabled={deleting}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                        {/* Menu mobile pour les actions supplémentaires */}
+                        {isMobile && (
+                          <button 
+                            onClick={() => {
+                              const choice = confirm('Modifier cette transaction ?');
+                              if (choice) {
+                                handleEditClick(transaction);
+                              }
+                            }}
+                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                            title="Plus d'actions"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -530,7 +568,7 @@ export default function FinancialTransactions() {
         isOpen={showAddForm}
         onClose={() => setShowAddForm(false)}
         title="Nouvelle Transaction"
-        size="lg"
+        size={isMobile ? "xl" : "lg"}
       >
         <TransactionForm
           onSubmit={handleAddTransaction}
@@ -547,7 +585,7 @@ export default function FinancialTransactions() {
           setSelectedTransaction(null);
         }}
         title="Modifier la Transaction"
-        size="lg"
+        size={isMobile ? "xl" : "lg"}
       >
         {selectedTransaction && (
           <TransactionForm
@@ -570,33 +608,33 @@ export default function FinancialTransactions() {
           setSelectedTransaction(null);
         }}
         title="Détails de la Transaction"
-        size="lg"
+        size={isMobile ? "xl" : "lg"}
       >
         {selectedTransaction && (
           <div className="space-y-6">
             <div className="flex items-center space-x-4">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+              <div className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} rounded-full flex items-center justify-center ${
                 selectedTransaction.type === 'Encaissement' 
                   ? 'bg-gradient-to-br from-green-400 to-green-500' 
                   : 'bg-gradient-to-br from-red-400 to-red-500'
               }`}>
                 {selectedTransaction.type === 'Encaissement' ? (
-                  <TrendingUp className="w-8 h-8 text-white" />
+                  <TrendingUp className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-white`} />
                 ) : (
-                  <TrendingDown className="w-8 h-8 text-white" />
+                  <TrendingDown className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-white`} />
                 )}
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">{selectedTransaction.reference || 'Transaction'}</h3>
-                <p className="text-gray-600">{selectedTransaction.description}</p>
-                <p className="text-sm text-gray-500">{selectedTransaction.category}</p>
+                <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-gray-900`}>{selectedTransaction.reference || 'Transaction'}</h3>
+                <p className={`${isMobile ? 'text-sm' : ''} text-gray-600`}>{selectedTransaction.description}</p>
+                <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-500`}>{selectedTransaction.category}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-1 md:grid-cols-2 gap-6'}`}>
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Informations financières</h4>
-                <div className="space-y-2 text-sm">
+                <h4 className={`font-medium text-gray-900 ${isMobile ? 'text-sm mb-2' : 'mb-2'}`}>Informations financières</h4>
+                <div className={`space-y-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
                   <p><span className="font-medium">Type:</span> {selectedTransaction.type}</p>
                   <p><span className="font-medium">Montant:</span> 
                     <span className={`ml-2 font-bold ${
@@ -611,11 +649,11 @@ export default function FinancialTransactions() {
               </div>
               
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Informations de suivi</h4>
-                <div className="space-y-2 text-sm">
+                <h4 className={`font-medium text-gray-900 ${isMobile ? 'text-sm mb-2' : 'mb-2'}`}>Informations de suivi</h4>
+                <div className={`space-y-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
                   <p><span className="font-medium">Date:</span> {new Date(selectedTransaction.date).toLocaleDateString('fr-FR')}</p>
                   <p><span className="font-medium">Statut:</span> 
-                    <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${statusColors[selectedTransaction.status]}`}>
+                    <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded ${isMobile ? 'text-xs' : 'text-xs'} font-medium ${statusColors[selectedTransaction.status]}`}>
                       {selectedTransaction.status}
                     </span>
                   </p>
@@ -627,7 +665,7 @@ export default function FinancialTransactions() {
                   )}
                   {selectedTransaction.relatedModule && (
                     <p><span className="font-medium">Module lié:</span> 
-                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded ${isMobile ? 'text-xs' : 'text-xs'} font-medium bg-blue-100 text-blue-800`}>
                         {selectedTransaction.relatedModule === 'ecolage' ? 'Écolage' : 'Salaires'}
                       </span>
                     </p>

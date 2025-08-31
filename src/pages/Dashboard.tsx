@@ -112,6 +112,18 @@ const upcomingEvents = [
 ];
 
 export function Dashboard() {
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'add-student':
@@ -143,9 +155,9 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white">
-        <h1 className="text-3xl font-bold mb-2">Bienvenue sur LES POUPONS</h1>
-        <p className="text-blue-100 text-lg">
+      <div className={`bg-gradient-to-r from-blue-600 to-blue-700 ${isMobile ? 'rounded-xl p-6' : 'rounded-2xl p-8'} text-white`}>
+        <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold mb-2`}>Bienvenue sur LES POUPONS</h1>
+        <p className={`text-blue-100 ${isMobile ? 'text-base' : 'text-lg'}`}>
           Tableau de bord de gestion scolaire - {new Date().toLocaleDateString('fr-FR', { 
             weekday: 'long', 
             year: 'numeric', 
@@ -156,35 +168,34 @@ export function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'}`}>
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow cursor-pointer">
+            <div key={index} className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className="text-sm text-green-600 font-medium">{stat.change} ce mois</p>
+                  <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-600 mb-1`}>{stat.label}</p>
+                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900`}>{stat.value}</p>
+                  <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-green-600 font-medium`}>{stat.change} ce mois</p>
                 </div>
-                <div className={`w-12 h-12 ${stat.bgColor} rounded-lg flex items-center justify-center`}>
-                  <Icon className={`w-6 h-6 ${stat.iconColor}`} />
+                <div className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'} ${stat.bgColor} rounded-lg flex items-center justify-center`}>
+                  <Icon className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} ${stat.iconColor}`} />
                 </div>
               </div>
-              <p className="text-sm text-green-600 font-medium">{stat.change || '+0%'} ce mois</p>
             </div>
           );
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-1 lg:grid-cols-3 gap-6'}`}>
         {/* Recent Activities */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className={`${isMobile ? '' : 'lg:col-span-2'} bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Activités Récentes</h2>
+            <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-gray-900`}>Activités Récentes</h2>
             <button 
               onClick={() => handleViewAll('activities')}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
+              className={`text-blue-600 hover:text-blue-700 ${isMobile ? 'text-xs' : 'text-sm'} font-medium transition-colors`}
             >
               Voir tout
             </button>
@@ -194,13 +205,13 @@ export function Dashboard() {
             {recentActivities.map((activity) => {
               const Icon = activity.icon;
               return (
-                <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                    <Icon className={`w-4 h-4 ${activity.color}`} />
+                <div key={activity.id} className={`flex items-start space-x-3 ${isMobile ? 'p-2' : 'p-3'} rounded-lg hover:bg-gray-50 transition-colors cursor-pointer`}>
+                  <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${activity.color}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{activity.message}</p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
+                    <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-900`}>{activity.message}</p>
+                    <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500`}>{activity.time}</p>
                   </div>
                 </div>
               );
@@ -209,25 +220,25 @@ export function Dashboard() {
         </div>
 
         {/* Upcoming Events */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Événements à Venir</h2>
-            <Calendar className="w-5 h-5 text-gray-400" />
+            <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-gray-900`}>Événements à Venir</h2>
+            <Calendar className={`${isMobile ? 'w-5 h-5' : 'w-5 h-5'} text-gray-400`} />
           </div>
           
           <div className="space-y-4">
             {upcomingEvents.map((event) => (
-              <div key={event.id} className="border-l-4 border-blue-500 pl-4 py-2 hover:bg-gray-50 transition-colors cursor-pointer">
-                <h3 className="font-medium text-gray-900 text-sm">{event.title}</h3>
-                <p className="text-xs text-gray-500">{event.date}</p>
-                <p className="text-xs text-blue-600 font-medium">{event.time}</p>
+              <div key={event.id} className={`border-l-4 border-blue-500 ${isMobile ? 'pl-3 py-2' : 'pl-4 py-2'} hover:bg-gray-50 transition-colors cursor-pointer`}>
+                <h3 className={`font-medium text-gray-900 ${isMobile ? 'text-xs' : 'text-sm'}`}>{event.title}</h3>
+                <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500`}>{event.date}</p>
+                <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-blue-600 font-medium`}>{event.time}</p>
               </div>
             ))}
           </div>
 
           <button 
             onClick={() => handleViewAll('calendar')}
-            className="w-full mt-4 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+            className={`w-full mt-4 ${isMobile ? 'px-3 py-2.5' : 'px-4 py-2'} bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors ${isMobile ? 'text-sm' : 'text-sm'} font-medium`}
           >
             Voir le calendrier complet
           </button>
@@ -238,72 +249,72 @@ export function Dashboard() {
       {/* <DataInitializer /> */}
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Actions Rapides</h2>
+      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
+        <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-gray-900 ${isMobile ? 'mb-4' : 'mb-6'}`}>Actions Rapides</h2>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-2 md:grid-cols-4 gap-4'}`}>
           <button 
             onClick={() => handleQuickAction('add-student')}
-            className="flex flex-col items-center p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all group"
+            className={`flex flex-col items-center ${isMobile ? 'p-3' : 'p-4'} rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all group`}
           >
-            <Users className="w-8 h-8 text-gray-400 group-hover:text-blue-600 mb-2" />
-            <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600">Ajouter Élève</span>
+            <Users className={`${isMobile ? 'w-6 h-6 mb-1' : 'w-8 h-8 mb-2'} text-gray-400 group-hover:text-blue-600`} />
+            <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-600 group-hover:text-blue-600 text-center`}>Ajouter Élève</span>
           </button>
           
           <button 
             onClick={() => handleQuickAction('add-teacher')}
-            className="flex flex-col items-center p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all group"
+            className={`flex flex-col items-center ${isMobile ? 'p-3' : 'p-4'} rounded-lg border-2 border-dashed border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all group`}
           >
-            <GraduationCap className="w-8 h-8 text-gray-400 group-hover:text-green-600 mb-2" />
-            <span className="text-sm font-medium text-gray-600 group-hover:text-green-600">Ajouter Enseignant</span>
+            <GraduationCap className={`${isMobile ? 'w-6 h-6 mb-1' : 'w-8 h-8 mb-2'} text-gray-400 group-hover:text-green-600`} />
+            <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-600 group-hover:text-green-600 text-center`}>Ajouter Enseignant</span>
           </button>
           
           <button 
             onClick={() => handleQuickAction('create-class')}
-            className="flex flex-col items-center p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-all group"
+            className={`flex flex-col items-center ${isMobile ? 'p-3' : 'p-4'} rounded-lg border-2 border-dashed border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-all group`}
           >
-            <BookOpen className="w-8 h-8 text-gray-400 group-hover:text-orange-600 mb-2" />
-            <span className="text-sm font-medium text-gray-600 group-hover:text-orange-600">Créer Classe</span>
+            <BookOpen className={`${isMobile ? 'w-6 h-6 mb-1' : 'w-8 h-8 mb-2'} text-gray-400 group-hover:text-orange-600`} />
+            <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-600 group-hover:text-orange-600 text-center`}>Créer Classe</span>
           </button>
           
           <button 
             onClick={() => handleQuickAction('send-message')}
-            className="flex flex-col items-center p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all group"
+            className={`flex flex-col items-center ${isMobile ? 'p-3' : 'p-4'} rounded-lg border-2 border-dashed border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all group`}
           >
-            <MessageCircle className="w-8 h-8 text-gray-400 group-hover:text-purple-600 mb-2" />
-            <span className="text-sm font-medium text-gray-600 group-hover:text-purple-600">Envoyer Message</span>
+            <MessageCircle className={`${isMobile ? 'w-6 h-6 mb-1' : 'w-8 h-8 mb-2'} text-gray-400 group-hover:text-purple-600`} />
+            <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-600 group-hover:text-purple-600 text-center`}>Envoyer Message</span>
           </button>
         </div>
       </div>
 
       {/* Quick Financial Sync Status */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">État de Synchronisation Financière</h2>
+      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
+        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'}`}>État de Synchronisation Financière</h2>
         <FinancialSyncStatus compact={false} showActions={true} />
       </div>
 
       {/* Payment Alerts */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-          <DollarSign className="w-5 h-5 mr-2 text-red-600" />
+      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
+        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'} flex items-center`}>
+          <DollarSign className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-red-600`} />
           Alertes de Paiement
         </h2>
         <PaymentAlerts />
       </div>
 
       {/* Synchronisation Écolage-Profils */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-          <Zap className="w-5 h-5 mr-2 text-green-600" />
+      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
+        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'} flex items-center`}>
+          <Zap className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-green-600`} />
           Synchronisation Écolage ↔ Profils Étudiants
         </h2>
         <EcolageStudentSync />
       </div>
 
       {/* Statut de Synchronisation Globale */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-          <Activity className="w-5 h-5 mr-2 text-purple-600" />
+      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
+        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'} flex items-center`}>
+          <Activity className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-purple-600`} />
           Statut de Synchronisation Globale
         </h2>
         <GlobalSyncStatus />

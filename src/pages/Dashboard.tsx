@@ -1,7 +1,8 @@
 import React from 'react';
-import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCircle, AlertTriangle, Plus } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCircle, AlertTriangle, Plus, DollarSign } from 'lucide-react';
 // import { DataInitializer } from '../components/admin/DataInitializer';
 import { FinancialSyncStatus } from '../components/financial/FinancialSyncStatus';
+import { PaymentAlerts } from '../components/ecolage/PaymentAlerts';
 
 const stats = [
   {
@@ -277,6 +278,15 @@ export function Dashboard() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4">État de Synchronisation Financière</h2>
         <FinancialSyncStatus compact={false} showActions={true} />
+      </div>
+
+      {/* Payment Alerts */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+          <DollarSign className="w-5 h-5 mr-2 text-red-600" />
+          Alertes de Paiement
+        </h2>
+        <PaymentAlerts />
       </div>
     </div>
   );

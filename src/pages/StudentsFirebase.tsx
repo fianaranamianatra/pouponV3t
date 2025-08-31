@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Search, Plus, Filter, Edit, Trash2, Eye, Users, Calendar, MapPin, Phone, FileText, CheckSquare, Square, AlertTriangle } from 'lucide-react';
+import { Search, Plus, Filter, Edit, Trash2, Eye, Users, Calendar, MapPin, Phone, FileText, CheckSquare, Square, AlertTriangle, DollarSign } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { StudentFormFirebase } from '../components/forms/StudentFormFirebase';
 import { CertificateModal } from '../components/certificates/CertificateModal';
+import { StudentPaymentDetails } from '../components/ecolage/StudentPaymentDetails';
 import { Avatar } from '../components/Avatar';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { studentsService } from '../lib/firebase/firebaseService';
@@ -30,6 +31,7 @@ export function StudentsFirebase() {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const [showPaymentDetails, setShowPaymentDetails] = useState(false);
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -101,6 +103,11 @@ export function StudentsFirebase() {
   const handleGenerateCertificate = (student: Student) => {
     setSelectedStudent(student);
     setShowCertificateModal(true);
+  };
+
+  const handleViewPaymentDetails = (student: Student) => {
+    setSelectedStudent(student);
+    setShowPaymentDetails(true);
   };
 
   const handleSelectStudent = (id: string) => {
@@ -452,6 +459,13 @@ export function StudentsFirebase() {
                         >
                           <FileText className="w-4 h-4" />
                         </button>
+                        <button 
+                          onClick={() => handleViewPaymentDetails(student)}
+                          className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          title="Détails des paiements"
+                        >
+                          <DollarSign className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -588,6 +602,18 @@ export function StudentsFirebase() {
           isOpen={showCertificateModal}
           onClose={() => {
             setShowCertificateModal(false);
+            setSelectedStudent(null);
+          }}
+          student={selectedStudent}
+        />
+      )}
+      
+      {/* Student Payment Details Modal */}
+      {selectedStudent && (
+        <StudentPaymentDetails
+          isOpen={showPaymentDetails}
+          onClose={() => {
+            setShowPaymentDetails(false);
             setSelectedStudent(null);
           }}
           student={selectedStudent}

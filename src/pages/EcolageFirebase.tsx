@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Filter, CreditCard, DollarSign, AlertTriangle, CheckCircle, Clock, Download, Eye, Edit } from 'lucide-react';
+import { Search, Plus, Filter, CreditCard, DollarSign, AlertTriangle, CheckCircle, Clock, Download, Eye, Edit, BarChart3 } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { PaymentForm } from '../components/forms/PaymentForm';
 import { Avatar } from '../components/Avatar';
 import { TransactionSyncIndicator } from '../components/financial/TransactionSyncIndicator';
+import { PaymentDashboard } from '../components/ecolage/PaymentDashboard';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { feesService, studentsService, classesService } from '../lib/firebase/firebaseService';
 import { FinancialIntegrationService } from '../lib/services/financialIntegrationService';
@@ -52,6 +53,7 @@ export function EcolageFirebase() {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('');
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   // Hook Firebase avec synchronisation temps réel
   const {
@@ -259,6 +261,13 @@ export function EcolageFirebase() {
           >
             <AlertTriangle className="w-4 h-4 mr-2" />
             Rappels
+          </button>
+          <button 
+            onClick={() => setShowDashboard(true)}
+            className="inline-flex items-center px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Tableau de Bord
           </button>
           <button 
             onClick={handleExport}
@@ -573,6 +582,16 @@ export function EcolageFirebase() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Payment Dashboard Modal */}
+      <Modal
+        isOpen={showDashboard}
+        onClose={() => setShowDashboard(false)}
+        title="Tableau de Bord des Paiements"
+        size="xl"
+      >
+        <PaymentDashboard />
       </Modal>
     </div>
   );

@@ -408,16 +408,6 @@ export function StudentsFirebase() {
                           showActions={false}
                           conditionalDisplay={true}
                         />
-                        {/* Indicateur de synchronisation conditionnel */}
-                        <div className="mt-1 text-right">
-                          <StudentSyncIndicator
-                            studentName={`${student.firstName} ${student.lastName}`}
-                            studentClass={student.class}
-                            size="sm"
-                            showDetails={false}
-                            conditionalDisplay={true}
-                          />
-                        </div>
                       </div>
                     </td>
                     <td className="py-4 px-6">

@@ -17,7 +17,7 @@ import { HumanResources } from './pages/HumanResources';
 import { UserProfile } from './pages/UserProfile';
 import { AccessDenied } from './pages/AccessDenied';
 import { SalaryManagement } from './pages/SalaryManagement';
-import { FinancialTransactions } from './pages/FinancialTransactions';
+import FinancialTransactions from './pages/FinancialTransactions';
 import { USER_ROLES } from './lib/roles';
 
 export type Page = 'dashboard' | 'students' | 'teachers' | 'classes' | 'subjects' | 'ecolage' | 'payroll' | 'salary-management' | 'financial-transactions' | 'reports' | 'hr' | 'import';

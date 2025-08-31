@@ -38,3 +38,8 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     </div>
   );
 }
+
+export default Modal;
+
+// Also export as default for compatibility
+export { Modal as default };

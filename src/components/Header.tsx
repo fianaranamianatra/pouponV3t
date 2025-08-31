@@ -47,7 +47,10 @@ export function Header({ onToggleSidebar, isMobile = false }: HeaderProps) {
       {/* Mobile Menu Button */}
       {actualIsMobile && (
         <button
-          onClick={onToggleSidebar}
+          onClick={() => {
+            console.log('🔘 Clic sur le bouton menu dans Header');
+            onToggleSidebar();
+          }}
           className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors mr-3"
           aria-label="Ouvrir le menu"
         >

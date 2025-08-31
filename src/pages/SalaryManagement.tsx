@@ -16,6 +16,8 @@ interface SalaryRecord {
   employeeType: 'teacher' | 'staff';
   position: string;
   department: string;
+  paymentMonth: number;
+  paymentYear: number;
   baseSalary: number;
   allowances: {
     transport?: number;
@@ -56,6 +58,8 @@ const mockSalaryRecords: SalaryRecord[] = [
     employeeType: 'staff',
     position: 'Directrice',
     department: 'Direction',
+    paymentMonth: 11,
+    paymentYear: 2024,
     baseSalary: 800000,
     allowances: {
       transport: 50000,
@@ -78,6 +82,8 @@ const mockSalaryRecords: SalaryRecord[] = [
     employeeType: 'teacher',
     position: 'Professeur de Mathématiques',
     department: 'Enseignement',
+    paymentMonth: 11,
+    paymentYear: 2024,
     baseSalary: 450000,
     allowances: {
       transport: 30000,
@@ -190,6 +196,8 @@ export function SalaryManagement() {
       employeeType: data.employeeType,
       position: data.position,
       department: data.department,
+      paymentMonth: parseInt(data.paymentMonth) || new Date().getMonth() + 1,
+      paymentYear: parseInt(data.paymentYear) || new Date().getFullYear(),
       baseSalary,
       allowances,
       totalGross,
@@ -287,6 +295,8 @@ export function SalaryManagement() {
         
         const updateData = {
           ...data,
+          paymentMonth: parseInt(data.paymentMonth) || selectedRecord.paymentMonth,
+          paymentYear: parseInt(data.paymentYear) || selectedRecord.paymentYear,
           baseSalary,
           allowances,
           totalGross,
@@ -368,6 +378,15 @@ export function SalaryManagement() {
 
   const handleExport = () => {
     alert('Export des données salariales en cours...');
+  };
+
+  // Fonction pour obtenir le nom du mois
+  const getMonthName = (monthNumber: number): string => {
+    const months = [
+      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    ];
+    return months[monthNumber - 1] || 'Mois inconnu';
   };
 
   // Afficher le loading pendant le chargement des salaires
@@ -540,6 +559,7 @@ export function SalaryManagement() {
                 <tr>
                   <th className="text-left py-3 px-6 font-medium text-gray-900">Employé</th>
                   <th className="text-left py-3 px-6 font-medium text-gray-900">Type</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-900">Période</th>
                   <th className="text-left py-3 px-6 font-medium text-gray-900">Salaire de Base</th>
                   <th className="text-left py-3 px-6 font-medium text-gray-900">Indemnités</th>
                   <th className="text-left py-3 px-6 font-medium text-gray-900">Salaire Brut</th>
@@ -583,6 +603,16 @@ export function SalaryManagement() {
                         }`}>
                           {record.employeeType === 'teacher' ? 'Enseignant' : 'Personnel'}
                         </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex flex-col">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                            {getMonthName(record.paymentMonth)} {record.paymentYear}
+                          </span>
+                          <span className="text-xs text-gray-500 mt-1">
+                            Période de paie
+                          </span>
+                        </div>
                       </td>
                       <td className="py-4 px-6">
                         <p className="text-lg font-bold text-gray-900">{record.baseSalary.toLocaleString()} Ar</p>
@@ -741,6 +771,15 @@ export function SalaryManagement() {
               <div>
                 <h4 className="font-medium text-gray-900 mb-4">Composition du Salaire</h4>
                 <div className="space-y-3">
+                  <div className="bg-indigo-50 rounded-lg p-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-indigo-700">Période de Paie</span>
+                      <span className="text-lg font-bold text-indigo-900">
+                        {getMonthName(selectedRecord.paymentMonth)} {selectedRecord.paymentYear}
+                      </span>
+                    </div>
+                  </div>
+                  
                   <div className="bg-gray-50 rounded-lg p-3">
                     <div className="flex justify-between items-center">
                       <span className="font-medium text-gray-700">Salaire de Base</span>

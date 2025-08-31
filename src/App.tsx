@@ -53,10 +53,13 @@ function App() {
 
   // Gérer l'ouverture/fermeture du menu mobile
   const handleToggleSidebar = () => {
+    console.log('🔘 handleToggleSidebar appelé - isMobile:', isMobile, 'mobileMenuOpen:', mobileMenuOpen);
     if (isMobile) {
       setMobileMenuOpen(!mobileMenuOpen);
+      console.log('📱 Menu mobile togglé:', !mobileMenuOpen);
     } else {
       setSidebarCollapsed(!sidebarCollapsed);
+      console.log('🖥️ Sidebar desktop togglé:', !sidebarCollapsed);
     }
   };
 
@@ -213,7 +216,10 @@ function App() {
                     : 'ml-64'
               }`}>
                 <Header 
-                  onToggleSidebar={handleToggleSidebar} 
+                  onToggleSidebar={() => {
+                    console.log('🔘 onToggleSidebar appelé depuis Header (route /)');
+                    handleToggleSidebar();
+                  }} 
                   isMobile={isMobile}
                 />
                 <main className={`flex-1 ${isMobile ? 'p-4' : 'p-6'}`}>
@@ -230,7 +236,10 @@ function App() {
                 currentPage={currentPage}
                 onPageChange={setCurrentPage}
                 collapsed={sidebarCollapsed}
-                onToggleCollapse={handleToggleSidebar}
+                onToggleCollapse={() => {
+                  console.log('🔘 onToggleCollapse appelé depuis Sidebar');
+                  handleToggleSidebar();
+                }}
               />
               <div className={`flex-1 flex flex-col transition-all duration-300 ${
                 isMobile 
@@ -240,7 +249,10 @@ function App() {
                     : 'ml-64'
               }`}>
                 <Header 
-                  onToggleSidebar={handleToggleSidebar} 
+                  onToggleSidebar={() => {
+                    console.log('🔘 onToggleSidebar appelé depuis Header');
+                    handleToggleSidebar();
+                  }} 
                   isMobile={isMobile}
                 />
                 <main className={`flex-1 ${isMobile ? 'p-4' : 'p-6'}`}>
@@ -256,3 +268,7 @@ function App() {
 }
 
 export default App;
+                onToggleCollapse={() => {
+                  console.log('🔘 onToggleCollapse appelé depuis Sidebar (route /)');
+                  handleToggleSidebar();
+                }}

@@ -336,7 +336,10 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
       {/* Mobile Menu Button - Affiché uniquement sur mobile */}
       {isMobile && (
         <button
-          onClick={handleMobileMenuToggle}
+          onClick={() => {
+            console.log('🔘 Clic sur le bouton hamburger mobile');
+            setMobileMenuOpen(!mobileMenuOpen);
+          }}
           className="fixed top-4 left-4 z-60 p-3 bg-white border border-gray-200 rounded-lg shadow-lg hover:bg-gray-50 transition-colors"
           aria-label="Ouvrir le menu"
         >

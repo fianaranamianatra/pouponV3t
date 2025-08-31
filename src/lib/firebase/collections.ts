@@ -131,6 +131,8 @@ export interface SalaryRecord {
   employeeType: 'teacher' | 'staff';
   position: string;
   department: string;
+  paymentMonth: number;
+  paymentYear: number;
   baseSalary: number;
   allowances: {
     transport?: number;

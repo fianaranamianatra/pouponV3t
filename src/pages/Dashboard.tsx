@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCircle, AlertTriangle, Plus, DollarSign, Zap, Activity } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCircle, AlertTriangle, Plus, DollarSign, Zap, Activity, Calculator } from 'lucide-react';
 // import { DataInitializer } from '../components/admin/DataInitializer';
 import { FinancialSyncStatus } from '../components/financial/FinancialSyncStatus';
 import { PaymentAlerts } from '../components/ecolage/PaymentAlerts';

@@ -1,5 +1,6 @@
 // Service de synchronisation bidirectionnelle centralisé
 import { StudentEcolageSyncService } from './studentEcolageSync';
+import { PayrollSalarySyncService } from './payrollSalarySync';
 
 export interface SyncStatus {
   isActive: boolean;
@@ -28,12 +29,15 @@ export class BidirectionalSyncService {
       // Initialiser la synchronisation Écolage ↔ Profils Étudiants
       const ecolageResult = await StudentEcolageSyncService.syncAllStudentProfiles();
       
+      // Initialiser la synchronisation Paie ↔ Salaires
+      const payrollResult = await PayrollSalarySyncService.initializeGlobalSync();
+      
       this.syncStatus = {
         isActive: true,
-        activeConnections: ecolageResult.syncedRecords,
+        activeConnections: ecolageResult.syncedRecords + payrollResult.syncedRecords,
         lastSyncTime: new Date(),
-        totalSyncedRecords: ecolageResult.syncedRecords,
-        errors: ecolageResult.errors
+        totalSyncedRecords: ecolageResult.syncedRecords + payrollResult.syncedRecords,
+        errors: [...ecolageResult.errors, ...payrollResult.errors]
       };
 
       console.log('✅ Synchronisations bidirectionnelles initialisées:', this.syncStatus);
@@ -63,6 +67,7 @@ export class BidirectionalSyncService {
     console.log('🧹 Nettoyage de toutes les synchronisations bidirectionnelles');
     
     StudentEcolageSyncService.cleanup();
+    PayrollSalarySyncService.cleanup();
     
     this.syncStatus = {
       isActive: false,
@@ -81,6 +86,7 @@ export class BidirectionalSyncService {
     
     this.cleanup();
     await this.initializeAllSync();
+    await PayrollSalarySyncService.syncHierarchyChanges();
   }
 
   /**

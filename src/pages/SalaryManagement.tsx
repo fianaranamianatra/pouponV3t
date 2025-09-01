@@ -5,6 +5,8 @@ import { SalaryForm } from '../components/forms/SalaryForm';
 import { SalaryHistoryModal } from '../components/modals/SalaryHistoryModal';
 import { Avatar } from '../components/Avatar';
 import { TransactionSyncIndicator } from '../components/financial/TransactionSyncIndicator';
+import { PayrollSyncIndicator } from '../components/payroll/PayrollSyncIndicator';
+import { usePayrollSalarySync } from '../hooks/usePayrollSalarySync';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { hierarchyService, teachersService, salariesService } from '../lib/firebase/firebaseService';
 import { FinancialIntegrationService } from '../lib/services/financialIntegrationService';
@@ -114,6 +116,7 @@ const mockSalaryHistory: SalaryHistory[] = [
 ];
 
 export function SalaryManagement() {
+  const payrollSyncData = usePayrollSalarySync();
   const [salaryHistory, setSalaryHistory] = useState<SalaryHistory[]>(mockSalaryHistory);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -590,6 +593,12 @@ export function SalaryManagement() {
                               module="salary"
                               recordId={record.id || ''}
                               recordName={record.employeeName}
+                              className="mt-1"
+                            />
+                            <PayrollSyncIndicator
+                              employeeId={record.employeeId}
+                              employeeName={record.employeeName}
+                              currentSalary={record.baseSalary}
                               className="mt-1"
                             />
                           </div>

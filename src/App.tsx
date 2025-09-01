@@ -20,6 +20,7 @@ import { SalaryManagement } from './pages/SalaryManagement';
 import FinancialTransactions from './pages/FinancialTransactions';
 import { StudentEcolageSyncService } from './lib/services/studentEcolageSync';
 import { BidirectionalSyncService } from './lib/services/bidirectionalSync';
+import { PayrollSalarySyncService } from './lib/services/payrollSalarySync';
 import { USER_ROLES } from './lib/roles';
 import { useAuth } from './hooks/useAuth';
 import { OfflineHandler } from './lib/firebase/offlineHandler';
@@ -81,10 +82,12 @@ function App() {
     }
 
     console.log('🚀 Initialisation de la synchronisation bidirectionnelle Écolage ↔ Profils');
+    console.log('🚀 Initialisation de la synchronisation bidirectionnelle Paie ↔ Salaires');
     
     const initializeSync = async () => {
       try {
         await BidirectionalSyncService.initializeAllSync();
+        await PayrollSalarySyncService.initializeGlobalSync();
         console.log('✅ Toutes les synchronisations bidirectionnelles sont actives');
       } catch (error) {
         console.error('❌ Erreur lors de l\'initialisation de la synchronisation:', error);
@@ -99,6 +102,7 @@ function App() {
     // Nettoyer les listeners au démontage
     return () => {
       BidirectionalSyncService.cleanup();
+      PayrollSalarySyncService.cleanup();
     };
   }, [user, isOnline]);
 

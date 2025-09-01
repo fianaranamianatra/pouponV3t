@@ -10,6 +10,9 @@ import { IRSAService } from '../lib/services/irsaService';
 import { IRSACalculator } from '../components/IRSACalculator';
 import { IRSABaremeDisplay } from '../components/IRSABaremeDisplay';
 import { FinancialIntegrationService } from '../lib/services/financialIntegrationService';
+import { PayrollSalarySyncPanel } from '../components/payroll/PayrollSalarySyncPanel';
+import { PayrollSyncIndicator } from '../components/payroll/PayrollSyncIndicator';
+import { usePayrollSalarySync } from '../hooks/usePayrollSalarySync';
 import type { FinancialSetting } from '../lib/firebase/collections';
 
 interface Employee {
@@ -28,6 +31,7 @@ interface Employee {
 }
 
 export function PayrollManagement() {
+  const payrollSyncData = usePayrollSalarySync();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -343,6 +347,9 @@ export function PayrollManagement() {
       </div>
 
       {/* Paramètres actuels */}
+      {/* Panneau de Synchronisation Paie ↔ Salaires */}
+      <PayrollSalarySyncPanel />
+
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4">Paramètres de Cotisation Actuels</h2>
         
@@ -522,6 +529,12 @@ export function PayrollManagement() {
                           />
                           <div>
                             <p className="font-medium text-gray-900">{employee.firstName} {employee.lastName}</p>
+                            <PayrollSyncIndicator
+                              employeeId={employee.id!}
+                              employeeName={`${employee.firstName} ${employee.lastName}`}
+                              currentSalary={employee.salary}
+                              className="mt-1"
+                            />
                           </div>
                         </div>
                       </td>

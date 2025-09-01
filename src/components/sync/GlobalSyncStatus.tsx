@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Zap, CheckCircle, AlertTriangle, RefreshCw, Activity, Users, DollarSign } from 'lucide-react';
 import { BidirectionalSyncService, SyncStatus } from '../../lib/services/bidirectionalSync';
+import { usePayrollSalarySync } from '../../hooks/usePayrollSalarySync';
 
 interface GlobalSyncStatusProps {
   className?: string;
@@ -8,6 +9,7 @@ interface GlobalSyncStatusProps {
 }
 
 export function GlobalSyncStatus({ className = '', compact = false }: GlobalSyncStatusProps) {
+  const payrollSyncData = usePayrollSalarySync();
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [healthCheck, setHealthCheck] = useState<any>(null);
 
@@ -29,6 +31,8 @@ export function GlobalSyncStatus({ className = '', compact = false }: GlobalSync
 
     window.addEventListener('globalSyncInitialized', handleSyncUpdate);
     window.addEventListener('studentPaymentUpdate', handleSyncUpdate);
+    window.addEventListener('payrollSalarySyncInitialized', handleSyncUpdate);
+    window.addEventListener('payrollSalarySync', handleSyncUpdate);
 
     // Actualiser périodiquement
     const interval = setInterval(loadStatus, 30000); // Toutes les 30 secondes
@@ -36,6 +40,8 @@ export function GlobalSyncStatus({ className = '', compact = false }: GlobalSync
     return () => {
       window.removeEventListener('globalSyncInitialized', handleSyncUpdate);
       window.removeEventListener('studentPaymentUpdate', handleSyncUpdate);
+      window.removeEventListener('payrollSalarySyncInitialized', handleSyncUpdate);
+      window.removeEventListener('payrollSalarySync', handleSyncUpdate);
       clearInterval(interval);
     };
   }, []);
@@ -102,7 +108,7 @@ export function GlobalSyncStatus({ className = '', compact = false }: GlobalSync
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <div className="grid grid-cols-4 gap-3 mb-4">
         <div className="text-center">
           <div className="flex items-center justify-center space-x-1 mb-1">
             <Activity className="w-4 h-4 text-blue-600" />
@@ -126,6 +132,16 @@ export function GlobalSyncStatus({ className = '', compact = false }: GlobalSync
           </div>
           <p className="text-xl font-bold text-red-600">{syncStatus.errors.length}</p>
         </div>
+        
+        <div className="text-center">
+          <div className="flex items-center justify-center space-x-1 mb-1">
+            <DollarSign className="w-4 h-4 text-purple-600" />
+            <span className="text-sm font-medium text-gray-900">Paie ↔ Salaires</span>
+          </div>
+          <p className="text-xl font-bold text-purple-600">
+            {payrollSyncData.syncStatus.activeConnections}
+          </p>
+        </div>
       </div>
 
       <div className="space-y-2 text-sm">
@@ -139,6 +155,12 @@ export function GlobalSyncStatus({ className = '', compact = false }: GlobalSync
           <span className="text-gray-600">Dernière synchronisation:</span>
           <span className="font-medium text-gray-900">
             {syncStatus.lastSyncTime.toLocaleTimeString('fr-FR')}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-600">Sync Paie ↔ Salaires:</span>
+          <span className={`font-medium ${payrollSyncData.syncStatus.isActive ? 'text-green-600' : 'text-red-600'}`}>
+            {payrollSyncData.syncStatus.isActive ? 'Actif' : 'Inactif'}
           </span>
         </div>
       </div>

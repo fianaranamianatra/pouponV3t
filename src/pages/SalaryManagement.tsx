@@ -3,8 +3,8 @@ import { User, DollarSign, Calendar, FileText, Calculator, Wallet, TrendingUp, B
 import { Avatar } from '../components/Avatar';
 import { IRSAService } from '../lib/services/irsaService';
 import { Modal } from '../components/Modal';
-import { PayslipPreview } from '../payroll/PayslipPreview';
-import { SalaryHistoryModal } from '../modals/SalaryHistoryModal';
+import { PayslipPreview } from '../components/payroll/PayslipPreview';
+import { SalaryHistoryModal } from '../components/modals/SalaryHistoryModal';
 import { hierarchyService, salariesService } from '../lib/firebase/firebaseService';
 
 interface SalaryFormProps {
@@ -16,7 +16,7 @@ interface SalaryFormProps {
   isSubmitting?: boolean;
 }
 
-export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], teachers = [], isSubmitting = false }: SalaryFormProps) {
+export function SalaryManagement({ onSubmit, onCancel, initialData, employees = [], teachers = [], isSubmitting = false }: SalaryFormProps) {
   const [formData, setFormData] = useState({
     employeeId: initialData?.employeeId || '',
     employeeName: initialData?.employeeName || '',

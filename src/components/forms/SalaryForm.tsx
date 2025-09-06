@@ -51,8 +51,13 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
 
   // Combine employees and teachers for selection
   const allEmployees = [
-    ...employees.map(emp => ({ ...emp, type: 'staff' })),
-    ...teachers.map(teacher => ({ ...teacher, type: 'teacher' }))
+    ...employees.filter(emp => emp.status === 'active'), // Filtrer seulement les employés actifs
+    ...teachers.filter(teacher => teacher.status && teacher.status !== 'inactive').map(teacher => ({ 
+      ...teacher, 
+      type: 'teacher',
+      position: teacher.subject || 'Enseignant',
+      department: 'Enseignement'
+    }))
   ];
 
   // Options pour les mois
@@ -164,9 +169,9 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
         ...prev,
         employeeId: employee.id,
         employeeName: `${employee.firstName} ${employee.lastName}`,
-        employeeType: employee.type,
+        employeeType: employee.type || (employee.department === 'Enseignement' ? 'teacher' : 'staff'),
         position: employee.position || employee.subject || 'Non spécifié',
-        department: employee.department || 'Enseignement'
+        department: employee.department || (employee.subject ? 'Enseignement' : 'Administration')
       }));
     }
   };
@@ -240,17 +245,22 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
                 <option value="">Sélectionner un employé</option>
-                <optgroup label="Personnel Administratif">
-                  {employees.map(emp => (
+                <optgroup label="Personnel des Ressources Humaines">
+                  {employees.filter(emp => emp.department !== 'Enseignement').map(emp => (
                     <option key={emp.id} value={emp.id}>
-                      {emp.firstName} {emp.lastName} - {emp.position}
+                      {emp.firstName} {emp.lastName} - {emp.position} ({emp.department})
                     </option>
                   ))}
                 </optgroup>
                 <optgroup label="Enseignants">
-                  {teachers.map(teacher => (
-                    <option key={teacher.id} value={teacher.id}>
-                      {teacher.firstName} {teacher.lastName} - {teacher.subject}
+                  {employees.filter(emp => emp.department === 'Enseignement').map(emp => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.firstName} {emp.lastName} - {emp.position}
+                    </option>
+                  ))}
+                  {teachers.length > 0 && teachers.map(teacher => (
+                    <option key={`teacher-${teacher.id}`} value={teacher.id}>
+                      {teacher.firstName} {teacher.lastName} - {teacher.subject} (Enseignant)
                     </option>
                   ))}
                 </optgroup>

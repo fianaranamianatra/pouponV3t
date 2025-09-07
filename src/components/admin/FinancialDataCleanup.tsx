@@ -314,28 +314,6 @@ ${result.errors.join('\n')}`);
               </div>
             )}
           </div>
-            </p>
-            
-            <div className="flex space-x-3">
-              <button
-                onClick={handleCleanupDuplicates}
-                disabled={isCleaningDuplicates || dataCounts.transactions === 0}
-                className="inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50"
-              >
-                {isCleaningDuplicates ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                ) : (
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                )}
-                {isCleaningDuplicates ? 'Nettoyage...' : 'Nettoyer les Doublons'}
-              </button>
-              
-              {duplicateCleanupResult && (
-                <div className="text-sm text-yellow-700">
-                  Dernier nettoyage: {duplicateCleanupResult.totalCleaned} doublon(s) supprimé(s)
-                </div>
-              )}
-            </div>
           </div>
           
           {/* Delete All Section */}

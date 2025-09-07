@@ -4,6 +4,8 @@ import { Modal } from '../components/Modal';
 import { EmployeeForm } from '../components/forms/EmployeeForm';
 import { PayrollSyncIndicator } from '../components/payroll/PayrollSyncIndicator';
 import { usePayrollSalarySync } from '../hooks/usePayrollSalarySync';
+import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
+import { hierarchyService } from '../lib/firebase/firebaseService';
 import { Avatar } from '../components/Avatar';
 
 interface Employee {
@@ -22,8 +24,6 @@ interface Employee {
   email: string;
   phone: string;
 }
-
-const mockEmployees: Employee[] = [];
 
 // Fonction pour calculer l'âge
 const calculateAge = (dateOfBirth: string): number => {
@@ -74,13 +74,25 @@ const calculateExperience = (entryDate: string): string => {
 
 export function HumanResources() {
   const payrollSyncData = usePayrollSalarySync();
-  const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+
+  // Hook Firebase avec synchronisation temps réel
+  const {
+    data: employees,
+    loading,
+    error,
+    creating,
+    updating,
+    deleting,
+    create,
+    update,
+    remove
+  } = useFirebaseCollection<Employee>(hierarchyService, true);
 
   const filteredEmployees = employees.filter(employee => {
     const matchesSearch = employee.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -92,47 +104,86 @@ export function HumanResources() {
 
   const departments = [...new Set(employees.map(e => e.department))];
   const totalEmployees = employees.length;
-  const activeEmployees = employees.filter(e => e.status === 'Actif').length;
+  const activeEmployees = employees.filter(e => e.status === 'active').length;
   const totalSalary = employees.reduce((acc, e) => acc + e.salary, 0);
 
-  const handleAddEmployee = (data: any) => {
-    const newEmployee: Employee = {
-      id: Date.now().toString(),
-      firstName: data.firstName || 'Prénom',
-      lastName: data.lastName || 'Nom',
-      dateOfBirth: data.dateOfBirth || '',
-      position: data.position || 'Poste',
-      department: data.department || 'Administration',
-      salary: parseFloat(data.salary) || 0,
-      status: data.status || 'Actif',
-      entryDate: data.entryDate || '',
-      contractType: data.contractType || '',
-      experience: data.experience || '',
-      retirementDate: data.retirementDate || '',
-      email: data.email || 'email@lespoupons.mg',
-      phone: data.phone || '+261 34 00 000 00'
-    };
-    setEmployees([...employees, newEmployee]);
-    setShowAddForm(false);
-  };
-
-  const handleEditEmployee = (data: any) => {
-    if (selectedEmployee) {
-      setEmployees(employees.map(e => 
-        e.id === selectedEmployee.id ? { 
-          ...e, 
-          ...data, 
-          salary: parseFloat(data.salary) || 0 
-        } : e
-      ));
-      setShowEditForm(false);
-      setSelectedEmployee(null);
+  const handleAddEmployee = async (data: any) => {
+    try {
+      console.log('🚀 Ajout d\'employé - Données reçues:', data);
+      
+      // Préparer les données pour Firebase
+      const employeeData = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        dateOfBirth: data.dateOfBirth || '',
+        email: data.email,
+        phone: data.phone,
+        position: data.position,
+        department: data.department,
+        level: parseInt(data.level) || 1,
+        parentId: data.parentId || '',
+        salary: parseFloat(data.salary) || 0,
+        hireDate: data.entryDate || new Date().toISOString().split('T')[0],
+        status: data.status || 'active',
+        contractType: data.contractType || '',
+        experience: data.experience || '',
+        entryDate: data.entryDate || '',
+        retirementDate: data.retirementDate || ''
+      };
+      
+      console.log('📝 Données formatées pour Firebase:', employeeData);
+      
+      const employeeId = await create(employeeData);
+      console.log('✅ Employé créé avec l\'ID:', employeeId);
+      
+      setShowAddForm(false);
+      
+      // Message de succès
+      alert('✅ Employé ajouté avec succès !');
+      
+    } catch (error: any) {
+      console.error('❌ Erreur lors de l\'ajout de l\'employé:', error);
+      alert('❌ Erreur lors de l\'ajout de l\'employé: ' + error.message);
     }
   };
 
-  const handleDeleteEmployee = (id: string) => {
+  const handleEditEmployee = async (data: any) => {
+    if (selectedEmployee?.id) {
+      try {
+        console.log('🔄 Modification d\'employé - Données:', data);
+        
+        const updateData = {
+          ...data,
+          salary: parseFloat(data.salary) || 0,
+          level: parseInt(data.level) || 1
+        };
+        
+        await update(selectedEmployee.id, updateData);
+        console.log('✅ Employé modifié avec succès');
+        
+        setShowEditForm(false);
+        setSelectedEmployee(null);
+        
+        alert('✅ Employé modifié avec succès !');
+        
+      } catch (error: any) {
+        console.error('❌ Erreur lors de la modification:', error);
+        alert('❌ Erreur lors de la modification: ' + error.message);
+      }
+    }
+  };
+
+  const handleDeleteEmployee = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer cet employé ?')) {
-      setEmployees(employees.filter(e => e.id !== id));
+      try {
+        console.log('🗑️ Suppression de l\'employé ID:', id);
+        await remove(id);
+        console.log('✅ Employé supprimé avec succès');
+        alert('✅ Employé supprimé avec succès !');
+      } catch (error: any) {
+        console.error('❌ Erreur lors de la suppression:', error);
+        alert('❌ Erreur lors de la suppression: ' + error.message);
+      }
     }
   };
 
@@ -146,6 +197,31 @@ export function HumanResources() {
     setShowEditForm(true);
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement des employés...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-600">Erreur: {error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -153,13 +229,22 @@ export function HumanResources() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Gestion des Employés</h1>
           <p className="text-gray-600">Gérez le personnel et les ressources humaines de l'école</p>
+          <div className="flex items-center space-x-2 mt-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span className="text-xs text-green-600 font-medium">Synchronisé avec Gestion des Salaires</span>
+          </div>
         </div>
         
         <button
           onClick={() => setShowAddForm(true)}
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          disabled={creating}
+          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          {creating ? (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+          ) : (
+            <Plus className="w-4 h-4 mr-2" />
+          )}
           Ajouter Employé
         </button>
       </div>
@@ -202,147 +287,166 @@ export function HumanResources() {
 
       {/* Employees Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left py-3 px-6 font-medium text-gray-900">EMPLOYÉ</th>
-                <th className="text-left py-3 px-6 font-medium text-gray-900">ÂGE</th>
-                <th className="text-left py-3 px-6 font-medium text-gray-900">POSTE</th>
-                <th className="text-left py-3 px-6 font-medium text-gray-900">DÉPARTEMENT</th>
-                <th className="text-left py-3 px-6 font-medium text-gray-900">EXPÉRIENCE</th>
-                <th className="text-left py-3 px-6 font-medium text-gray-900">CONTRAT</th>
-                <th className="text-left py-3 px-6 font-medium text-gray-900">SALAIRE</th>
-                <th className="text-left py-3 px-6 font-medium text-gray-900">STATUT</th>
-                <th className="text-left py-3 px-6 font-medium text-gray-900">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredEmployees.map((employee) => (
-                <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="py-4 px-6">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center">
-                        <span className="text-white font-medium text-sm">
-                          {employee.firstName.charAt(0)}{employee.lastName.charAt(0)}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{employee.firstName} {employee.lastName}</p>
-                        <p className="text-sm text-gray-500">
-                          {employee.entryDate ? 
-                            `Depuis le ${new Date(employee.entryDate).toLocaleDateString('fr-FR')}` : 
-                            'Date d\'entrée non renseignée'
-                          }
-                        </p>
-                        <PayrollSyncIndicator
-                          employeeId={employee.id}
-                          employeeName={`${employee.firstName} ${employee.lastName}`}
-                          currentSalary={employee.salary}
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="text-sm">
-                      {employee.dateOfBirth ? (
-                        <>
-                          <p className="font-medium text-gray-900">{calculateAge(employee.dateOfBirth)} ans</p>
-                          <p className="text-xs text-gray-500">
-                            Né(e) le {new Date(employee.dateOfBirth).toLocaleDateString('fr-FR')}
-                          </p>
-                        </>
-                      ) : (
-                        <span className="text-gray-500">Non renseigné</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <p className="text-sm text-gray-900">{employee.position}</p>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      employee.department === 'Administration' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : employee.department === 'Enseignement'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-purple-100 text-purple-800'
-                    }`}>
-                      {employee.department}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="text-sm">
-                      {employee.entryDate ? (
-                        <>
-                          <p className="font-medium text-gray-900">{calculateExperience(employee.entryDate)}</p>
-                          <p className="text-xs text-gray-500">
-                            Depuis {new Date(employee.entryDate).toLocaleDateString('fr-FR')}
-                          </p>
-                        </>
-                      ) : (
-                        <span className="text-gray-500">Non renseigné</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    {employee.contractType ? (
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        employee.contractType === 'FRAM' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : employee.contractType === 'CDI'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-purple-100 text-purple-800'
-                      }`}>
-                        {employee.contractType}
-                      </span>
-                    ) : (
-                      <span className="text-gray-500 text-sm">Non renseigné</span>
-                    )}
-                  </td>
-                  <td className="py-4 px-6">
-                    <p className="text-lg font-bold text-gray-900">{employee.salary.toLocaleString()} MGA</p>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      employee.status === 'Actif' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {employee.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center space-x-2">
-                      <button 
-                        onClick={() => handleViewEmployee(employee)}
-                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Voir les détails"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleEditClick(employee)}
-                        className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                        title="Modifier"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteEmployee(employee.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Supprimer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+        {employees.length === 0 ? (
+          <div className="text-center py-12">
+            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun employé enregistré</h3>
+            <p className="text-gray-500 mb-6">Commencez par ajouter votre premier employé à l'école.</p>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Ajouter Employé
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left py-3 px-6 font-medium text-gray-900">EMPLOYÉ</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-900">ÂGE</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-900">POSTE</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-900">DÉPARTEMENT</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-900">EXPÉRIENCE</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-900">CONTRAT</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-900">SALAIRE</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-900">STATUT</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-900">ACTIONS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredEmployees.map((employee) => (
+                  <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white font-medium text-sm">
+                            {employee.firstName.charAt(0)}{employee.lastName.charAt(0)}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{employee.firstName} {employee.lastName}</p>
+                          <p className="text-sm text-gray-500">
+                            {employee.entryDate ? 
+                              `Depuis le ${new Date(employee.entryDate).toLocaleDateString('fr-FR')}` : 
+                              'Date d\'entrée non renseignée'
+                            }
+                          </p>
+                          <PayrollSyncIndicator
+                            employeeId={employee.id}
+                            employeeName={`${employee.firstName} ${employee.lastName}`}
+                            currentSalary={employee.salary}
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="text-sm">
+                        {employee.dateOfBirth ? (
+                          <>
+                            <p className="font-medium text-gray-900">{calculateAge(employee.dateOfBirth)} ans</p>
+                            <p className="text-xs text-gray-500">
+                              Né(e) le {new Date(employee.dateOfBirth).toLocaleDateString('fr-FR')}
+                            </p>
+                          </>
+                        ) : (
+                          <span className="text-gray-500">Non renseigné</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <p className="text-sm text-gray-900">{employee.position}</p>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        employee.department === 'Administration' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : employee.department === 'Enseignement'
+                          ? 'bg-green-100 text-green-800'
+                          : employee.department === 'Direction'
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-orange-100 text-orange-800'
+                      }`}>
+                        {employee.department}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="text-sm">
+                        {employee.entryDate ? (
+                          <>
+                            <p className="font-medium text-gray-900">{calculateExperience(employee.entryDate)}</p>
+                            <p className="text-xs text-gray-500">
+                              Depuis {new Date(employee.entryDate).toLocaleDateString('fr-FR')}
+                            </p>
+                          </>
+                        ) : (
+                          <span className="text-gray-500">Non renseigné</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      {employee.contractType ? (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          employee.contractType === 'FRAM' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : employee.contractType === 'CDI'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-purple-100 text-purple-800'
+                        }`}>
+                          {employee.contractType}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500 text-sm">Non renseigné</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-6">
+                      <p className="text-lg font-bold text-gray-900">{employee.salary.toLocaleString()} MGA</p>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        employee.status === 'active' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {employee.status === 'active' ? 'Actif' : 'Inactif'}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-2">
+                        <button 
+                          onClick={() => handleViewEmployee(employee)}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Voir les détails"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleEditClick(employee)}
+                          disabled={updating}
+                          className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                          title="Modifier"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteEmployee(employee.id)}
+                          disabled={deleting}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Statistics */}
@@ -405,8 +509,8 @@ export function HumanResources() {
           <EmployeeForm
             onSubmit={handleEditEmployee}
             onCancel={() => {
-              setShowEditForm(false);
-              setSelectedEmployee(null);
+      setShowEditForm(false);
+      setSelectedEmployee(null);
             }}
             initialData={selectedEmployee}
           />
@@ -593,7 +697,7 @@ export function HumanResources() {
               <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">Salaire de base:</span>
-                  <span className="text-lg font-bold text-blue-600">{selectedEmployee.salary.toLocaleString()} MGA</span>
+                  <span className="text-lg font-bold text-blue-600">{selectedEmployee.salary.toLocaleString()} Ar</span>
                 </div>
                 
                 <div className="border-t border-gray-300 pt-2">
@@ -602,19 +706,19 @@ export function HumanResources() {
                 
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">CNAPS (13%):</span>
-                  <span className="text-sm font-medium text-red-600">-{Math.round(selectedEmployee.salary * 0.13).toLocaleString()} MGA</span>
+                  <span className="text-sm font-medium text-red-600">-{Math.round(selectedEmployee.salary * 0.13).toLocaleString()} Ar</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">OSTIE (5%):</span>
-                  <span className="text-sm font-medium text-red-600">-{Math.round(selectedEmployee.salary * 0.05).toLocaleString()} MGA</span>
+                  <span className="text-sm font-medium text-red-600">-{Math.round(selectedEmployee.salary * 0.05).toLocaleString()} Ar</span>
                 </div>
                 
                 <div className="border-t border-gray-300 pt-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-700">Salaire imposable:</span>
                     <span className="text-sm font-bold text-gray-900">
-                      {Math.round(selectedEmployee.salary * 0.82).toLocaleString()} MGA
+                      {Math.round(selectedEmployee.salary * 0.82).toLocaleString()} Ar
                     </span>
                   </div>
                 </div>
@@ -665,7 +769,7 @@ export function HumanResources() {
                           }
                         }
                         return (salaireImposable - irsa).toLocaleString();
-                      })()} MGA
+                      })()} Ar
                     </span>
                   </div>
                 </div>

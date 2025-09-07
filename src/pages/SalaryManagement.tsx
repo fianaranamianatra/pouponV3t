@@ -79,21 +79,20 @@ export function SalaryManagement() {
   const { data: teachers, loading: teachersLoading } = useFirebaseCollection(teachersService, true);
   const { data: salaries, loading: salariesLoading, create: createSalary, update: updateSalary, remove: deleteSalary } = useFirebaseCollection<SalaryRecord>(salariesService, true);
 
-  // Combiner employés et enseignants
+  // Utiliser EXCLUSIVEMENT les employés du module Ressources Humaines
+  // Filtrer uniquement les employés actifs pour la liste déroulante
   const allEmployees = [
-    ...employees.filter(emp => emp.status === 'active'),
-    ...teachers.filter(teacher => teacher.status && teacher.status !== 'inactive').map(teacher => ({
-      id: teacher.id!,
-      firstName: teacher.firstName,
-      lastName: teacher.lastName,
-      position: teacher.subject || 'Enseignant',
-      department: 'Enseignement',
-      salary: 800000, // Salaire par défaut pour les enseignants
-      status: 'active' as const,
-      contractType: teacher.status,
-      entryDate: teacher.entryDate
-    }))
+    ...employees.filter(emp => emp.status === 'active')
   ];
+
+  console.log('📊 Employés chargés depuis Ressources Humaines:', {
+    total: employees.length,
+    actifs: allEmployees.length,
+    parDepartement: allEmployees.reduce((acc, emp) => {
+      acc[emp.department] = (acc[emp.department] || 0) + 1;
+      return acc;
+    }, {} as { [key: string]: number })
+  });
 
   // Filtrer les salaires
   const filteredSalaries = salaries.filter(salary => {
@@ -204,9 +203,12 @@ export function SalaryManagement() {
         <div>
           <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900`}>Gestion des Salaires</h1>
           <p className={`${isMobile ? 'text-sm' : ''} text-gray-600`}>Calcul automatisé des salaires avec déductions légales (CNAPS, OSTIE, IRSA)</p>
-          <div className="flex items-center space-x-2 mt-2">
+          <div className="flex items-center space-x-4 mt-2">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <span className="text-xs text-green-600 font-medium">Synchronisé avec Ressources Humaines</span>
+            <span className="text-xs text-blue-600 font-medium">
+              {allEmployees.length} employé(s) actif(s) disponible(s)
+            </span>
           </div>
         </div>
         
@@ -239,13 +241,15 @@ export function SalaryManagement() {
           </div>
           <div>
             <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-blue-900 mb-2`}>
-              Module de Calcul Automatisé des Salaires
+              Module de Calcul Automatisé des Salaires - Synchronisé avec RH
             </h3>
             <div className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-1 md:grid-cols-2 gap-4'} ${isMobile ? 'text-sm' : 'text-sm'} text-blue-800`}>
               <div>
                 <h4 className="font-medium mb-1">✅ Fonctionnalités intégrées:</h4>
                 <ul className="space-y-1 text-blue-700">
-                  <li>• Synchronisation automatique avec RH</li>
+                  <li>• <strong>Synchronisation exclusive avec RH</strong></li>
+                  <li>• Liste d'employés filtrée par statut actif</li>
+                  <li>• Organisation par département</li>
                   <li>• Calcul CNAPS et OSTIE (1% chacun)</li>
                   <li>• Calcul IRSA selon barème officiel</li>
                   <li>• Gestion des indemnités variables</li>
@@ -254,12 +258,20 @@ export function SalaryManagement() {
               <div>
                 <h4 className="font-medium mb-1">🔄 Processus automatisé:</h4>
                 <ul className="space-y-1 text-blue-700">
-                  <li>• Récupération salaire de base (RH)</li>
+                  <li>• <strong>Récupération exclusive depuis RH</strong></li>
+                  <li>• Validation des employés actifs uniquement</li>
                   <li>• Calcul temps réel des déductions</li>
                   <li>• Application barème IRSA progressif</li>
                   <li>• Génération salaire net final</li>
                 </ul>
               </div>
+            </div>
+            <div className="mt-3 p-3 bg-white border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>📋 Source des données :</strong> Module Ressources Humaines exclusivement • 
+                <strong>Employés disponibles :</strong> {allEmployees.length} actif(s) • 
+                <strong>Départements :</strong> {departments.length}
+              </p>
             </div>
           </div>
         </div>

@@ -239,35 +239,42 @@ export function SalaryCalculationForm({
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
             >
               <option value="">Sélectionner un employé</option>
-              <optgroup label="Direction">
+              <optgroup label="🏛️ Direction ({employees.filter(emp => emp.department === 'Direction').length})">
                 {employees.filter(emp => emp.department === 'Direction').map(emp => (
                   <option key={emp.id} value={emp.id}>
-                    {emp.firstName} {emp.lastName} - {emp.position}
+                    {emp.firstName} {emp.lastName} - {emp.position} ({emp.salary.toLocaleString()} Ar)
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="Administration">
+              <optgroup label="📋 Administration ({employees.filter(emp => emp.department === 'Administration').length})">
                 {employees.filter(emp => emp.department === 'Administration').map(emp => (
                   <option key={emp.id} value={emp.id}>
-                    {emp.firstName} {emp.lastName} - {emp.position}
+                    {emp.firstName} {emp.lastName} - {emp.position} ({emp.salary.toLocaleString()} Ar)
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="Enseignement">
+              <optgroup label="🎓 Enseignement ({employees.filter(emp => emp.department === 'Enseignement').length})">
                 {employees.filter(emp => emp.department === 'Enseignement').map(emp => (
                   <option key={emp.id} value={emp.id}>
-                    {emp.firstName} {emp.lastName} - {emp.position}
+                    {emp.firstName} {emp.lastName} - {emp.position} ({emp.salary.toLocaleString()} Ar)
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="Service">
+              <optgroup label="🔧 Service ({employees.filter(emp => emp.department === 'Service').length})">
                 {employees.filter(emp => emp.department === 'Service').map(emp => (
                   <option key={emp.id} value={emp.id}>
-                    {emp.firstName} {emp.lastName} - {emp.position}
+                    {emp.firstName} {emp.lastName} - {emp.position} ({emp.salary.toLocaleString()} Ar)
                   </option>
                 ))}
               </optgroup>
             </select>
+            <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-700">
+                <strong>📊 Source :</strong> Module Ressources Humaines • 
+                <strong>Filtre :</strong> Employés actifs uniquement • 
+                <strong>Total disponible :</strong> {employees.length} employé(s)
+              </p>
+            </div>
           </div>
 
           {/* Affichage automatique du poste occupé */}
@@ -291,12 +298,16 @@ export function SalaryCalculationForm({
                     {selectedEmployee.entryDate && (
                       <span>Entrée: {new Date(selectedEmployee.entryDate).toLocaleDateString('fr-FR')}</span>
                     )}
+                    <span className="text-green-600 font-medium">✅ Depuis RH</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-600">Salaire RH</p>
+                  <p className="text-sm text-green-600 font-medium">💰 Salaire RH (Synchronisé)</p>
                   <p className="text-xl font-bold text-blue-600">
                     {selectedEmployee.salary.toLocaleString()} Ar
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Mis à jour automatiquement depuis RH
                   </p>
                 </div>
               </div>

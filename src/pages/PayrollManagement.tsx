@@ -51,6 +51,15 @@ export function PayrollManagement() {
     error
   } = useFirebaseCollection<Employee>(hierarchyService, true);
 
+  console.log('📊 Employés chargés dans Gestion de Paie:', {
+    total: employees.length,
+    actifs: employees.filter(e => e.status === 'active').length,
+    parDepartement: employees.reduce((acc, emp) => {
+      acc[emp.department] = (acc[emp.department] || 0) + 1;
+      return acc;
+    }, {} as { [key: string]: number })
+  });
+
   // Charger les paramètres financiers
   useEffect(() => {
     const loadFinancialSettings = async () => {
@@ -70,7 +79,14 @@ export function PayrollManagement() {
                          employee.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          employee.position.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDepartment = selectedDepartment === '' || employee.department === selectedDepartment;
+    // Filtrer EXCLUSIVEMENT les employés actifs du module RH
     return matchesSearch && matchesDepartment && employee.status === 'active';
+  });
+
+  console.log('🔍 Employés filtrés pour affichage:', {
+    total: filteredEmployees.length,
+    recherche: searchTerm,
+    departement: selectedDepartment
   });
 
   const departments = [...new Set(employees.map(e => e.department))];
@@ -320,7 +336,16 @@ export function PayrollManagement() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Gestion de la Paie</h1>
-          <p className="text-gray-600">Calcul des salaires avec cotisations OSTIE et CNAPS</p>
+          <p className="text-gray-600">Calcul des salaires avec cotisations OSTIE et CNAPS - Synchronisé avec RH</p>
+          <div className="flex items-center space-x-4 mt-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span className="text-xs text-green-600 font-medium">
+              Source exclusive : Module Ressources Humaines
+            </span>
+            <span className="text-xs text-blue-600 font-medium">
+              {activeEmployees} employé(s) actif(s) synchronisé(s)
+            </span>
+          </div>
         </div>
         
         <div className="flex gap-2">
@@ -474,7 +499,9 @@ export function PayrollManagement() {
           <div className="text-center py-12">
             <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun employé trouvé</h3>
-            <p className="text-gray-500 mb-6">Ajoutez des employés dans le plan hiérarchique pour calculer leur paie.</p>
+            <p className="text-gray-500 mb-6">
+              Ajoutez des employés dans le module <strong>Ressources Humaines</strong> pour calculer leur paie.
+            </p>
             <button
               onClick={() => window.location.href = '/#hr'}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -485,6 +512,19 @@ export function PayrollManagement() {
           </div>
         ) : (
           <div className="overflow-x-auto">
+            <div className="bg-green-50 border-b border-green-200 px-6 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Users className="w-5 h-5 text-green-600" />
+                  <span className="text-sm font-medium text-green-800">
+                    Employés synchronisés depuis Ressources Humaines
+                  </span>
+                </div>
+                <span className="text-xs text-green-600">
+                  {filteredEmployees.length} employé(s) actif(s) affiché(s)
+                </span>
+              </div>
+            </div>
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -536,6 +576,10 @@ export function PayrollManagement() {
                           />
                           <div>
                             <p className="font-medium text-gray-900">{employee.firstName} {employee.lastName}</p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <span className="text-xs text-green-600 font-medium">Sync RH</span>
+                            </div>
                             <PayrollSyncIndicator
                               employeeId={employee.id!}
                               employeeName={`${employee.firstName} ${employee.lastName}`}
@@ -554,7 +598,10 @@ export function PayrollManagement() {
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        <p className="text-lg font-bold text-gray-900">{employee.salary.toLocaleString()} Ar</p>
+                        <div>
+                          <p className="text-lg font-bold text-gray-900">{employee.salary.toLocaleString()} Ar</p>
+                          <p className="text-xs text-green-600">Depuis RH</p>
+                        </div>
                       </td>
                       <td className="py-4 px-6">
                         <div className="text-xs space-y-1">

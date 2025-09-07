@@ -290,8 +290,21 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
 
     try {
       console.log('🚀 Soumission du formulaire employé:', formData);
+      
+      // Préparer les données avec la structure attendue par Firebase
+      const submitData = {
+        ...formData,
+        salary: parseFloat(formData.salary),
+        level: parseInt(formData.level.toString()),
+        // Assurer la compatibilité avec les autres modules
+        hireDate: formData.entryDate || new Date().toISOString().split('T')[0]
+      };
+      
+      console.log('📝 Données préparées pour Firebase:', submitData);
       await onSubmit(formData);
+      console.log('✅ Employé sauvegardé avec succès dans Firebase');
     } catch (error: any) {
+      console.error('❌ Erreur lors de la sauvegarde:', error);
       setErrors({ submit: error.message || 'Erreur lors de la soumission du formulaire' });
     } finally {
       setIsSubmitting(false);

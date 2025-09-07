@@ -1,10 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './hooks/useAuth';
+import { AuthProvider } from './hooks/useAuth.tsx';
 import AuthGuard from './components/auth/AuthGuard';
-import Header from './components/Header';
-import Sidebar from './components/Sidebar';
-import LoginPage from './pages/LoginPage';
+import { Header } from './components/Header';
+import { Sidebar } from './components/Sidebar';
+import { LoginPage } from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import StudentsFirebase from './pages/StudentsFirebase';
 import TeachersFirebase from './pages/TeachersFirebase';

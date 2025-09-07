@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Calendar, Building, DollarSign, FileText, Users, Briefcase } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Building, DollarSign, FileText, Users, Briefcase, Calculator } from 'lucide-react';
 import { useFirebaseCollection } from '../../hooks/useFirebaseCollection';
 import { teachersService } from '../../lib/firebase/firebaseService';
 
@@ -50,6 +50,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
   const [showTeacherSelector, setShowTeacherSelector] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [calculatedExperience, setCalculatedExperience] = useState(0);
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -90,14 +91,35 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
           position: selectedTeacher.subject ? `Enseignant(e) ${selectedTeacher.subject}` : 'Enseignant(e)',
           department: 'Enseignement',
           entryDate: selectedTeacher.entryDate || prev.entryDate,
-          contractType: selectedTeacher.status || prev.contractType,
-          experience: selectedTeacher.experience ? selectedTeacher.experience.toString() : prev.experience
+          contractType: selectedTeacher.status || prev.contractType
         }));
         
         console.log('✅ Formulaire rempli automatiquement avec les données de l\'enseignant');
       }
     }
   }, [selectedTeacherId, teachers]);
+
+  // Effet pour calculer automatiquement l'expérience à partir de la date d'entrée
+  useEffect(() => {
+    if (formData.entryDate) {
+      const experience = calculateExperience(formData.entryDate);
+      setCalculatedExperience(experience);
+      
+      // Mettre à jour automatiquement le champ expérience dans formData
+      setFormData(prev => ({
+        ...prev,
+        experience: experience.toString()
+      }));
+      
+      console.log(`🧮 Expérience calculée automatiquement: ${experience} ans`);
+    } else {
+      setCalculatedExperience(0);
+      setFormData(prev => ({
+        ...prev,
+        experience: '0'
+      }));
+    }
+  }, [formData.entryDate]);
 
   // Calculate age from date of birth
   const calculateAge = (dateOfBirth: string): number => {
@@ -415,7 +437,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
               <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-blue-700`}>
                   <strong>💡 Astuce :</strong> Sélectionnez un enseignant existant pour remplir automatiquement 
-                  les informations personnelles et professionnelles. Vous pourrez ensuite les modifier si nécessaire.
+                  toutes les informations (nom, date de naissance, email, téléphone, poste, date d'entrée, type de contrat). 
+                  Vous pourrez ensuite les modifier si nécessaire.
                 </p>
                 {selectedTeacherId && (
                   <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-green-700 mt-1`}>
@@ -458,10 +481,38 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
               onChange={handleInputChange}
               className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
             />
-            {experience > 0 && <p className={`mt-1 ${isMobile ? 'text-sm' : 'text-xs'} text-green-600`}>Expérience: {experience} ans</p>}
+            {calculatedExperience > 0 && (
+              <p className={`mt-1 ${isMobile ? 'text-sm' : 'text-xs'} text-green-600`}>
+                <Calculator className="w-3 h-3 inline mr-1" />
+                Expérience calculée automatiquement: {calculatedExperience} ans
+              </p>
+            )}
             {selectedTeacherId && (
               <p className={`mt-1 ${isMobile ? 'text-sm' : 'text-xs'} text-blue-600`}>
                 ✅ Date d'entrée importée depuis les données enseignant
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className={`block ${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-700 mb-2`}>
+              <Calculator className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} inline mr-2`} />
+              Années d'expérience (calculé automatiquement)
+            </label>
+            <input
+              type="number"
+              name="experience"
+              value={formData.experience}
+              readOnly
+              className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed`}
+              placeholder="Calculé automatiquement"
+            />
+            <p className={`mt-1 ${isMobile ? 'text-sm' : 'text-xs'} text-gray-500`}>
+              Calculé automatiquement à partir de la date d'entrée (Date actuelle - Date d'entrée)
+            </p>
+            {selectedTeacherId && (
+              <p className={`mt-1 ${isMobile ? 'text-sm' : 'text-xs'} text-blue-600`}>
+                ✅ Expérience recalculée automatiquement depuis la date d'entrée
               </p>
             )}
           </div>
@@ -506,6 +557,11 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
               <option value="En congé">En congé</option>
               <option value="Suspendu">Suspendu</option>
             </select>
+            {selectedTeacherId && (
+              <p className={`mt-1 ${isMobile ? 'text-sm' : 'text-xs'} text-blue-600`}>
+                ✅ Statut importé depuis les données enseignant
+              </p>
+            )}
           </div>
         </div>
         
@@ -528,8 +584,9 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
                     position: '',
                     entryDate: '',
                     contractType: '',
-                    experience: ''
+                    experience: '0'
                   }));
+                  setCalculatedExperience(0);
                 }
               }}
               className={`inline-flex items-center ${isMobile ? 'px-4 py-2 text-sm' : 'px-3 py-2 text-xs'} border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors`}
@@ -542,7 +599,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
       </div>
 
       {/* Informations Calculées */}
-      {(age > 0 || experience > 0 || retirementDate) && (
+      {(age > 0 || calculatedExperience > 0 || retirementDate) && (
         <div className={`bg-purple-50 border border-purple-200 rounded-lg ${isMobile ? 'p-4' : 'p-6'}`}>
           <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-purple-900 mb-4 flex items-center`}>
             <Users className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} mr-2`} />
@@ -560,13 +617,14 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
               </div>
             )}
             
-            {experience > 0 && (
+            {calculatedExperience > 0 && (
               <div className="bg-white border border-purple-200 rounded-lg p-3">
                 <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-purple-600 font-medium`}>Expérience</p>
-                <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-purple-800`}>{experience} ans</p>
-                {selectedTeacherId && (
-                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-blue-600 mt-1`}>Depuis enseignant</p>
-                )}
+                <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-purple-800`}>{calculatedExperience} ans</p>
+                <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-green-600 mt-1`}>
+                  <Calculator className="w-3 h-3 inline mr-1" />
+                  Calculé automatiquement
+                </p>
               </div>
             )}
             
@@ -617,6 +675,24 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
                           </div>
                         </div>
                       )}
+                      <div className="md:col-span-2">
+                        <div className="bg-green-50 border border-green-200 rounded p-3">
+                          <h5 className="font-medium text-green-800 text-sm mb-2">✅ Données Automatiquement Remplies</h5>
+                          <div className="grid grid-cols-2 gap-2 text-xs text-green-700">
+                            <div>• Nom et prénom</div>
+                            <div>• Date de naissance</div>
+                            <div>• Email</div>
+                            <div>• Téléphone</div>
+                            <div>• Poste (généré)</div>
+                            <div>• Date d'entrée</div>
+                            <div>• Type de contrat</div>
+                            <div>• Statut</div>
+                          </div>
+                          <p className="text-green-600 text-xs mt-2 font-medium">
+                            L'expérience est recalculée automatiquement à partir de la date d'entrée.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );

@@ -109,16 +109,4 @@ export const feesService = new FirebaseService('fees');
 export const reportsService = new FirebaseService('reports');
 export const hierarchyService = new FirebaseService('hierarchy');
 
-// Service pour la gestion des salaires
-export const salariesService = new FirebaseService('salaries');
-
-// Service pour la gestion des transactions financières
-export const transactionsService = new FirebaseService('transactions');
-
-// Service pour les paramètres d'intégration financière
-export const financialSettingsService = new FirebaseService('financial_settings');
-
-// Service pour les logs d'intégration
-export const integrationLogsService = new FirebaseService('integration_logs');
-
 export default FirebaseService;

@@ -3,12 +3,8 @@ import { Search, Plus, Filter, CreditCard, DollarSign, AlertTriangle, CheckCircl
 import { Modal } from '../components/Modal';
 import { PaymentForm } from '../components/forms/PaymentForm';
 import { Avatar } from '../components/Avatar';
-import { TransactionSyncIndicator } from '../components/financial/TransactionSyncIndicator';
-import { PaymentDashboard } from '../components/ecolage/PaymentDashboard';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
-import { useEcolageSync } from '../hooks/useEcolageSync';
 import { feesService, studentsService, classesService } from '../lib/firebase/firebaseService';
-import { FinancialIntegrationService } from '../lib/services/financialIntegrationService';
 
 interface Payment {
   id?: string;
@@ -54,7 +50,6 @@ export function EcolageFirebase() {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('');
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
-  const [showDashboard, setShowDashboard] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   React.useEffect(() => {
@@ -66,9 +61,6 @@ export function EcolageFirebase() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
-  // Hook de synchronisation globale Écolage
-  const ecolageSyncData = useEcolageSync();
 
   // Hook Firebase avec synchronisation temps réel
   const {
@@ -147,24 +139,6 @@ export function EcolageFirebase() {
       const paymentId = await create(paymentData);
       console.log('✅ Paiement créé avec l\'ID:', paymentId);
       
-      // Créer automatiquement une transaction financière via le service d'intégration
-      try {
-        const result = await FinancialIntegrationService.createEcolageTransaction({
-          ...paymentData,
-          id: paymentId
-        });
-        
-        if (result.success) {
-          console.log('✅ Transaction financière créée automatiquement avec l\'ID:', result.transactionId);
-          console.log('🔄 Synchronisation automatique avec profils étudiants activée');
-        } else {
-          console.warn('⚠️ Erreur lors de la création de la transaction automatique:', result.error);
-        }
-      } catch (transactionError) {
-        console.warn('⚠️ Erreur lors de la création de la transaction automatique:', transactionError);
-        // Ne pas bloquer le processus principal si la transaction échoue
-      }
-      
       setShowAddForm(false);
       
       // Message de succès
@@ -188,23 +162,6 @@ export function EcolageFirebase() {
         
         await update(selectedPayment.id, updateData);
         console.log('✅ Paiement modifié avec succès');
-        
-        // Synchroniser avec les transactions financières
-        try {
-          // Si le statut change vers "paid", créer une transaction
-          if (updateData.status === 'paid' && selectedPayment.status !== 'paid') {
-            const result = await FinancialIntegrationService.createEcolageTransaction({
-              ...updateData,
-              id: selectedPayment.id
-            });
-            
-            if (result.success) {
-              console.log('✅ Transaction financière créée lors de la modification');
-            }
-          }
-        } catch (syncError) {
-          console.warn('⚠️ Erreur lors de la synchronisation:', syncError);
-        }
         
         setShowEditForm(false);
         setSelectedPayment(null);
@@ -282,11 +239,6 @@ export function EcolageFirebase() {
         <div>
           <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900`}>Gestion de l'Écolage</h1>
           <p className={`${isMobile ? 'text-sm' : ''} text-gray-600`}>Suivi des paiements et frais scolaires</p>
-          {!ecolageSyncData.loading && (
-            <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-blue-600 mt-1`}>
-              🔄 Synchronisé en temps réel • Dernière MAJ: {ecolageSyncData.lastUpdated.toLocaleTimeString('fr-FR')}
-            </p>
-          )}
         </div>
         
         <div className={`flex ${isMobile ? 'flex-col gap-2' : 'gap-2'}`}>
@@ -296,13 +248,6 @@ export function EcolageFirebase() {
           >
             <AlertTriangle className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
             Rappels
-          </button>
-          <button 
-            onClick={() => setShowDashboard(true)}
-            className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors`}
-          >
-            <BarChart3 className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
-            Tableau de Bord
           </button>
           <button 
             onClick={handleExport}
@@ -648,16 +593,6 @@ export function EcolageFirebase() {
             </div>
           </div>
         )}
-      </Modal>
-
-      {/* Payment Dashboard Modal */}
-      <Modal
-        isOpen={showDashboard}
-        onClose={() => setShowDashboard(false)}
-        title="Tableau de Bord des Paiements"
-        size={isMobile ? "xl" : "xl"}
-      >
-        <PaymentDashboard />
       </Modal>
     </div>
   );

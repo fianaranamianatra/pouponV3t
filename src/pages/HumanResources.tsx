@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { Search, Plus, Filter, Edit, Trash2, Eye, Users, DollarSign, UserCheck, Building, User, Calendar, Briefcase, Clock, Calculator } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { EmployeeForm } from '../components/forms/EmployeeForm';
-import { PayrollSyncIndicator } from '../components/payroll/PayrollSyncIndicator';
-import { usePayrollSalarySync } from '../hooks/usePayrollSalarySync';
 import { Avatar } from '../components/Avatar';
 
 interface Employee {
@@ -116,7 +114,6 @@ const calculateExperience = (entryDate: string): string => {
 };
 
 export function HumanResources() {
-  const payrollSyncData = usePayrollSalarySync();
   const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -278,12 +275,6 @@ export function HumanResources() {
                             'Date d\'entrée non renseignée'
                           }
                         </p>
-                        <PayrollSyncIndicator
-                          employeeId={employee.id}
-                          employeeName={`${employee.firstName} ${employee.lastName}`}
-                          currentSalary={employee.salary}
-                          className="mt-1"
-                        />
                       </div>
                     </div>
                   </td>

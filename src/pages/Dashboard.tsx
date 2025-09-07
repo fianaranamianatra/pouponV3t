@@ -1,11 +1,5 @@
 import React from 'react';
-import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCircle, AlertTriangle, Plus, DollarSign, Zap, Activity, Calculator } from 'lucide-react';
-// import { DataInitializer } from '../components/admin/DataInitializer';
-import { FinancialSyncStatus } from '../components/financial/FinancialSyncStatus';
-import { PaymentAlerts } from '../components/ecolage/PaymentAlerts';
-import { EcolageStudentSync } from '../components/ecolage/EcolageStudentSync';
-import { GlobalSyncStatus } from '../components/sync/GlobalSyncStatus';
-import { PayrollSalarySyncPanel } from '../components/payroll/PayrollSalarySyncPanel';
+import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCircle, AlertTriangle, Plus, DollarSign } from 'lucide-react';
 
 const stats = [
   {
@@ -288,47 +282,6 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Financial Sync Status */}
-      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
-        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'}`}>État de Synchronisation Financière</h2>
-        <FinancialSyncStatus compact={false} showActions={true} />
-      </div>
-
-      {/* Payment Alerts */}
-      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
-        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'} flex items-center`}>
-          <DollarSign className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-red-600`} />
-          Alertes de Paiement
-        </h2>
-        <PaymentAlerts />
-      </div>
-
-      {/* Synchronisation Écolage-Profils */}
-      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
-        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'} flex items-center`}>
-          <Zap className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-green-600`} />
-          Synchronisation Écolage ↔ Profils Étudiants
-        </h2>
-        <EcolageStudentSync />
-      </div>
-
-      {/* Statut de Synchronisation Globale */}
-      {/* Synchronisation Paie ↔ Salaires */}
-      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
-        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'} flex items-center`}>
-          <Calculator className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-purple-600`} />
-          Synchronisation Paie ↔ Salaires
-        </h2>
-        <PayrollSalarySyncPanel compact={false} />
-      </div>
-
-      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
-        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'} flex items-center`}>
-          <Activity className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-purple-600`} />
-          Statut de Synchronisation Globale
-        </h2>
-        <GlobalSyncStatus />
-      </div>
     </div>
   );
 }

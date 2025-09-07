@@ -41,6 +41,9 @@ export function PaymentAlerts({ className = '' }: PaymentAlertsProps) {
     const today = new Date();
     const overdueList: OverduePayment[] = [];
 
+    if (students.length === 0 || payments.length === 0) {
+      return [];
+    }
     students.forEach(student => {
       const studentPayments = payments.filter(p => 
         p.studentName === `${student.firstName} ${student.lastName}`

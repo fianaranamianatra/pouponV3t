@@ -29,7 +29,7 @@ export function useStudentPayments(studentName: string, studentClass: string) {
   });
 
   useEffect(() => {
-    if (!studentName) {
+    if (!studentName || !studentName.trim()) {
       setPaymentData(prev => ({ ...prev, loading: false }));
       return;
     }

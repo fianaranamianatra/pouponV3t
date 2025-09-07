@@ -20,6 +20,11 @@ export function FinancialIntegrationPanel() {
   const [isRepairing, setIsRepairing] = useState(false);
 
   const handleValidateConsistency = async () => {
+    if (!summary || summary.transactionsCount === 0) {
+      alert('ℹ️ Aucune donnée financière à valider');
+      return;
+    }
+    
     setIsValidating(true);
     try {
       const result = await validateConsistency();

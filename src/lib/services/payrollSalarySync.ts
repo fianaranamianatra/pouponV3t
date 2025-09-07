@@ -39,6 +39,25 @@ export class PayrollSalarySyncService {
       const employees = await hierarchyService.getAll();
       const salaryRecords = await salariesService.getAll();
       
+      // Si aucun employé, initialiser quand même la structure
+      if (employees.length === 0) {
+        this.syncStatus = {
+          isActive: true,
+          activeConnections: 0,
+          lastSyncTime: new Date(),
+          totalSyncedRecords: 0,
+          errors: []
+        };
+        
+        console.log('ℹ️ Aucun employé trouvé, synchronisation initialisée en mode vide');
+        
+        return {
+          success: true,
+          syncedRecords: 0,
+          errors: []
+        };
+      }
+      
       let syncedRecords = 0;
       const errors: string[] = [];
 

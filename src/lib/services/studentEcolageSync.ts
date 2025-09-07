@@ -138,6 +138,16 @@ export class StudentEcolageSyncService {
       const students = await studentsService.getAll();
       const allPayments = await feesService.getAll();
       
+      // Si aucun étudiant, retourner un résultat vide mais valide
+      if (students.length === 0) {
+        console.log('ℹ️ Aucun étudiant trouvé, synchronisation initialisée en mode vide');
+        return {
+          success: true,
+          syncedRecords: 0,
+          errors: []
+        };
+      }
+      
       let syncedRecords = 0;
       const errors: string[] = [];
 

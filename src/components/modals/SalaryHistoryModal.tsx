@@ -22,7 +22,7 @@ interface SalaryHistoryModalProps {
 }
 
 export function SalaryHistoryModal({ isOpen, onClose, employee, history }: SalaryHistoryModalProps) {
-  const sortedHistory = [...history].sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+  const sortedHistory = history ? [...history].sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime()) : [];
 
   return (
     <Modal

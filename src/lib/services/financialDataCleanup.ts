@@ -158,7 +158,7 @@ export class FinancialDataCleanupService {
         const transactionsSnapshot = await getDocs(collection(db, 'transactions'));
         counts.transactions = transactionsSnapshot.size;
       } catch (error) {
-        console.log('Collection transactions non trouvée');
+        // Collection vide ou non créée, c'est normal
       }
 
       // Compter les paiements d'écolage
@@ -166,7 +166,7 @@ export class FinancialDataCleanupService {
         const feesSnapshot = await getDocs(collection(db, 'fees'));
         counts.fees = feesSnapshot.size;
       } catch (error) {
-        console.log('Collection fees non trouvée');
+        // Collection vide ou non créée, c'est normal
       }
 
       // Compter les salaires
@@ -174,7 +174,7 @@ export class FinancialDataCleanupService {
         const salariesSnapshot = await getDocs(collection(db, 'salaries'));
         counts.salaries = salariesSnapshot.size;
       } catch (error) {
-        console.log('Collection salaries non trouvée');
+        // Collection vide ou non créée, c'est normal
       }
 
       // Compter les bulletins de paie
@@ -182,12 +182,12 @@ export class FinancialDataCleanupService {
         const payrollSnapshot = await getDocs(collection(db, 'payroll'));
         counts.payroll = payrollSnapshot.size;
       } catch (error) {
-        console.log('Collection payroll non trouvée');
+        // Collection vide ou non créée, c'est normal
       }
 
       return counts;
     } catch (error) {
-      console.error('Erreur lors du comptage des données:', error);
+      console.warn('Erreur lors du comptage des données (normal si base vide):', error);
       return { transactions: 0, fees: 0, salaries: 0, payroll: 0 };
     }
   }

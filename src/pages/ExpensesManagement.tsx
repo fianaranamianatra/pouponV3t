@@ -31,65 +31,7 @@ interface BudgetCategory {
   status: 'good' | 'warning' | 'danger';
 }
 
-const mockExpenses: Expense[] = [
-  {
-    id: '1',
-    category: 'Charges Fixes',
-    subcategory: 'Électricité',
-    description: 'Facture électricité - Novembre 2024',
-    amount: 450000,
-    type: 'fixed',
-    frequency: 'monthly',
-    dueDate: '2024-11-30',
-    paymentDate: '2024-11-25',
-    status: 'paid',
-    supplier: 'JIRAMA',
-    reference: 'EXP-2024-001',
-    budget: 500000
-  },
-  {
-    id: '2',
-    category: 'Charges Variables',
-    subcategory: 'Fournitures Scolaires',
-    description: 'Achat cahiers et stylos',
-    amount: 280000,
-    type: 'variable',
-    frequency: 'quarterly',
-    dueDate: '2024-12-15',
-    status: 'pending',
-    supplier: 'Papeterie Centrale',
-    reference: 'EXP-2024-002',
-    budget: 300000
-  },
-  {
-    id: '3',
-    category: 'Charges Fixes',
-    subcategory: 'Salaires Personnel',
-    description: 'Salaires personnel administratif - Novembre',
-    amount: 2500000,
-    type: 'fixed',
-    frequency: 'monthly',
-    dueDate: '2024-11-30',
-    paymentDate: '2024-11-28',
-    status: 'paid',
-    reference: 'EXP-2024-003',
-    budget: 2500000
-  },
-  {
-    id: '4',
-    category: 'Charges Exceptionnelles',
-    subcategory: 'Maintenance',
-    description: 'Réparation système électrique',
-    amount: 850000,
-    type: 'exceptional',
-    frequency: 'one-time',
-    dueDate: '2024-12-01',
-    status: 'overdue',
-    supplier: 'Électricité Pro',
-    reference: 'EXP-2024-004',
-    budget: 1000000
-  }
-];
+const mockExpenses: Expense[] = [];
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -118,7 +60,7 @@ const typeLabels = {
 };
 
 export function ExpensesManagement() {
-  const [expenses, setExpenses] = useState<Expense[]>(mockExpenses);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedType, setSelectedType] = useState('');

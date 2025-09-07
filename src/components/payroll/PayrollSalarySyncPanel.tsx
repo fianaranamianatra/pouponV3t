@@ -311,7 +311,7 @@ export function PayrollSalarySyncPanel({ className = '', compact = false }: Payr
           )}
 
           {/* Calculation Result */}
-          {calculationResult && (
+          {calculationResult && calculationResult.calculated > 0 && (
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
               <h4 className="font-medium text-purple-800 mb-3">Résultat du Dernier Calcul Global</h4>
               <div className="grid grid-cols-3 gap-4 text-center">

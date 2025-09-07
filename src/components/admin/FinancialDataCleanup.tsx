@@ -22,7 +22,12 @@ export function FinancialDataCleanup({ className = '' }: FinancialDataCleanupPro
 
   // Charger les compteurs au montage
   useEffect(() => {
-    loadDataCounts();
+    // Délai pour éviter les appels trop fréquents au montage
+    const timer = setTimeout(() => {
+      loadDataCounts();
+    }, 1000);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const loadDataCounts = async () => {

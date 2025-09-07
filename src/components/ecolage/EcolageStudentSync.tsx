@@ -20,7 +20,7 @@ export function EcolageStudentSync({ className = '' }: EcolageStudentSyncProps) 
 
   // Calculer les statistiques de synchronisation
   useEffect(() => {
-    if (students.length > 0 && !ecolageSyncData.loading) {
+    if (students.length > 0 && !ecolageSyncData.loading && ecolageSyncData.recentPayments.length > 0) {
       const studentsWithPayments = students.filter(student => {
         const studentName = `${student.firstName} ${student.lastName}`;
         return ecolageSyncData.recentPayments.some(p => p.studentName === studentName);
@@ -35,6 +35,14 @@ export function EcolageStudentSync({ className = '' }: EcolageStudentSyncProps) 
         studentsWithoutPayments,
         averagePaymentRate,
         totalSyncedRecords: ecolageSyncData.totalPayments
+      });
+    } else {
+      // Réinitialiser les stats si pas de données
+      setSyncStats({
+        studentsWithPayments: 0,
+        studentsWithoutPayments: students.length,
+        averagePaymentRate: 0,
+        totalSyncedRecords: 0
       });
     }
   }, [students, ecolageSyncData]);

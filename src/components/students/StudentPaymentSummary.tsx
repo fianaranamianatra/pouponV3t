@@ -90,11 +90,9 @@ export function StudentPaymentSummary({
   // Logique d'affichage conditionnel
   if (conditionalDisplay) {
     // Ne rien afficher si aucun paiement n'existe
-    if (paymentData.payments.length === 0) {
+    if (paymentData.payments.length === 0 || paymentData.totalPaid === 0) {
       return (
-        <div className="text-xs text-gray-400 italic">
-          Aucun paiement
-        </div>
+        null
       );
     }
 

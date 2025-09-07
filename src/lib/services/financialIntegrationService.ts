@@ -181,6 +181,17 @@ export class FinancialIntegrationService {
   }> {
     try {
       const allTransactions = await transactionsService.getAll();
+      
+      // Si aucune transaction, retourner des valeurs par défaut
+      if (allTransactions.length === 0) {
+        return {
+          totalEcolages: 0,
+          totalSalaires: 0,
+          soldeNet: 0,
+          transactionsCount: 0
+        };
+      }
+      
       const validTransactions = allTransactions.filter(t => t.status === 'Validé');
       
       const totalEcolages = validTransactions
@@ -244,6 +255,14 @@ export class FinancialIntegrationService {
       // Vérifier les écolages sans transactions
       const allPayments = await feesService.getAll();
       const allTransactions = await transactionsService.getAll();
+      
+      // Si aucune donnée, considérer comme cohérent
+      if (allPayments.length === 0 && allTransactions.length === 0) {
+        return {
+          isConsistent: true,
+          issues: []
+        };
+      }
       
       const paymentsWithoutTransactions = allPayments.filter(payment => {
         return !allTransactions.some(t => 

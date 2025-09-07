@@ -80,28 +80,7 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
   const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
   // Mock salary history data
-  const mockSalaryHistory = [
-    {
-      id: '1',
-      employeeId: selectedEmployee?.id || '',
-      previousSalary: 750000,
-      newSalary: 800000,
-      changeReason: 'Augmentation annuelle',
-      effectiveDate: '2024-01-01',
-      modifiedBy: 'Admin LES POUPONS',
-      createdAt: new Date('2024-01-01')
-    },
-    {
-      id: '2',
-      employeeId: selectedEmployee?.id || '',
-      previousSalary: 700000,
-      newSalary: 750000,
-      changeReason: 'Promotion',
-      effectiveDate: '2023-09-01',
-      modifiedBy: 'Directeur',
-      createdAt: new Date('2023-09-01')
-    }
-  ];
+  const mockSalaryHistory: any[] = [];
 
   // Calculate salary components when values change
   useEffect(() => {

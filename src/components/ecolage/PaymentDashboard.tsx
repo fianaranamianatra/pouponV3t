@@ -52,6 +52,10 @@ export function PaymentDashboard({ selectedClass = '', academicYear = '2024-2025
   }, [students, payments, academicYear]);
 
   const calculateClassSummaries = (): ClassPaymentSummary[] => {
+    if (students.length === 0 || payments.length === 0) {
+      return [];
+    }
+    
     const classNames = [...new Set(students.map(s => s.class))];
     
     return classNames.map(className => {

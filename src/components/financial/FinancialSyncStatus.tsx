@@ -27,7 +27,7 @@ export function FinancialSyncStatus({ compact = false, showActions = true }: Fin
 
   useEffect(() => {
     // Validation automatique au chargement
-    if (summary && !lastValidation) {
+    if (summary && !lastValidation && summary.transactionsCount > 0) {
       handleQuickValidation();
     }
   }, [summary]);

@@ -34,10 +34,10 @@ export class BidirectionalSyncService {
       
       this.syncStatus = {
         isActive: true,
-        activeConnections: ecolageResult.syncedRecords + payrollResult.syncedRecords,
+        activeConnections: (ecolageResult?.syncedRecords || 0) + (payrollResult?.syncedRecords || 0),
         lastSyncTime: new Date(),
-        totalSyncedRecords: ecolageResult.syncedRecords + payrollResult.syncedRecords,
-        errors: [...ecolageResult.errors, ...payrollResult.errors]
+        totalSyncedRecords: (ecolageResult?.syncedRecords || 0) + (payrollResult?.syncedRecords || 0),
+        errors: [...(ecolageResult?.errors || []), ...(payrollResult?.errors || [])]
       };
 
       console.log('✅ Synchronisations bidirectionnelles initialisées:', this.syncStatus);

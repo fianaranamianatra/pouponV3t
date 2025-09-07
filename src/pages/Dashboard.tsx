@@ -11,8 +11,8 @@ import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
 const stats = [
   {
     label: 'Total Élèves',
-    value: '1,247',
-    change: '+12%',
+    value: '0',
+    change: '0%',
     icon: Users,
     color: 'blue',
     bgColor: 'bg-blue-50',
@@ -20,8 +20,8 @@ const stats = [
   },
   {
     label: 'Enseignants',
-    value: '89',
-    change: '+3%',
+    value: '0',
+    change: '0%',
     icon: GraduationCap,
     color: 'emerald',
     bgColor: 'bg-emerald-50',
@@ -29,8 +29,8 @@ const stats = [
   },
   {
     label: 'Classes Actives',
-    value: '42',
-    change: '+5%',
+    value: '0',
+    change: '0%',
     icon: BookOpen,
     color: 'orange',
     bgColor: 'bg-orange-50',
@@ -38,8 +38,8 @@ const stats = [
   },
   {
     label: 'Taux de Réussite',
-    value: '94.2%',
-    change: '+2.1%',
+    value: '0%',
+    change: '0%',
     icon: TrendingUp,
     color: 'green',
     bgColor: 'bg-green-50',
@@ -47,71 +47,9 @@ const stats = [
   }
 ];
 
-const recentActivities = [
-  {
-    id: 1,
-    type: 'student',
-    message: 'Nouvel élève inscrit: Marie Dubois',
-    time: 'Il y a 2 heures',
-    icon: Users,
-    color: 'text-blue-600'
-  },
-  {
-    id: 2,
-    type: 'grade',
-    message: 'Notes de mathématiques publiées pour la 6ème A',
-    time: 'Il y a 4 heures',
-    icon: Award,
-    color: 'text-green-600'
-  },
-  {
-    id: 3,
-    type: 'communication',
-    message: 'Nouveau message des parents - Classe 5ème B',
-    time: 'Il y a 6 heures',
-    icon: MessageCircle,
-    color: 'text-purple-600'
-  },
-  {
-    id: 4,
-    type: 'alert',
-    message: 'Absence non justifiée: Jean Martin',
-    time: 'Il y a 8 heures',
-    icon: AlertTriangle,
-    color: 'text-orange-600'
-  }
-];
+const recentActivities: any[] = [];
 
-const upcomingEvents = [
-  {
-    id: 1,
-    title: 'Réunion Parents-Professeurs',
-    date: '25 Nov 2024',
-    time: '14:00 - 17:00',
-    type: 'meeting'
-  },
-  {
-    id: 2,
-    title: 'Évaluation Trimestrielle',
-    date: '28 Nov 2024',
-    time: '08:00 - 12:00',
-    type: 'exam'
-  },
-  {
-    id: 3,
-    title: 'Formation Enseignants',
-    date: '2 Déc 2024',
-    time: '13:00 - 16:00',
-    type: 'training'
-  },
-  {
-    id: 4,
-    title: 'Spectacle de Fin d\'Année',
-    date: '15 Déc 2024',
-    time: '19:00 - 21:00',
-    type: 'event'
-  }
-];
+const upcomingEvents: any[] = [];
 
 export function Dashboard() {
   const [isMobile, setIsMobile] = React.useState(false);
@@ -204,20 +142,28 @@ export function Dashboard() {
           </div>
           
           <div className="space-y-4">
-            {recentActivities.map((activity) => {
-              const Icon = activity.icon;
-              return (
-                <div key={activity.id} className={`flex items-start space-x-3 ${isMobile ? 'p-2' : 'p-3'} rounded-lg hover:bg-gray-50 transition-colors cursor-pointer`}>
-                  <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0`}>
-                    <Icon className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${activity.color}`} />
+            {recentActivities.length === 0 ? (
+              <div className="text-center py-8">
+                <Activity className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">Aucune activité récente</p>
+                <p className="text-gray-400 text-xs">Les activités apparaîtront ici une fois que vous commencerez à utiliser l'application</p>
+              </div>
+            ) : (
+              recentActivities.map((activity) => {
+                const Icon = activity.icon;
+                return (
+                  <div key={activity.id} className={`flex items-start space-x-3 ${isMobile ? 'p-2' : 'p-3'} rounded-lg hover:bg-gray-50 transition-colors cursor-pointer`}>
+                    <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0`}>
+                      <Icon className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${activity.color}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-900`}>{activity.message}</p>
+                      <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500`}>{activity.time}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-900`}>{activity.message}</p>
-                    <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500`}>{activity.time}</p>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -229,20 +175,29 @@ export function Dashboard() {
           </div>
           
           <div className="space-y-4">
-            {upcomingEvents.map((event) => (
-              <div key={event.id} className={`border-l-4 border-blue-500 ${isMobile ? 'pl-3 py-2' : 'pl-4 py-2'} hover:bg-gray-50 transition-colors cursor-pointer`}>
-                <h3 className={`font-medium text-gray-900 ${isMobile ? 'text-xs' : 'text-sm'}`}>{event.title}</h3>
-                <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500`}>{event.date}</p>
-                <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-blue-600 font-medium`}>{event.time}</p>
+            {upcomingEvents.length === 0 ? (
+              <div className="text-center py-8">
+                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">Aucun événement programmé</p>
+                <p className="text-gray-400 text-xs">Ajoutez des événements pour les voir apparaître ici</p>
               </div>
-            ))}
+            ) : (
+              upcomingEvents.map((event) => (
+                <div key={event.id} className={`border-l-4 border-blue-500 ${isMobile ? 'pl-3 py-2' : 'pl-4 py-2'} hover:bg-gray-50 transition-colors cursor-pointer`}>
+                  <h3 className={`font-medium text-gray-900 ${isMobile ? 'text-xs' : 'text-sm'}`}>{event.title}</h3>
+                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500`}>{event.date}</p>
+                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-blue-600 font-medium`}>{event.time}</p>
+                </div>
+              ))
+            )}
           </div>
 
           <button 
             onClick={() => handleViewAll('calendar')}
             className={`w-full mt-4 ${isMobile ? 'px-3 py-2.5' : 'px-4 py-2'} bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors ${isMobile ? 'text-sm' : 'text-sm'} font-medium`}
+            disabled={upcomingEvents.length === 0}
           >
-            Voir le calendrier complet
+            {upcomingEvents.length === 0 ? 'Aucun événement' : 'Voir le calendrier complet'}
           </button>
         </div>
       </div>

@@ -28,6 +28,17 @@ export function useEcolageSync() {
   useEffect(() => {
     console.log('🔄 Initialisation de la synchronisation globale Écolage');
 
+    // Initialiser avec des valeurs par défaut
+    setSyncData({
+      totalPayments: 0,
+      totalAmount: 0,
+      recentPayments: [],
+      paymentsByClass: {},
+      paymentsByStatus: {},
+      lastUpdated: new Date(),
+      loading: true,
+      error: null
+    });
     // Écouter tous les changements dans la collection fees
     const collectionRef = feesService.getCollectionRef();
     

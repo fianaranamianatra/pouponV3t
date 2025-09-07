@@ -23,50 +23,7 @@ interface Employee {
   phone: string;
 }
 
-const mockEmployees: Employee[] = [
-  {
-    id: '1',
-    firstName: 'Marie',
-    lastName: 'Rakoto',
-    dateOfBirth: '1985-03-15',
-    position: 'Directrice',
-    department: 'Administration',
-    salary: 800000,
-    status: 'Actif',
-    entryDate: '2020-01-15',
-    contractType: 'CDI',
-    email: 'marie.rakoto@lespoupons.mg',
-    phone: '+261 34 12 345 67'
-  },
-  {
-    id: '2',
-    firstName: 'Jean',
-    lastName: 'Rabe',
-    dateOfBirth: '1978-07-22',
-    position: 'Professeur de Mathématiques',
-    department: 'Enseignement',
-    salary: 450000,
-    status: 'Actif',
-    entryDate: '2021-09-01',
-    contractType: 'FRAM',
-    email: 'jean.rabe@lespoupons.mg',
-    phone: '+261 34 23 456 78'
-  },
-  {
-    id: '3',
-    firstName: 'Sophie',
-    lastName: 'Andry',
-    dateOfBirth: '1990-12-10',
-    position: 'Secrétaire',
-    department: 'Administration',
-    salary: 320000,
-    status: 'Actif',
-    entryDate: '2019-03-20',
-    contractType: 'CDD',
-    email: 'sophie.andry@lespoupons.mg',
-    phone: '+261 34 34 567 89'
-  }
-];
+const mockEmployees: Employee[] = [];
 
 // Fonction pour calculer l'âge
 const calculateAge = (dateOfBirth: string): number => {
@@ -117,7 +74,7 @@ const calculateExperience = (entryDate: string): string => {
 
 export function HumanResources() {
   const payrollSyncData = usePayrollSalarySync();
-  const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);

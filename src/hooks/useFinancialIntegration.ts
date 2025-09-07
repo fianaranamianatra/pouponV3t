@@ -89,7 +89,12 @@ export function useFinancialIntegration() {
 
   // Charger le résumé au montage du composant
   useEffect(() => {
-    loadSummary();
+    // Délai pour éviter les appels trop fréquents
+    const timer = setTimeout(() => {
+      loadSummary();
+    }, 1500);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   return {

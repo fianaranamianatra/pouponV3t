@@ -137,30 +137,9 @@ export function PayrollManagement() {
       const calculations = await PayrollService.calculateBulkPayroll(employeesToCalculate);
       console.log('✅ Calculs terminés avec succès');
       
-      // Créer automatiquement les transactions financières pour chaque salaire
-      try {
-        for (const calculation of calculations) {
-          const salaryRecord = {
-            id: calculation.employeeId,
-            employeeName: calculation.employeeName,
-            position: calculation.position,
-            department: calculation.department,
-            netSalary: calculation.calculation.netSalary,
-            employeeId: calculation.employeeId
-          };
-          
-          const result = await FinancialIntegrationService.createSalaryTransaction(salaryRecord);
-          if (result.success) {
-            console.log(`✅ Transaction créée pour ${calculation.employeeName}: ${result.transactionId}`);
-          } else {
-            console.warn(`⚠️ Erreur transaction pour ${calculation.employeeName}: ${result.error}`);
-          }
-        }
-        console.log('✅ Toutes les transactions de salaire ont été créées');
-      } catch (transactionError) {
-        console.warn('⚠️ Erreur lors de la création des transactions automatiques:', transactionError);
-        // Ne pas bloquer le processus principal
-      }
+      // Note: Les transactions financières sont créées automatiquement
+      // par le service PayrollSalarySyncService lors de la synchronisation
+      console.log('ℹ️ Les transactions financières seront créées automatiquement par la synchronisation');
       
       setBulkPayroll(calculations);
       setShowBulkModal(true);

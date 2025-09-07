@@ -221,15 +221,9 @@ export class PayrollSalarySyncService {
           }
         }));
 
-        // Créer automatiquement une transaction financière si nécessaire
-        try {
-          const result = await FinancialIntegrationService.createSalaryTransaction(latestSalary);
-          if (result.success) {
-            console.log(`✅ Transaction financière synchronisée pour ${employeeName}`);
-          }
-        } catch (transactionError) {
-          console.warn(`⚠️ Erreur transaction pour ${employeeName}:`, transactionError);
-        }
+        // Note: Les transactions financières sont créées uniquement
+        // lors de l'enregistrement explicite dans le module Gestion des Salaires
+        console.log(`ℹ️ Synchronisation paie terminée pour ${employeeName} (sans création de transaction automatique)`);
       }
     } catch (error) {
       console.error('❌ Erreur lors de la synchronisation employé-paie:', error);
@@ -248,6 +242,18 @@ export class PayrollSalarySyncService {
       if (employee) {
         await this.syncEmployeeWithPayroll(employee, [salaryData]);
       }
+      
+      // Créer automatiquement une transaction financière pour le nouveau salaire
+      try {
+        const result = await FinancialIntegrationService.createSalaryTransaction(salaryData);
+        if (result.success) {
+          console.log(`✅ Transaction financière créée pour le nouveau salaire: ${result.transactionId}`);
+        } else {
+          console.warn(`⚠️ Erreur lors de la création de transaction: ${result.error}`);
+        }
+      } catch (transactionError) {
+        console.warn(`⚠️ Erreur transaction pour ${salaryData.employeeName}:`, transactionError);
+      }
     } catch (error) {
       console.error('❌ Erreur lors du traitement du nouveau salaire:', error);
     }
@@ -264,6 +270,18 @@ export class PayrollSalarySyncService {
       const employee = await hierarchyService.getById(salaryData.employeeId);
       if (employee) {
         await this.syncEmployeeWithPayroll(employee, [salaryData]);
+      }
+      
+      // Mettre à jour la transaction financière liée
+      try {
+        const result = await FinancialIntegrationService.createSalaryTransaction(salaryData);
+        if (result.success) {
+          console.log(`✅ Transaction financière mise à jour pour la modification: ${result.transactionId}`);
+        } else {
+          console.warn(`⚠️ Erreur lors de la mise à jour de transaction: ${result.error}`);
+        }
+      } catch (transactionError) {
+        console.warn(`⚠️ Erreur transaction pour ${salaryData.employeeName}:`, transactionError);
       }
     } catch (error) {
       console.error('❌ Erreur lors du traitement de la modification:', error);

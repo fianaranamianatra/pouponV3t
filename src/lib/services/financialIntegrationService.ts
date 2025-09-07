@@ -18,6 +18,36 @@ export class FinancialIntegrationService {
     try {
       console.log('🔄 Création automatique de transaction pour salaire:', salaryRecord.employeeName);
       
+      // Vérifier si une transaction existe déjà pour cet employé/période
+      const existingTransactions = await transactionsService.getAll();
+      const duplicateTransaction = existingTransactions.find(t => 
+        t.relatedModule === 'salary' && 
+        t.relatedId === salaryRecord.id &&
+        t.type === 'Décaissement' &&
+        t.category === 'Salaires'
+      );
+      
+      if (duplicateTransaction) {
+        console.log('⚠️ Transaction existante trouvée, mise à jour au lieu de création:', duplicateTransaction.id);
+        
+        // Mettre à jour la transaction existante
+        const updateData = {
+          description: `Salaire ${salaryRecord.employeeName} - ${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`,
+          amount: salaryRecord.netSalary,
+          date: new Date().toISOString().split('T')[0],
+          notes: `Mis à jour automatiquement - Salaire net: ${salaryRecord.netSalary.toLocaleString()} Ar`
+        };
+        
+        await transactionsService.update(duplicateTransaction.id, updateData);
+        
+        console.log('✅ Transaction de salaire mise à jour:', duplicateTransaction.id);
+        
+        return {
+          success: true,
+          transactionId: duplicateTransaction.id
+        };
+      }
+      
       const currentDate = new Date();
       const monthYear = currentDate.toLocaleDateString('fr-FR', { 
         month: 'long', 
@@ -61,6 +91,37 @@ export class FinancialIntegrationService {
   static async createEcolageTransaction(payment: Fee): Promise<FinancialIntegrationResult> {
     try {
       console.log('🔄 Création automatique de transaction pour écolage:', payment.studentName);
+      
+      // Vérifier si une transaction existe déjà pour ce paiement
+      const existingTransactions = await transactionsService.getAll();
+      const duplicateTransaction = existingTransactions.find(t => 
+        t.relatedModule === 'ecolage' && 
+        t.relatedId === payment.id &&
+        t.type === 'Encaissement' &&
+        t.category === 'Écolages'
+      );
+      
+      if (duplicateTransaction) {
+        console.log('⚠️ Transaction existante trouvée, mise à jour au lieu de création:', duplicateTransaction.id);
+        
+        // Mettre à jour la transaction existante
+        const updateData = {
+          description: `Écolage ${payment.studentName} - ${payment.period}`,
+          amount: payment.amount,
+          date: payment.paymentDate,
+          paymentMethod: this.mapPaymentMethod(payment.paymentMethod),
+          notes: `Mis à jour automatiquement - Classe: ${payment.class}`
+        };
+        
+        await transactionsService.update(duplicateTransaction.id, updateData);
+        
+        console.log('✅ Transaction d\'écolage mise à jour:', duplicateTransaction.id);
+        
+        return {
+          success: true,
+          transactionId: duplicateTransaction.id
+        };
+      }
       
       const transactionData: Omit<Transaction, 'id'> = {
         type: 'Encaissement',
@@ -356,6 +417,117 @@ export class FinancialIntegrationService {
         repaired: 0,
         errors: [error.message]
       };
+    }
+  }
+
+  /**
+   * Vérifier et nettoyer les transactions en double pour un employé
+   */
+  static async cleanupDuplicateSalaryTransactions(employeeId: string, employeeName: string): Promise<{
+    cleaned: number;
+    errors: string[];
+  }> {
+    try {
+      console.log(`🧹 Nettoyage des transactions en double pour ${employeeName}`);
+      
+      const allTransactions = await transactionsService.getAll();
+      
+      // Grouper les transactions de salaire par employé et période
+      const salaryTransactions = allTransactions.filter(t => 
+        t.relatedModule === 'salary' && 
+        t.type === 'Décaissement' && 
+        t.category === 'Salaires' &&
+        t.description.includes(employeeName)
+      );
+      
+      if (salaryTransactions.length <= 1) {
+        console.log(`ℹ️ Aucun doublon trouvé pour ${employeeName}`);
+        return { cleaned: 0, errors: [] };
+      }
+      
+      // Garder la transaction la plus récente et supprimer les autres
+      const sortedTransactions = salaryTransactions.sort((a, b) => 
+        new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime()
+      );
+      
+      const transactionToKeep = sortedTransactions[0];
+      const transactionsToDelete = sortedTransactions.slice(1);
+      
+      let cleaned = 0;
+      const errors: string[] = [];
+      
+      for (const transaction of transactionsToDelete) {
+        try {
+          if (transaction.id) {
+            await transactionsService.delete(transaction.id);
+            cleaned++;
+            console.log(`🗑️ Transaction en double supprimée: ${transaction.id}`);
+          }
+        } catch (error: any) {
+          errors.push(`Erreur suppression ${transaction.id}: ${error.message}`);
+        }
+      }
+      
+      console.log(`✅ Nettoyage terminé pour ${employeeName}: ${cleaned} doublon(s) supprimé(s)`);
+      
+      return { cleaned, errors };
+    } catch (error: any) {
+      console.error('❌ Erreur lors du nettoyage des doublons:', error);
+      return { cleaned: 0, errors: [error.message] };
+    }
+  }
+
+  /**
+   * Nettoyer tous les doublons de transactions de salaires
+   */
+  static async cleanupAllDuplicateSalaryTransactions(): Promise<{
+    totalCleaned: number;
+    employeesProcessed: number;
+    errors: string[];
+  }> {
+    try {
+      console.log('🧹 Début du nettoyage global des doublons de transactions de salaires');
+      
+      const allTransactions = await transactionsService.getAll();
+      const salaryTransactions = allTransactions.filter(t => 
+        t.relatedModule === 'salary' && 
+        t.type === 'Décaissement' && 
+        t.category === 'Salaires'
+      );
+      
+      // Grouper par nom d'employé
+      const transactionsByEmployee = salaryTransactions.reduce((acc, transaction) => {
+        const employeeName = transaction.description.split(' - ')[0].replace('Salaire ', '');
+        if (!acc[employeeName]) {
+          acc[employeeName] = [];
+        }
+        acc[employeeName].push(transaction);
+        return acc;
+      }, {} as { [employeeName: string]: any[] });
+      
+      let totalCleaned = 0;
+      let employeesProcessed = 0;
+      const errors: string[] = [];
+      
+      for (const [employeeName, transactions] of Object.entries(transactionsByEmployee)) {
+        if (transactions.length > 1) {
+          try {
+            const result = await this.cleanupDuplicateSalaryTransactions('', employeeName);
+            totalCleaned += result.cleaned;
+            errors.push(...result.errors);
+            employeesProcessed++;
+          } catch (error: any) {
+            errors.push(`${employeeName}: ${error.message}`);
+          }
+        }
+      }
+      
+      console.log(`✅ Nettoyage global terminé: ${totalCleaned} doublon(s) supprimé(s) pour ${employeesProcessed} employé(s)`);
+      
+      return { totalCleaned, employeesProcessed, errors };
+    } catch (error: any) {
+      console.error('❌ Erreur lors du nettoyage global:', error);
+      return { totalCleaned: 0, employeesProcessed: 0, errors: [error.message] };
     }
   }
 }

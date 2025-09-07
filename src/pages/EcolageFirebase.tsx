@@ -148,22 +148,24 @@ export function EcolageFirebase() {
       const paymentId = await create(paymentData);
       console.log('✅ Paiement créé avec l\'ID:', paymentId);
       
-      // Créer automatiquement une transaction financière via le service d'intégration
-      try {
-        const result = await FinancialIntegrationService.createEcolageTransaction({
-          ...paymentData,
-          id: paymentId
-        });
-        
-        if (result.success) {
-          console.log('✅ Transaction financière créée automatiquement avec l\'ID:', result.transactionId);
-          console.log('🔄 Synchronisation automatique avec profils étudiants activée');
-        } else {
-          console.warn('⚠️ Erreur lors de la création de la transaction automatique:', result.error);
+      // Créer automatiquement une transaction financière UNIQUEMENT pour les nouveaux paiements
+      if (paymentData.status === 'paid') {
+        try {
+          const result = await FinancialIntegrationService.createEcolageTransaction({
+            ...paymentData,
+            id: paymentId
+          });
+          
+          if (result.success) {
+            console.log('✅ Transaction financière créée automatiquement avec l\'ID:', result.transactionId);
+            console.log('🔄 Synchronisation automatique avec profils étudiants activée');
+          } else {
+            console.warn('⚠️ Erreur lors de la création de la transaction automatique:', result.error);
+          }
+        } catch (transactionError) {
+          console.warn('⚠️ Erreur lors de la création de la transaction automatique:', transactionError);
+          // Ne pas bloquer le processus principal si la transaction échoue
         }
-      } catch (transactionError) {
-        console.warn('⚠️ Erreur lors de la création de la transaction automatique:', transactionError);
-        // Ne pas bloquer le processus principal si la transaction échoue
       }
       
       setShowAddForm(false);
@@ -192,15 +194,15 @@ export function EcolageFirebase() {
         
         // Synchroniser avec les transactions financières
         try {
-          // Si le statut change vers "paid", créer une transaction
-          if (updateData.status === 'paid' && selectedPayment.status !== 'paid') {
+          // Si le statut change vers "paid", créer ou mettre à jour une transaction
+          if (updateData.status === 'paid') {
             const result = await FinancialIntegrationService.createEcolageTransaction({
               ...updateData,
               id: selectedPayment.id
             });
             
             if (result.success) {
-              console.log('✅ Transaction financière créée lors de la modification');
+              console.log('✅ Transaction financière synchronisée lors de la modification');
             }
           }
         } catch (syncError) {

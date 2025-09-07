@@ -140,14 +140,40 @@ export function SalaryManagement() {
     try {
       setIsSubmitting(true);
       
+      let salaryId: string;
+      
       if (editingSalary) {
         // Mettre à jour le salaire existant
         await updateSalary(editingSalary.id!, salaryData);
+        salaryId = editingSalary.id!;
         console.log('✅ Salaire mis à jour avec succès');
       } else {
         // Créer un nouveau salaire
-        await createSalary(salaryData);
+        salaryId = await createSalary(salaryData);
         console.log('✅ Nouveau salaire créé avec succès');
+      }
+      
+      // Créer ou mettre à jour la transaction financière UNIQUEMENT si c'est un nouveau salaire
+      // ou si le montant a changé lors d'une modification
+      try {
+        const salaryRecord = {
+          id: salaryId,
+          employeeName: salaryData.employeeName,
+          position: salaryData.position,
+          department: salaryData.department,
+          netSalary: salaryData.netSalary,
+          employeeId: salaryData.employeeId
+        };
+        
+        const result = await FinancialIntegrationService.createSalaryTransaction(salaryRecord);
+        if (result.success) {
+          console.log('✅ Transaction financière synchronisée:', result.transactionId);
+        } else {
+          console.warn('⚠️ Erreur lors de la synchronisation financière:', result.error);
+        }
+      } catch (transactionError) {
+        console.warn('⚠️ Erreur lors de la création de la transaction automatique:', transactionError);
+        // Ne pas bloquer le processus principal si la transaction échoue
       }
       
       setShowSalaryForm(false);

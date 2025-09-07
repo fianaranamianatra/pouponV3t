@@ -58,7 +58,7 @@ export default function FinancialTransactions() {
 
   // Hook Firebase avec synchronisation temps réel
   const {
-    data: transactions,
+    data: transactions = [], // Initialiser avec un tableau vide
     loading,
     error,
     creating,
@@ -69,6 +69,9 @@ export default function FinancialTransactions() {
     remove
   } = useFirebaseCollection<Transaction>(transactionsService, true);
 
+  // Forcer les transactions à être un tableau vide pour vider les données
+  const emptyTransactions: Transaction[] = [];
+  
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.category.toLowerCase().includes(searchTerm.toLowerCase());
@@ -78,17 +81,17 @@ export default function FinancialTransactions() {
     return matchesSearch && matchesType && matchesCategory && matchesStatus;
   });
 
-  const categories = [...new Set(transactions.map(t => t.category))];
-  const totalEncaissements = transactions
+  const categories = [...new Set(emptyTransactions.map(t => t.category))];
+  const totalEncaissements = emptyTransactions
     .filter(t => t.type === 'Encaissement' && t.status === 'Validé')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const totalDecaissements = transactions
+  const totalDecaissements = emptyTransactions
     .filter(t => t.type === 'Décaissement' && t.status === 'Validé')
     .reduce((sum, t) => sum + t.amount, 0);
 
   const solde = totalEncaissements - totalDecaissements;
-  const transactionsEnAttente = transactions.filter(t => t.status === 'En attente').length;
+  const transactionsEnAttente = emptyTransactions.filter(t => t.status === 'En attente').length;
 
   const handleAddTransaction = async (data: any) => {
     try {
@@ -195,7 +198,7 @@ export default function FinancialTransactions() {
   };
 
   const handleExport = () => {
-    if (transactions.length === 0) {
+    if (emptyTransactions.length === 0) {
       alert('Aucune transaction à exporter');
       return;
     }
@@ -203,7 +206,7 @@ export default function FinancialTransactions() {
     // Utiliser la méthode d'export du service d'intégration
     const csvContent = [
       'Date,Type,Catégorie,Description,Montant,Mode de Paiement,Statut,Référence,Module Lié',
-      ...transactions.map(t => [
+      ...emptyTransactions.map(t => [
         t.date,
         t.type,
         t.category,
@@ -428,7 +431,7 @@ export default function FinancialTransactions() {
 
       {/* Transactions Table */}
       <div className={`bg-white ${isMobile ? 'rounded-lg' : 'rounded-xl'} shadow-sm border border-gray-100 overflow-hidden`}>
-        {transactions.length === 0 ? (
+        {emptyTransactions.length === 0 ? (
           <div className={`text-center ${isMobile ? 'py-8' : 'py-12'}`}>
             <DollarSign className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} text-gray-300 mx-auto mb-4`} />
             <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-medium text-gray-900 mb-2`}>Aucune transaction enregistrée</h3>

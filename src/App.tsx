@@ -21,6 +21,7 @@ import FinancialTransactions from './pages/FinancialTransactions';
 import { StudentEcolageSyncService } from './lib/services/studentEcolageSync';
 import { BidirectionalSyncService } from './lib/services/bidirectionalSync';
 import { PayrollSalarySyncService } from './lib/services/payrollSalarySync';
+import { CentralizedFinancialSyncService } from './lib/services/centralizedFinancialSync';
 import { USER_ROLES } from './lib/roles';
 import { useAuth } from './hooks/useAuth';
 import { OfflineHandler } from './lib/firebase/offlineHandler';
@@ -88,6 +89,7 @@ function App() {
       try {
         await BidirectionalSyncService.initializeAllSync();
         await PayrollSalarySyncService.initializeGlobalSync();
+        await CentralizedFinancialSyncService.initializeCentralizedSync();
         console.log('✅ Toutes les synchronisations bidirectionnelles sont actives');
       } catch (error) {
         console.error('❌ Erreur lors de l\'initialisation de la synchronisation:', error);
@@ -103,6 +105,7 @@ function App() {
     return () => {
       BidirectionalSyncService.cleanup();
       PayrollSalarySyncService.cleanup();
+      CentralizedFinancialSyncService.cleanup();
     };
   }, [user, isOnline]);
 

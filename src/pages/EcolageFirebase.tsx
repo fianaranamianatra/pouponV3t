@@ -8,6 +8,7 @@ import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { useEcolageSync } from '../hooks/useEcolageSync';
 import { feesService, studentsService, classesService } from '../lib/firebase/firebaseService';
 import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
+import { CentralizedSyncIndicator } from '../components/financial/CentralizedSyncIndicator';
 
 interface Payment {
   id?: string;
@@ -430,6 +431,15 @@ export function EcolageFirebase() {
                         <div>
                           <p className={`font-medium text-gray-900 ${isMobile ? 'text-sm' : ''}`}>{payment.studentName}</p>
                           {/* Afficher la classe sur mobile */}
+                          {/* Indicateur de centralisation */}
+                          <CentralizedSyncIndicator
+                            module="ecolage"
+                            recordId={payment.id!}
+                            recordName={payment.studentName}
+                            amount={payment.amount}
+                            className="mt-1"
+                            showDetails={true}
+                          />
                           {isMobile && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">
                               {payment.class}

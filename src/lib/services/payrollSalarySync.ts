@@ -325,11 +325,17 @@ export class PayrollSalarySyncService {
     console.log('🗑️ Salaire supprimé:', salaryData.employeeName);
     
     try {
-      // Supprimer les transactions liées
-      await FinancialIntegrationService.deleteRelatedTransactions('salary', salaryData.id);
-      
       // Émettre un événement de suppression
       window.dispatchEvent(new CustomEvent('payrollSalaryRemoved', {
+        detail: {
+          employeeId: salaryData.employeeId,
+          employeeName: salaryData.employeeName,
+          salaryId: salaryData.id,
+          deletionTime: new Date()
+        }
+      }));
+      
+      console.log(`✅ Événement de suppression émis pour ${salaryData.employeeName}`);
     } catch (error) {
       console.error('❌ Erreur lors du traitement de la suppression:', error);
     }

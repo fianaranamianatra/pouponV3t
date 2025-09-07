@@ -4,8 +4,10 @@ import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCir
 import { PaymentAlerts } from '../components/ecolage/PaymentAlerts';
 import { EcolageStudentSync } from '../components/ecolage/EcolageStudentSync';
 import { GlobalSyncStatus } from '../components/sync/GlobalSyncStatus';
+import { Database, Zap } from 'lucide-react';
 import { PayrollSalarySyncPanel } from '../components/payroll/PayrollSalarySyncPanel';
 import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
+import { CentralizedSyncPanel } from '../components/financial/CentralizedSyncPanel';
 
 const stats = [
   {
@@ -253,6 +255,27 @@ export function Dashboard() {
       </div>
 
       {/* Synchronisation Écolage-Profils */}
+      {/* Synchronisation Financière Centralisée */}
+      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
+        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'} flex items-center`}>
+          <Database className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-blue-600`} />
+          🎯 Centralisation Financière Automatique
+        </h2>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="flex items-start space-x-3">
+            <Zap className="w-6 h-6 text-blue-600 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-blue-800">Centre de Contrôle Financier Unifié</h3>
+              <p className="text-blue-700 text-sm mt-1">
+                Toutes les opérations financières (Écolages et Salaires) sont automatiquement centralisées 
+                dans le module "Encaissements et Décaissements" pour un contrôle financier unifié et en temps réel.
+              </p>
+            </div>
+          </div>
+        </div>
+        <CentralizedSyncPanel compact={false} />
+      </div>
+
       <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
         <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'} flex items-center`}>
           <Zap className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-green-600`} />

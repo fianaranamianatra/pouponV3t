@@ -18,29 +18,45 @@ export class FinancialIntegrationService {
     try {
       console.log('🔄 Création automatique de transaction pour salaire:', salaryRecord.employeeName);
       
-      // Vérifier si une transaction existe déjà pour cet employé/période
+      // PRÉVENTION DES DOUBLONS : Vérification stricte d'unicité
       const existingTransactions = await transactionsService.getAll();
+      
+      // Créer une signature unique pour cette transaction
+      const currentDate = new Date();
+      const monthYear = currentDate.toLocaleDateString('fr-FR', { 
+        month: 'long', 
+        year: 'numeric' 
+      });
+      const expectedDescription = `Salaire ${salaryRecord.employeeName} - ${monthYear}`;
+      const expectedAmount = salaryRecord.netSalary;
+      const expectedDate = new Date().toISOString().split('T')[0];
+      
+      // Vérifier les doublons avec une signature stricte
       const duplicateTransaction = existingTransactions.find(t => 
         t.relatedModule === 'salary' && 
-        t.relatedId === salaryRecord.id &&
         t.type === 'Décaissement' &&
-        t.category === 'Salaires'
+        t.category === 'Salaires' &&
+        t.description === expectedDescription &&
+        t.amount === expectedAmount &&
+        t.date === expectedDate
       );
       
       if (duplicateTransaction) {
-        console.log('⚠️ Transaction existante trouvée, mise à jour au lieu de création:', duplicateTransaction.id);
+        console.log('🚫 DOUBLON DÉTECTÉ - Transaction identique existante:', duplicateTransaction.id);
+        console.log('📊 Signature:', { expectedDescription, expectedAmount, expectedDate });
         
-        // Mettre à jour la transaction existante
-        const updateData = {
-          description: `Salaire ${salaryRecord.employeeName} - ${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`,
-          amount: salaryRecord.netSalary,
-          date: new Date().toISOString().split('T')[0],
-          notes: `Mis à jour automatiquement - Salaire net: ${salaryRecord.netSalary.toLocaleString()} Ar`
-        };
+        // Mettre à jour le lien vers le nouveau salaire si nécessaire
+        if (duplicateTransaction.relatedId !== salaryRecord.id) {
+          const updateData = {
+            relatedId: salaryRecord.id,
+            notes: `Lié au salaire ID: ${salaryRecord.id} - Mis à jour: ${new Date().toLocaleString('fr-FR')}`
+          };
+          
+          await transactionsService.update(duplicateTransaction.id, updateData);
+          console.log('✅ Lien de transaction mis à jour vers le nouveau salaire');
+        }
         
-        await transactionsService.update(duplicateTransaction.id, updateData);
-        
-        console.log('✅ Transaction de salaire mise à jour:', duplicateTransaction.id);
+        console.log('✅ Transaction existante réutilisée (pas de doublon créé):', duplicateTransaction.id);
         
         return {
           success: true,
@@ -48,29 +64,26 @@ export class FinancialIntegrationService {
         };
       }
       
-      const currentDate = new Date();
-      const monthYear = currentDate.toLocaleDateString('fr-FR', { 
-        month: 'long', 
-        year: 'numeric' 
-      });
+      // Créer une nouvelle transaction uniquement si aucun doublon n'existe
+      console.log('✅ Aucun doublon détecté, création d\'une nouvelle transaction');
       
       const transactionData: Omit<Transaction, 'id'> = {
         type: 'Décaissement',
         category: 'Salaires',
-        description: `Salaire ${salaryRecord.employeeName} - ${monthYear}`,
-        amount: salaryRecord.netSalary,
-        date: new Date().toISOString().split('T')[0],
+        description: expectedDescription,
+        amount: expectedAmount,
+        date: expectedDate,
         paymentMethod: 'Virement',
         status: 'Validé',
         reference: `SAL-${currentDate.getFullYear()}-${salaryRecord.employeeId?.substring(0, 4).toUpperCase()}`,
         relatedModule: 'salary',
         relatedId: salaryRecord.id,
-        notes: `Paiement automatique - Salaire net: ${salaryRecord.netSalary.toLocaleString()} Ar`
+        notes: `Paiement automatique - Salaire net: ${salaryRecord.netSalary.toLocaleString()} Ar - Créé: ${new Date().toLocaleString('fr-FR')}`
       };
 
       const transactionId = await transactionsService.create(transactionData);
       
-      console.log('✅ Transaction de salaire créée automatiquement:', transactionId);
+      console.log('✅ Nouvelle transaction de salaire créée:', transactionId);
       
       return {
         success: true,
@@ -92,30 +105,42 @@ export class FinancialIntegrationService {
     try {
       console.log('🔄 Création automatique de transaction pour écolage:', payment.studentName);
       
-      // Vérifier si une transaction existe déjà pour ce paiement
+      // PRÉVENTION DES DOUBLONS : Vérification stricte d'unicité
       const existingTransactions = await transactionsService.getAll();
+      
+      // Créer une signature unique pour cette transaction
+      const expectedDescription = `Écolage ${payment.studentName} - ${payment.period}`;
+      const expectedAmount = payment.amount;
+      const expectedDate = payment.paymentDate;
+      const expectedPaymentMethod = this.mapPaymentMethod(payment.paymentMethod);
+      
+      // Vérifier les doublons avec une signature stricte
       const duplicateTransaction = existingTransactions.find(t => 
         t.relatedModule === 'ecolage' && 
-        t.relatedId === payment.id &&
         t.type === 'Encaissement' &&
-        t.category === 'Écolages'
+        t.category === 'Écolages' &&
+        t.description === expectedDescription &&
+        t.amount === expectedAmount &&
+        t.date === expectedDate &&
+        t.paymentMethod === expectedPaymentMethod
       );
       
       if (duplicateTransaction) {
-        console.log('⚠️ Transaction existante trouvée, mise à jour au lieu de création:', duplicateTransaction.id);
+        console.log('🚫 DOUBLON DÉTECTÉ - Transaction identique existante:', duplicateTransaction.id);
+        console.log('📊 Signature:', { expectedDescription, expectedAmount, expectedDate, expectedPaymentMethod });
         
-        // Mettre à jour la transaction existante
-        const updateData = {
-          description: `Écolage ${payment.studentName} - ${payment.period}`,
-          amount: payment.amount,
-          date: payment.paymentDate,
-          paymentMethod: this.mapPaymentMethod(payment.paymentMethod),
-          notes: `Mis à jour automatiquement - Classe: ${payment.class}`
-        };
+        // Mettre à jour le lien vers le nouveau paiement si nécessaire
+        if (duplicateTransaction.relatedId !== payment.id) {
+          const updateData = {
+            relatedId: payment.id,
+            notes: `Lié au paiement ID: ${payment.id} - Mis à jour: ${new Date().toLocaleString('fr-FR')}`
+          };
+          
+          await transactionsService.update(duplicateTransaction.id, updateData);
+          console.log('✅ Lien de transaction mis à jour vers le nouveau paiement');
+        }
         
-        await transactionsService.update(duplicateTransaction.id, updateData);
-        
-        console.log('✅ Transaction d\'écolage mise à jour:', duplicateTransaction.id);
+        console.log('✅ Transaction existante réutilisée (pas de doublon créé):', duplicateTransaction.id);
         
         return {
           success: true,
@@ -123,23 +148,26 @@ export class FinancialIntegrationService {
         };
       }
       
+      // Créer une nouvelle transaction uniquement si aucun doublon n'existe
+      console.log('✅ Aucun doublon détecté, création d\'une nouvelle transaction');
+      
       const transactionData: Omit<Transaction, 'id'> = {
         type: 'Encaissement',
         category: 'Écolages',
-        description: `Écolage ${payment.studentName} - ${payment.period}`,
-        amount: payment.amount,
-        date: payment.paymentDate,
-        paymentMethod: this.mapPaymentMethod(payment.paymentMethod),
+        description: expectedDescription,
+        amount: expectedAmount,
+        date: expectedDate,
+        paymentMethod: expectedPaymentMethod,
         status: 'Validé',
         reference: payment.reference,
         relatedModule: 'ecolage',
         relatedId: payment.id,
-        notes: `Paiement automatique - Classe: ${payment.class}`
+        notes: `Paiement automatique - Classe: ${payment.class} - Créé: ${new Date().toLocaleString('fr-FR')}`
       };
 
       const transactionId = await transactionsService.create(transactionData);
       
-      console.log('✅ Transaction d\'écolage créée automatiquement:', transactionId);
+      console.log('✅ Nouvelle transaction d\'écolage créée:', transactionId);
       
       return {
         success: true,

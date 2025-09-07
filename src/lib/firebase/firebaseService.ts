@@ -21,10 +21,18 @@ class FirebaseService {
 
   async create(data) {
     try {
+      // Ajouter un timestamp de création pour éviter les doublons
+      const dataWithTimestamp = {
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
       const docRef = await addDoc(this.collectionRef, data);
+      console.log(`✅ Document créé avec ID: ${docRef.id} dans collection: ${this.collectionName}`);
       return docRef.id;
     } catch (error) {
-      console.error("Error adding document: ", error);
+      console.error(`❌ Erreur lors de l'ajout dans ${this.collectionName}:`, error);
       throw error;
     }
   }
@@ -62,10 +70,17 @@ class FirebaseService {
   async update(id, data) {
     try {
       const docRef = doc(db, this.collectionName, id);
-      await updateDoc(docRef, data);
+      // Ajouter un timestamp de mise à jour
+      const dataWithTimestamp = {
+        ...data,
+        updatedAt: new Date()
+      };
+      
+      await updateDoc(docRef, dataWithTimestamp);
+      console.log(`✅ Document mis à jour avec ID: ${id} dans collection: ${this.collectionName}`);
       return true;
     } catch (error) {
-      console.error("Error updating document: ", error);
+      console.error(`❌ Erreur lors de la mise à jour dans ${this.collectionName}:`, error);
       throw error;
     }
   }

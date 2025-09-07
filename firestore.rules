@@ -64,14 +64,6 @@ service cloud.firestore {
     }
     
     // Règles pour les finances
-    match /finances/{financeId} {
-      allow read: if true;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null;
-    }
-    
-    // Règles pour la hiérarchie
     match /hierarchy/{employeeId} {
       allow read: if true;
       allow create: if request.auth != null;
@@ -110,38 +102,6 @@ service cloud.firestore {
     }
     
     // Règles pour les salaires
-    match /salaries/{salaryId} {
-      allow read: if true;
-      allow create: if request.auth != null && validateSalary(request.resource.data);
-      allow update: if request.auth != null && validateSalary(request.resource.data);
-      allow delete: if request.auth != null;
-    }
-    
-    // Règles pour les transactions financières
-    match /transactions/{transactionId} {
-      allow read: if true;
-      allow create: if request.auth != null && validateTransaction(request.resource.data);
-      allow update: if request.auth != null && validateTransaction(request.resource.data);
-      allow delete: if request.auth != null;
-    }
-    
-    // Règles pour les paramètres d'intégration financière
-    match /financial_settings/{settingId} {
-      allow read: if true;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null;
-    }
-    
-    // Règles pour les logs d'intégration
-    match /integration_logs/{logId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null;
-    }
-    
-    // Fonctions de validation
     function validateStudent(data) {
       return data.keys().hasAll(['firstName', 'lastName', 'dateOfBirth', 'class', 'address', 'phone', 'parentName', 'status'])
         && data.firstName is string && data.firstName.size() >= 2 && data.firstName.size() <= 50
@@ -214,36 +174,5 @@ service cloud.firestore {
         && data.endTime is string;
     }
     
-    function validateSalary(data) {
-      return data.keys().hasAll(['employeeName', 'position', 'department', 'baseSalary', 'effectiveDate', 'status'])
-        && data.employeeName is string && data.employeeName.size() >= 2 && data.employeeName.size() <= 100
-        && data.position is string && data.position.size() >= 2 && data.position.size() <= 100
-        && data.department is string && data.department.size() >= 2 && data.department.size() <= 50
-        && data.baseSalary is number && data.baseSalary >= 100000 && data.baseSalary <= 10000000
-        && data.effectiveDate is string
-        && data.status in ['active', 'inactive', 'pending'];
-    }
-    
-    function validateTransaction(data) {
-      return data.keys().hasAll(['type', 'category', 'description', 'amount', 'date', 'paymentMethod', 'status'])
-        && data.type in ['Encaissement', 'Décaissement']
-        && data.category is string && data.category.size() >= 2 && data.category.size() <= 50
-        && data.description is string && data.description.size() >= 5 && data.description.size() <= 200
-        && data.amount is number && data.amount > 0 && data.amount <= 100000000
-        && data.date is string
-        && data.paymentMethod is string && data.paymentMethod.size() >= 2
-        && data.status in ['Validé', 'En attente', 'Annulé'];
-    }
-    
-    // Validation pour les paramètres financiers
-    function validateFinancialSetting(data) {
-      return data.keys().hasAll(['cnaps', 'ostie', 'irsa'])
-        && data.cnaps.keys().hasAll(['employeeRate', 'employerRate', 'ceiling', 'isActive'])
-        && data.ostie.keys().hasAll(['employeeRate', 'employerRate', 'ceiling', 'isActive'])
-        && data.cnaps.employeeRate is number && data.cnaps.employeeRate >= 0 && data.cnaps.employeeRate <= 20
-        && data.cnaps.employerRate is number && data.cnaps.employerRate >= 0 && data.cnaps.employerRate <= 20
-        && data.ostie.employeeRate is number && data.ostie.employeeRate >= 0 && data.ostie.employeeRate <= 20
-        && data.ostie.employerRate is number && data.ostie.employerRate >= 0 && data.ostie.employerRate <= 20;
-    }
   }
 }

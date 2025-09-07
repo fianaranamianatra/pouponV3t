@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Download, Users, DollarSign, TrendingUp, Calendar, Trash2, Calculator, User, Wallet, Settings, Eye, Edit, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Filter, Download, Users, DollarSign, TrendingUp, Calendar, Trash2, Calculator, User, Wallet, Settings, Eye, Edit, CheckCircle, AlertTriangle, Building, Zap } from 'lucide-react';
 import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
 import { SalaryCalculationForm } from '../components/forms/SalaryCalculationForm';
 import { SalaryListView } from '../components/salary/SalaryListView';
@@ -54,6 +54,7 @@ interface SalaryRecord {
 export function SalaryManagement() {
   const [showSalaryForm, setShowSalaryForm] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showSyncStatus, setShowSyncStatus] = useState(true);
   const [editingSalary, setEditingSalary] = useState<SalaryRecord | null>(null);
   const [selectedSalary, setSelectedSalary] = useState<SalaryRecord | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -61,6 +62,17 @@ export function SalaryManagement() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Hooks Firebase pour charger les données en temps réel
   const { data: employees, loading: employeesLoading } = useFirebaseCollection<Employee>(hierarchyService, true);
@@ -188,58 +200,106 @@ export function SalaryManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className={`flex ${isMobile ? 'flex-col gap-3' : 'flex-col sm:flex-row sm:items-center sm:justify-between gap-4'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestion des Salaires</h1>
-          <p className="text-gray-600">Calcul et gestion des salaires avec déductions légales</p>
+          <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900`}>Gestion des Salaires</h1>
+          <p className={`${isMobile ? 'text-sm' : ''} text-gray-600`}>Calcul automatisé des salaires avec déductions légales (CNAPS, OSTIE, IRSA)</p>
+          <div className="flex items-center space-x-2 mt-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span className="text-xs text-green-600 font-medium">Synchronisé avec Ressources Humaines</span>
+          </div>
         </div>
-        <button
-          onClick={handleAddSalary}
-          className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Nouveau Calcul de Salaire
-        </button>
+        
+        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'gap-2'}`}>
+          <button
+            onClick={() => setShowSyncStatus(!showSyncStatus)}
+            className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors`}
+          >
+            <Zap className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
+            {showSyncStatus ? 'Masquer' : 'Afficher'} Sync
+          </button>
+          <button
+            onClick={handleAddSalary}
+            className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors`}
+          >
+            <Plus className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
+            Nouveau Calcul
+          </button>
+        </div>
       </div>
 
       {/* Panneau de Synchronisation Paie ↔ Salaires */}
-      <PayrollSalarySyncPanel />
+      {showSyncStatus && <PayrollSalarySyncPanel />}
+
+      {/* Guide d'utilisation */}
+      <div className={`bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'}`}>
+        <div className="flex items-start space-x-3">
+          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <Calculator className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-blue-900 mb-2`}>
+              Module de Calcul Automatisé des Salaires
+            </h3>
+            <div className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-1 md:grid-cols-2 gap-4'} ${isMobile ? 'text-sm' : 'text-sm'} text-blue-800`}>
+              <div>
+                <h4 className="font-medium mb-1">✅ Fonctionnalités intégrées:</h4>
+                <ul className="space-y-1 text-blue-700">
+                  <li>• Synchronisation automatique avec RH</li>
+                  <li>• Calcul CNAPS et OSTIE (1% chacun)</li>
+                  <li>• Calcul IRSA selon barème officiel</li>
+                  <li>• Gestion des indemnités variables</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium mb-1">🔄 Processus automatisé:</h4>
+                <ul className="space-y-1 text-blue-700">
+                  <li>• Récupération salaire de base (RH)</li>
+                  <li>• Calcul temps réel des déductions</li>
+                  <li>• Application barème IRSA progressif</li>
+                  <li>• Génération salaire net final</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-5 gap-4'}`}>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center">
-            <Users className="w-8 h-8 text-blue-600" />
+            <Users className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-blue-600`} />
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Total Employés</p>
-              <p className="text-xl font-bold text-gray-900">{totalEmployees}</p>
+              <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-600`}>Total Employés</p>
+              <p className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-gray-900`}>{totalEmployees}</p>
             </div>
           </div>
         </div>
         
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+            <CheckCircle className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-green-600`} />
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Salaires Actifs</p>
-              <p className="text-xl font-bold text-gray-900">{activeSalaries}</p>
+              <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-600`}>Salaires Calculés</p>
+              <p className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-gray-900`}>{activeSalaries}</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+        <div className={`bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${isMobile ? 'col-span-2' : ''}`}>
           <div className="flex items-center">
-            <DollarSign className="w-8 h-8 text-purple-600" />
+            <DollarSign className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-purple-600`} />
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Masse Salariale Brute</p>
-              <p className="text-xl font-bold text-gray-900">
+              <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-600`}>Masse Salariale Brute</p>
+              <p className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-gray-900`}>
                 {(totalGrossSalary / 1000000).toFixed(1)}M Ar
               </p>
             </div>
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+        <div className={`bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${isMobile ? 'hidden' : ''}`}>
           <div className="flex items-center">
             <Wallet className="w-8 h-8 text-green-600" />
             <div className="ml-3">
@@ -251,7 +311,7 @@ export function SalaryManagement() {
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+        <div className={`bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${isMobile ? 'hidden' : ''}`}>
           <div className="flex items-center">
             <Calendar className="w-8 h-8 text-orange-600" />
             <div className="ml-3">
@@ -263,26 +323,26 @@ export function SalaryManagement() {
       </div>
 
       {/* Filtres et Recherche */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex flex-col lg:flex-row gap-4">
+      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
+        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'flex-col lg:flex-row gap-4'}`}>
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 ${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />
               <input
                 type="text"
                 placeholder="Rechercher un employé..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className={`w-full ${isMobile ? 'pl-12 pr-4 py-3 text-base' : 'pl-10 pr-4 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
               />
             </div>
           </div>
           
-          <div className="flex gap-2">
+          <div className={`flex ${isMobile ? 'flex-col gap-2' : 'gap-2'}`}>
             <select
               value={selectedDepartment}
               onChange={(e) => setSelectedDepartment(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className={`${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
             >
               <option value="">Tous les départements</option>
               {departments.map(dept => (
@@ -293,7 +353,7 @@ export function SalaryManagement() {
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className={`${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
             >
               <option value="">Toutes les années</option>
               {years.map(year => (
@@ -304,7 +364,7 @@ export function SalaryManagement() {
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className={`${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
             >
               <option value="">Tous les mois</option>
               {months.map(month => (
@@ -312,8 +372,8 @@ export function SalaryManagement() {
               ))}
             </select>
             
-            <button className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <Filter className="w-4 h-4 mr-2" />
+            <button className={`${isMobile ? 'hidden sm:inline-flex' : 'inline-flex'} items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors`}>
+              <Filter className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
               Filtres
             </button>
           </div>
@@ -331,9 +391,9 @@ export function SalaryManagement() {
       />
 
       {/* Nettoyage des Données Financières - Section Admin */}
-      <div className="bg-white rounded-lg shadow-sm border p-6 mt-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Trash2 className="w-5 h-5 mr-2 text-red-600" />
+      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-lg p-6'} shadow-sm border mt-6`}>
+        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'} flex items-center`}>
+          <Trash2 className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-red-600`} />
           Administration - Nettoyage des Données
         </h2>
         <FinancialDataCleanup />
@@ -344,7 +404,7 @@ export function SalaryManagement() {
         isOpen={showSalaryForm}
         onClose={handleCancel}
         title={editingSalary ? 'Modifier le Calcul de Salaire' : 'Nouveau Calcul de Salaire'}
-        size="xl"
+        size={isMobile ? "xl" : "xl"}
       >
         <SalaryCalculationForm
           onSubmit={handleSalarySubmit}
@@ -363,7 +423,7 @@ export function SalaryManagement() {
           setSelectedSalary(null);
         }}
         title="Détails du Salaire"
-        size="xl"
+        size={isMobile ? "xl" : "xl"}
       >
         {selectedSalary && (
           <SalaryDetailsModal

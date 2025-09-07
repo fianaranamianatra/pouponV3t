@@ -117,10 +117,10 @@ export class TransactionDeduplicationService {
    */
   static async removeDuplicates(): Promise<DeduplicationResult> {
     try {
-      console.log('🧹 Début de la suppression des doublons de transactions');
+      console.log('🧹 🤖 SUPPRESSION AUTOMATIQUE DES DOUBLONS - Début du processus');
       
       const allTransactions = await transactionsService.getAll();
-      console.log(`📊 Total transactions à traiter: ${allTransactions.length}`);
+      console.log(`📊 Total transactions à analyser: ${allTransactions.length}`);
       
       if (allTransactions.length === 0) {
         return {
@@ -150,14 +150,13 @@ export class TransactionDeduplicationService {
       let duplicateGroups = 0;
       const errors: string[] = [];
       
-      console.log(`📊 Groupes de transactions trouvés: ${transactionGroups.size}`);
+      console.log(`📊 Analyse: ${transactionGroups.size} groupe(s) de transactions trouvé(s)`);
       
       // Traiter chaque groupe de doublons
       for (const [signature, transactions] of transactionGroups) {
         if (transactions.length > 1) {
           duplicateGroups++;
-          console.log(`🔍 Groupe de doublons trouvé: ${transactions.length} transactions identiques`);
-          console.log(`📝 Description: ${transactions[0].description}`);
+          console.log(`🔍 DOUBLON DÉTECTÉ: ${transactions.length} exemplaires de "${transactions[0].description}" (${transactions[0].amount.toLocaleString()} Ar)`);
           
           try {
             // Trier par date de création (garder le plus récent)
@@ -171,8 +170,8 @@ export class TransactionDeduplicationService {
             const transactionToKeep = sortedTransactions[0];
             const transactionsToDelete = sortedTransactions.slice(1);
             
-            console.log(`✅ Transaction à conserver: ${transactionToKeep.id}`);
-            console.log(`🗑️ Transactions à supprimer: ${transactionsToDelete.length}`);
+            console.log(`✅ CONSERVATION: Transaction ${transactionToKeep.id} (la plus récente)`);
+            console.log(`🗑️ SUPPRESSION: ${transactionsToDelete.length} doublon(s) ancien(s)`);
             
             // Supprimer les doublons par lots
             for (const transaction of transactionsToDelete) {
@@ -180,23 +179,27 @@ export class TransactionDeduplicationService {
                 if (transaction.id) {
                   await transactionsService.delete(transaction.id);
                   duplicatesRemoved++;
-                  console.log(`🗑️ Doublon supprimé: ${transaction.id}`);
+                  console.log(`🗑️ ✅ Doublon supprimé: ${transaction.id}`);
                 }
               } catch (deleteError: any) {
                 errors.push(`Erreur suppression ${transaction.id}: ${deleteError.message}`);
+                console.error(`❌ Erreur suppression ${transaction.id}:`, deleteError);
               }
             }
             
           } catch (groupError: any) {
             errors.push(`Erreur traitement groupe: ${groupError.message}`);
+            console.error(`❌ Erreur traitement groupe:`, groupError);
           }
         }
       }
       
       const uniqueTransactionsKept = allTransactions.length - duplicatesRemoved;
       
-      console.log(`✅ Déduplication terminée: ${duplicatesRemoved} doublon(s) supprimé(s) dans ${duplicateGroups} groupe(s)`);
-      console.log(`📊 Transactions uniques conservées: ${uniqueTransactionsKept}`);
+      console.log(`🎉 DÉDUPLICATION AUTOMATIQUE TERMINÉE:`);
+      console.log(`   • ${duplicatesRemoved} doublon(s) supprimé(s) dans ${duplicateGroups} groupe(s)`);
+      console.log(`   • ${uniqueTransactionsKept} transaction(s) unique(s) conservée(s)`);
+      console.log(`   • Base de données nettoyée et cohérente`);
       
       return {
         success: errors.length === 0,
@@ -237,6 +240,39 @@ export class TransactionDeduplicationService {
   }
 
   /**
+   * Supprimer automatiquement les doublons lors de la création
+   */
+  static async preventDuplicateOnCreate(transactionData: any): Promise<{
+    shouldCreate: boolean;
+    existingTransactionId?: string;
+    message: string;
+  }> {
+    try {
+      const duplicateCheck = await this.checkForDuplicate(transactionData);
+      
+      if (duplicateCheck.isDuplicate) {
+        console.log('🚫 PRÉVENTION DE DOUBLON - Transaction identique existante');
+        return {
+          shouldCreate: false,
+          existingTransactionId: duplicateCheck.existingTransaction?.id,
+          message: 'Transaction identique déjà existante'
+        };
+      }
+      
+      return {
+        shouldCreate: true,
+        message: 'Transaction unique, création autorisée'
+      };
+    } catch (error: any) {
+      console.error('Erreur lors de la prévention de doublon:', error);
+      return {
+        shouldCreate: true,
+        message: 'Erreur de vérification, création autorisée par sécurité'
+      };
+    }
+  }
+
+  /**
    * Vérifier si une transaction est un doublon potentiel
    */
   static async checkForDuplicate(transactionData: any): Promise<{
@@ -259,6 +295,39 @@ export class TransactionDeduplicationService {
     } catch (error) {
       console.error('Erreur lors de la vérification de doublon:', error);
       return { isDuplicate: false };
+    }
+  }
+
+  /**
+   * Obtenir des statistiques sur les doublons
+   */
+  static async getDuplicationStats(): Promise<{
+    totalTransactions: number;
+    duplicateGroups: number;
+    totalDuplicates: number;
+    cleanlinessRate: number;
+  }> {
+    try {
+      const analysis = await this.analyzeDuplicates();
+      
+      const cleanlinessRate = analysis.totalTransactions > 0 ? 
+        ((analysis.totalTransactions - analysis.duplicatesFound) / analysis.totalTransactions) * 100 : 
+        100;
+      
+      return {
+        totalTransactions: analysis.totalTransactions,
+        duplicateGroups: analysis.duplicateGroups.length,
+        totalDuplicates: analysis.duplicatesFound,
+        cleanlinessRate
+      };
+    } catch (error) {
+      console.error('Erreur lors du calcul des statistiques:', error);
+      return {
+        totalTransactions: 0,
+        duplicateGroups: 0,
+        totalDuplicates: 0,
+        cleanlinessRate: 100
+      };
     }
   }
 

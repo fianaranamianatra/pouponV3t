@@ -21,14 +21,21 @@ class FirebaseService {
 
   async create(data) {
     try {
-      // PRÉVENTION DES DOUBLONS : Vérification avant création
+      // 🤖 PRÉVENTION AUTOMATIQUE DES DOUBLONS
       if (this.collectionName === 'transactions') {
-        const { TransactionDeduplicationService } = await import('../services/transactionDeduplicationService');
-        const duplicateCheck = await TransactionDeduplicationService.checkForDuplicate(data);
-        
-        if (duplicateCheck.isDuplicate) {
-          console.log('🚫 DOUBLON EMPÊCHÉ - Transaction identique existante:', duplicateCheck.existingTransaction?.id);
-          return duplicateCheck.existingTransaction.id;
+        try {
+          const { TransactionDeduplicationService } = await import('../services/transactionDeduplicationService');
+          const preventionResult = await TransactionDeduplicationService.preventDuplicateOnCreate(data);
+          
+          if (!preventionResult.shouldCreate) {
+            console.log('🚫 DOUBLON EMPÊCHÉ - Réutilisation de la transaction existante:', preventionResult.existingTransactionId);
+            return preventionResult.existingTransactionId;
+          }
+          
+          console.log('✅ VÉRIFICATION PASSÉE - Création autorisée:', preventionResult.message);
+        } catch (deduplicationError) {
+          console.warn('⚠️ Erreur de vérification de doublon, création autorisée par sécurité:', deduplicationError);
+          // Continuer avec la création normale en cas d'erreur de vérification
         }
       }
       
@@ -36,14 +43,93 @@ class FirebaseService {
       const dataWithTimestamp = {
         ...data,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        // Ajouter un identifiant unique pour cette session
+        sessionId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       };
       
       const docRef = await addDoc(this.collectionRef, dataWithTimestamp);
       console.log(`✅ Document créé avec ID: ${docRef.id} dans collection: ${this.collectionName}`);
+      
+      // Déclencher une vérification de déduplication après création (pour nettoyer d'éventuels doublons résiduels)
+      if (this.collectionName === 'transactions') {
+        setTimeout(async () => {
+          try {
+            const { AutomaticDeduplicationService } = await import('../services/automaticDeduplication');
+            await AutomaticDeduplicationService.forceCheck();
+          } catch (error) {
+            console.warn('Erreur lors de la vérification post-création:', error);
+          }
+        }, 1000); // Délai de 1 seconde pour permettre la propagation
+      }
+      
       return docRef.id;
     } catch (error) {
       console.error(`❌ Erreur lors de l'ajout dans ${this.collectionName}:`, error);
+      throw error;
+    }
+  }
+
+  async createWithoutDuplicationCheck(data) {
+    try {
+      // Création directe sans vérification de doublon (pour les cas spéciaux)
+      const dataWithTimestamp = {
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const docRef = await addDoc(this.collectionRef, dataWithTimestamp);
+      console.log(`✅ Document créé sans vérification: ${docRef.id} dans collection: ${this.collectionName}`);
+      return docRef.id;
+    } catch (error) {
+      console.error(`❌ Erreur lors de l'ajout direct dans ${this.collectionName}:`, error);
+      throw error;
+    }
+  }
+
+  async createSafe(data) {
+    try {
+      // Version ultra-sécurisée avec vérifications multiples
+      if (this.collectionName === 'transactions') {
+        // Vérification 1: Doublon exact
+        const { TransactionDeduplicationService } = await import('../services/transactionDeduplicationService');
+        const duplicateCheck = await TransactionDeduplicationService.checkForDuplicate(data);
+        
+        if (duplicateCheck.isDuplicate) {
+          console.log('🚫 DOUBLON DÉTECTÉ - Réutilisation:', duplicateCheck.existingTransaction?.id);
+          return duplicateCheck.existingTransaction.id;
+        }
+        
+        // Vérification 2: Transactions très similaires (même montant, même date, même type)
+        const allTransactions = await this.getAll();
+        const similarTransaction = allTransactions.find(t => 
+          t.type === data.type &&
+          t.amount === data.amount &&
+          t.date === data.date &&
+          Math.abs(new Date(t.createdAt || t.date).getTime() - Date.now()) < 60000 // Créé dans la dernière minute
+        );
+        
+        if (similarTransaction) {
+          console.log('🚫 TRANSACTION SIMILAIRE RÉCENTE DÉTECTÉE - Réutilisation:', similarTransaction.id);
+          return similarTransaction.id;
+        }
+      }
+      
+      // Création sécurisée avec métadonnées anti-doublon
+      const dataWithTimestamp = {
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        sessionId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        creationSource: 'safe_create'
+      };
+      
+      const docRef = await addDoc(this.collectionRef, dataWithTimestamp);
+      console.log(`✅ Document créé de manière sécurisée: ${docRef.id} dans collection: ${this.collectionName}`);
+      return docRef.id;
+    } catch (error) {
+      console.error(`❌ Erreur lors de l'ajout sécurisé dans ${this.collectionName}:`, error);
       throw error;
     }
   }

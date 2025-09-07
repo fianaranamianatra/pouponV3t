@@ -4,7 +4,7 @@ import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCir
 import { PaymentAlerts } from '../components/ecolage/PaymentAlerts';
 import { EcolageStudentSync } from '../components/ecolage/EcolageStudentSync';
 import { GlobalSyncStatus } from '../components/sync/GlobalSyncStatus';
-import { Database, Zap } from 'lucide-react';
+import { Database } from 'lucide-react';
 import { PayrollSalarySyncPanel } from '../components/payroll/PayrollSalarySyncPanel';
 import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
 import { CentralizedSyncPanel } from '../components/financial/CentralizedSyncPanel';

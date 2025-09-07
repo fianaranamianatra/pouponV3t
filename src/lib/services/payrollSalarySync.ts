@@ -322,6 +322,9 @@ export class PayrollSalarySyncService {
   }
 
   /**
+   * Gérer la suppression d'un salaire
+   */
+  private static async handleSalaryRemoved(salaryData: any): Promise<void> {
     console.log('🗑️ Salaire supprimé:', salaryData.employeeName);
     
     try {

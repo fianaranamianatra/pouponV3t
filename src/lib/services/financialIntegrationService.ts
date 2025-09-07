@@ -180,30 +180,17 @@ export class FinancialIntegrationService {
     transactionsCount: number;
   }> {
     try {
-      const allTransactions = await transactionsService.getAll();
-      const validTransactions = allTransactions.filter(t => t.status === 'Validé');
-      
-      const totalEcolages = validTransactions
-        .filter(t => t.type === 'Encaissement' && t.category === 'Écolages')
-        .reduce((acc, t) => acc + t.amount, 0);
-      
-      const totalSalaires = validTransactions
-        .filter(t => t.type === 'Décaissement' && t.category === 'Salaires')
-        .reduce((acc, t) => acc + t.amount, 0);
-      
-      const totalEncaissements = validTransactions
-        .filter(t => t.type === 'Encaissement')
-        .reduce((acc, t) => acc + t.amount, 0);
-      
-      const totalDecaissements = validTransactions
-        .filter(t => t.type === 'Décaissement')
-        .reduce((acc, t) => acc + t.amount, 0);
+      // Retourner des valeurs à zéro pour la réinitialisation
+      const totalEcolages = 0;
+      const totalSalaires = 0;
+      const totalEncaissements = 0;
+      const totalDecaissements = 0;
       
       return {
         totalEcolages,
         totalSalaires,
-        soldeNet: totalEncaissements - totalDecaissements,
-        transactionsCount: allTransactions.length
+        soldeNet: 0,
+        transactionsCount: 0
       };
     } catch (error) {
       console.error('❌ Erreur lors du calcul du résumé financier:', error);

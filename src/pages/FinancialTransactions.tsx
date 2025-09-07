@@ -70,7 +70,7 @@ export default function FinancialTransactions() {
   } = useFirebaseCollection<Transaction>(transactionsService, true);
 
   // Forcer les transactions à être un tableau vide pour vider les données
-  const emptyTransactions: Transaction[] = [];
+  const emptyTransactions: Transaction[] = transactions; // Restaurer l'affichage normal
   
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -82,16 +82,16 @@ export default function FinancialTransactions() {
   });
 
   const categories = [...new Set(emptyTransactions.map(t => t.category))];
-  const totalEncaissements = emptyTransactions
+  const totalEncaissements = []
     .filter(t => t.type === 'Encaissement' && t.status === 'Validé')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const totalDecaissements = emptyTransactions
+  const totalDecaissements = []
     .filter(t => t.type === 'Décaissement' && t.status === 'Validé')
     .reduce((sum, t) => sum + t.amount, 0);
 
   const solde = totalEncaissements - totalDecaissements;
-  const transactionsEnAttente = emptyTransactions.filter(t => t.status === 'En attente').length;
+  const transactionsEnAttente = [].filter(t => t.status === 'En attente').length;
 
   const handleAddTransaction = async (data: any) => {
     try {

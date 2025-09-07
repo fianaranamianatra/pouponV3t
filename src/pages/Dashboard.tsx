@@ -10,7 +10,7 @@ import { PayrollSalarySyncPanel } from '../components/payroll/PayrollSalarySyncP
 const stats = [
   {
     label: 'Total Élèves',
-    value: '1,247',
+    value: '0',
     change: '+12%',
     icon: Users,
     color: 'blue',
@@ -19,7 +19,7 @@ const stats = [
   },
   {
     label: 'Enseignants',
-    value: '89',
+    value: '0',
     change: '+3%',
     icon: GraduationCap,
     color: 'emerald',
@@ -28,7 +28,7 @@ const stats = [
   },
   {
     label: 'Classes Actives',
-    value: '42',
+    value: '0',
     change: '+5%',
     icon: BookOpen,
     color: 'orange',
@@ -37,7 +37,7 @@ const stats = [
   },
   {
     label: 'Taux de Réussite',
-    value: '94.2%',
+    value: '0%',
     change: '+2.1%',
     icon: TrendingUp,
     color: 'green',

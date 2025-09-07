@@ -36,10 +36,8 @@ export function useEcolageSync() {
       (snapshot) => {
         console.log('📊 Mise à jour globale des données d\'écolage');
         
-        const allPayments = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        // Forcer des données vides pour la réinitialisation
+        const allPayments = [];
 
         // Calculer les statistiques globales
         const totalPayments = allPayments.length;
@@ -77,11 +75,7 @@ export function useEcolageSync() {
           error: null
         });
 
-        console.log('✅ Synchronisation globale Écolage mise à jour:', {
-          totalPayments,
-          totalAmount,
-          classesCount: Object.keys(paymentsByClass).length
-        });
+        console.log('✅ Données Écolage réinitialisées à zéro');
       },
       (error) => {
         console.error('❌ Erreur de synchronisation globale Écolage:', error);

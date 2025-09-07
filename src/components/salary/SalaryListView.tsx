@@ -31,19 +31,9 @@ interface SalaryRecord {
   notes?: string;
 }
 
-interface Employee {
-  id: string;
-  firstName: string;
-  lastName: string;
-  position: string;
-  department: string;
-  salary: number;
-  status: 'active' | 'inactive';
-}
-
 interface SalaryListViewProps {
   salaries: SalaryRecord[];
-  employees: Employee[];
+  employees: any[];
   onView: (salary: SalaryRecord) => void;
   onEdit: (salary: SalaryRecord) => void;
   onDelete: (salaryId: string) => void;

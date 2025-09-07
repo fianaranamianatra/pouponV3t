@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { Search, Plus, Filter, Edit, Trash2, Eye, Users, DollarSign, UserCheck, Building, User, Calendar, Briefcase, Clock, Calculator } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { EmployeeForm } from '../components/forms/EmployeeForm';
-import { PayrollSyncIndicator } from '../components/payroll/PayrollSyncIndicator';
-import { usePayrollSalarySync } from '../hooks/usePayrollSalarySync';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { hierarchyService } from '../lib/firebase/firebaseService';
 import { Avatar } from '../components/Avatar';
@@ -73,7 +71,6 @@ const calculateExperience = (entryDate: string): string => {
 };
 
 export function HumanResources() {
-  const payrollSyncData = usePayrollSalarySync();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -229,10 +226,6 @@ export function HumanResources() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Gestion des Employés</h1>
           <p className="text-gray-600">Gérez le personnel et les ressources humaines de l'école</p>
-          <div className="flex items-center space-x-2 mt-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-xs text-green-600 font-medium">Synchronisé avec Gestion des Salaires</span>
-          </div>
         </div>
         
         <button
@@ -334,12 +327,6 @@ export function HumanResources() {
                               'Date d\'entrée non renseignée'
                             }
                           </p>
-                          <PayrollSyncIndicator
-                            employeeId={employee.id}
-                            employeeName={`${employee.firstName} ${employee.lastName}`}
-                            currentSalary={employee.salary}
-                            className="mt-1"
-                          />
                         </div>
                       </div>
                     </td>

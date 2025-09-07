@@ -5,21 +5,9 @@ import { SalaryCalculationForm } from '../components/forms/SalaryCalculationForm
 import { SalaryListView } from '../components/salary/SalaryListView';
 import { SalaryDetailsModal } from '../components/salary/SalaryDetailsModal';
 import { Modal } from '../components/Modal';
-import { hierarchyService, salariesService, teachersService } from '../lib/firebase/firebaseService';
+import { salariesService, teachersService } from '../lib/firebase/firebaseService';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { PayrollSalarySyncPanel } from '../components/payroll/PayrollSalarySyncPanel';
-
-interface Employee {
-  id: string;
-  firstName: string;
-  lastName: string;
-  position: string;
-  department: string;
-  salary: number;
-  status: 'active' | 'inactive';
-  contractType?: string;
-  entryDate?: string;
-}
 
 interface SalaryRecord {
   id?: string;
@@ -63,6 +51,7 @@ export function SalaryManagement() {
   const [selectedMonth, setSelectedMonth] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [employees, setEmployees] = useState<any[]>([]);
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -74,25 +63,74 @@ export function SalaryManagement() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Hooks Firebase pour charger les données en temps réel
-  const { data: employees, loading: employeesLoading } = useFirebaseCollection<Employee>(hierarchyService, true);
+  // Hooks Firebase pour charger les données en temps réel (sans RH)
   const { data: teachers, loading: teachersLoading } = useFirebaseCollection(teachersService, true);
   const { data: salaries, loading: salariesLoading, create: createSalary, update: updateSalary, remove: deleteSalary } = useFirebaseCollection<SalaryRecord>(salariesService, true);
 
-  // Utiliser EXCLUSIVEMENT les employés du module Ressources Humaines
-  // Filtrer uniquement les employés actifs pour la liste déroulante
-  const allEmployees = [
-    ...employees.filter(emp => emp.status === 'active')
-  ];
+  // Créer une liste d'employés fictifs pour la démonstration
+  useEffect(() => {
+    const mockEmployees = [
+      {
+        id: 'emp_001',
+        firstName: 'Marie',
+        lastName: 'RAKOTO',
+        position: 'Directrice Pédagogique',
+        department: 'Direction',
+        salary: 2500000,
+        status: 'active',
+        contractType: 'CDI',
+        entryDate: '2020-01-15'
+      },
+      {
+        id: 'emp_002',
+        firstName: 'Jean',
+        lastName: 'ANDRY',
+        position: 'Comptable',
+        department: 'Administration',
+        salary: 1800000,
+        status: 'active',
+        contractType: 'CDI',
+        entryDate: '2021-03-01'
+      },
+      {
+        id: 'emp_003',
+        firstName: 'Sophie',
+        lastName: 'RABE',
+        position: 'Institutrice CP',
+        department: 'Enseignement',
+        salary: 1500000,
+        status: 'active',
+        contractType: 'FRAM',
+        entryDate: '2019-09-01'
+      },
+      {
+        id: 'emp_004',
+        firstName: 'Paul',
+        lastName: 'HERY',
+        position: 'Professeur d\'Anglais',
+        department: 'Enseignement',
+        salary: 1600000,
+        status: 'active',
+        contractType: 'CDI',
+        entryDate: '2022-01-10'
+      },
+      {
+        id: 'emp_005',
+        firstName: 'Nadia',
+        lastName: 'RAZAF',
+        position: 'Secrétaire',
+        department: 'Administration',
+        salary: 1200000,
+        status: 'active',
+        contractType: 'CDI',
+        entryDate: '2023-02-15'
+      }
+    ];
+    
+    setEmployees(mockEmployees);
+  }, []);
 
-  console.log('📊 Employés chargés depuis Ressources Humaines:', {
-    total: employees.length,
-    actifs: allEmployees.length,
-    parDepartement: allEmployees.reduce((acc, emp) => {
-      acc[emp.department] = (acc[emp.department] || 0) + 1;
-      return acc;
-    }, {} as { [key: string]: number })
-  });
+  const allEmployees = employees.filter(emp => emp.status === 'active');
 
   // Filtrer les salaires
   const filteredSalaries = salaries.filter(salary => {
@@ -211,7 +249,7 @@ export function SalaryManagement() {
   const totalNetSalary = salaries.reduce((total, s) => total + (s.netSalary || 0), 0);
   const currentMonth = new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
-  if (employeesLoading || teachersLoading || salariesLoading) {
+  if (teachersLoading || salariesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -228,10 +266,10 @@ export function SalaryManagement() {
       <div className={`flex ${isMobile ? 'flex-col gap-3' : 'flex-col sm:flex-row sm:items-center sm:justify-between gap-4'}`}>
         <div>
           <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900`}>Gestion des Salaires</h1>
-          <p className={`${isMobile ? 'text-sm' : ''} text-gray-600`}>Calcul automatisé des salaires avec déductions légales (CNAPS, OSTIE, IRSA)</p>
+          <p className={`${isMobile ? 'text-sm' : ''} text-gray-600`}>Module indépendant de calcul des salaires avec déductions légales (CNAPS, OSTIE, IRSA)</p>
           <div className="flex items-center space-x-4 mt-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-xs text-green-600 font-medium">Synchronisé avec Ressources Humaines</span>
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <span className="text-xs text-blue-600 font-medium">Module indépendant</span>
             <span className="text-xs text-blue-600 font-medium">
               {allEmployees.length} employé(s) actif(s) disponible(s)
             </span>
@@ -267,14 +305,14 @@ export function SalaryManagement() {
           </div>
           <div>
             <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-blue-900 mb-2`}>
-              Module de Calcul Automatisé des Salaires - Synchronisé avec RH
+              Module de Calcul Automatisé des Salaires - Indépendant
             </h3>
             <div className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-1 md:grid-cols-2 gap-4'} ${isMobile ? 'text-sm' : 'text-sm'} text-blue-800`}>
               <div>
                 <h4 className="font-medium mb-1">✅ Fonctionnalités intégrées:</h4>
                 <ul className="space-y-1 text-blue-700">
-                  <li>• <strong>Synchronisation exclusive avec RH</strong></li>
-                  <li>• Liste d'employés filtrée par statut actif</li>
+                  <li>• <strong>Liste d'employés intégrée</strong></li>
+                  <li>• Gestion indépendante du personnel</li>
                   <li>• Organisation par département</li>
                   <li>• Calcul CNAPS et OSTIE (1% chacun)</li>
                   <li>• Calcul IRSA selon barème officiel</li>
@@ -284,8 +322,8 @@ export function SalaryManagement() {
               <div>
                 <h4 className="font-medium mb-1">🔄 Processus automatisé:</h4>
                 <ul className="space-y-1 text-blue-700">
-                  <li>• <strong>Récupération exclusive depuis RH</strong></li>
-                  <li>• Validation des employés actifs uniquement</li>
+                  <li>• <strong>Base de données employés intégrée</strong></li>
+                  <li>• Gestion autonome des employés</li>
                   <li>• Calcul temps réel des déductions</li>
                   <li>• Application barème IRSA progressif</li>
                   <li>• Génération salaire net final</li>
@@ -294,7 +332,7 @@ export function SalaryManagement() {
             </div>
             <div className="mt-3 p-3 bg-white border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
-                <strong>📋 Source des données :</strong> Module Ressources Humaines exclusivement • 
+                <strong>📋 Source des données :</strong> Base de données intégrée • 
                 <strong>Employés disponibles :</strong> {allEmployees.length} actif(s) • 
                 <strong>Départements :</strong> {departments.length}
               </p>

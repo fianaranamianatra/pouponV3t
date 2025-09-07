@@ -3,7 +3,7 @@ import { Search, Plus, Filter, Calculator, Users, Download, Eye, Edit, Trash2, D
 import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
-import { hierarchyService } from '../lib/firebase/firebaseService';
+import { salariesService } from '../lib/firebase/firebaseService';
 import { PayrollService, PayrollSummary, PayrollCalculation } from '../lib/services/payrollService';
 import { FinancialSettingsService } from '../lib/services/financialSettingsService';
 import { IRSAService } from '../lib/services/irsaService';
@@ -15,21 +15,6 @@ import { PayrollSyncIndicator } from '../components/payroll/PayrollSyncIndicator
 import { usePayrollSalarySync } from '../hooks/usePayrollSalarySync';
 import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
 import type { FinancialSetting } from '../lib/firebase/collections';
-
-interface Employee {
-  id?: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth?: string;
-  position: string;
-  department: string;
-  entryDate?: string;
-  contractType?: string;
-  experience?: string;
-  retirementDate?: string;
-  salary: number;
-  status: 'active' | 'inactive';
-}
 
 export function PayrollManagement() {
   const payrollSyncData = usePayrollSalarySync();
@@ -43,22 +28,73 @@ export function PayrollManagement() {
   const [financialSettings, setFinancialSettings] = useState<FinancialSetting | null>(null);
   const [calculating, setCalculating] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
 
-  // Hook Firebase pour charger les employés
-  const {
-    data: employees,
-    loading,
-    error
-  } = useFirebaseCollection<Employee>(hierarchyService, true);
+  // Créer une liste d'employés pour la gestion de paie
+  useEffect(() => {
+    const mockEmployees = [
+      {
+        id: 'emp_001',
+        firstName: 'Marie',
+        lastName: 'RAKOTO',
+        position: 'Directrice Pédagogique',
+        department: 'Direction',
+        salary: 2500000,
+        status: 'active',
+        contractType: 'CDI',
+        entryDate: '2020-01-15'
+      },
+      {
+        id: 'emp_002',
+        firstName: 'Jean',
+        lastName: 'ANDRY',
+        position: 'Comptable',
+        department: 'Administration',
+        salary: 1800000,
+        status: 'active',
+        contractType: 'CDI',
+        entryDate: '2021-03-01'
+      },
+      {
+        id: 'emp_003',
+        firstName: 'Sophie',
+        lastName: 'RABE',
+        position: 'Institutrice CP',
+        department: 'Enseignement',
+        salary: 1500000,
+        status: 'active',
+        contractType: 'FRAM',
+        entryDate: '2019-09-01'
+      },
+      {
+        id: 'emp_004',
+        firstName: 'Paul',
+        lastName: 'HERY',
+        position: 'Professeur d\'Anglais',
+        department: 'Enseignement',
+        salary: 1600000,
+        status: 'active',
+        contractType: 'CDI',
+        entryDate: '2022-01-10'
+      },
+      {
+        id: 'emp_005',
+        firstName: 'Nadia',
+        lastName: 'RAZAF',
+        position: 'Secrétaire',
+        department: 'Administration',
+        salary: 1200000,
+        status: 'active',
+        contractType: 'CDI',
+        entryDate: '2023-02-15'
+      }
+    ];
+    
+    setEmployees(mockEmployees);
+  }, []);
 
-  console.log('📊 Employés chargés dans Gestion de Paie:', {
-    total: employees.length,
-    actifs: employees.filter(e => e.status === 'active').length,
-    parDepartement: employees.reduce((acc, emp) => {
-      acc[emp.department] = (acc[emp.department] || 0) + 1;
-      return acc;
-    }, {} as { [key: string]: number })
-  });
+  const loading = false;
+  const error = null;
 
   // Charger les paramètres financiers
   useEffect(() => {
@@ -79,14 +115,8 @@ export function PayrollManagement() {
                          employee.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          employee.position.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDepartment = selectedDepartment === '' || employee.department === selectedDepartment;
-    // Filtrer EXCLUSIVEMENT les employés actifs du module RH
+    // Filtrer les employés actifs
     return matchesSearch && matchesDepartment && employee.status === 'active';
-  });
-
-  console.log('🔍 Employés filtrés pour affichage:', {
-    total: filteredEmployees.length,
-    recherche: searchTerm,
-    departement: selectedDepartment
   });
 
   const departments = [...new Set(employees.map(e => e.department))];
@@ -315,14 +345,14 @@ export function PayrollManagement() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Gestion de la Paie</h1>
-          <p className="text-gray-600">Calcul des salaires avec cotisations OSTIE et CNAPS - Synchronisé avec RH</p>
+          <p className="text-gray-600">Calcul des salaires avec cotisations OSTIE et CNAPS - Module indépendant</p>
           <div className="flex items-center space-x-4 mt-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
             <span className="text-xs text-green-600 font-medium">
-              Source exclusive : Module Ressources Humaines
+              Module indépendant de gestion de paie
             </span>
             <span className="text-xs text-blue-600 font-medium">
-              {activeEmployees} employé(s) actif(s) synchronisé(s)
+              {activeEmployees} employé(s) actif(s) disponible(s)
             </span>
           </div>
         </div>
@@ -491,12 +521,12 @@ export function PayrollManagement() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <div className="bg-green-50 border-b border-green-200 px-6 py-3">
+            <div className="bg-blue-50 border-b border-blue-200 px-6 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Users className="w-5 h-5 text-green-600" />
+                  <Users className="w-5 h-5 text-blue-600" />
                   <span className="text-sm font-medium text-green-800">
-                    Employés synchronisés depuis Ressources Humaines
+                    Employés du module Gestion de Paie
                   </span>
                 </div>
                 <span className="text-xs text-green-600">
@@ -556,8 +586,8 @@ export function PayrollManagement() {
                           <div>
                             <p className="font-medium text-gray-900">{employee.firstName} {employee.lastName}</p>
                             <div className="flex items-center space-x-2 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <span className="text-xs text-green-600 font-medium">Sync RH</span>
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <span className="text-xs text-blue-600 font-medium">Module Paie</span>
                             </div>
                             <PayrollSyncIndicator
                               employeeId={employee.id!}

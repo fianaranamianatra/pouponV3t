@@ -31,19 +31,9 @@ interface SalaryRecord {
   notes?: string;
 }
 
-interface Employee {
-  id: string;
-  firstName: string;
-  lastName: string;
-  position: string;
-  department: string;
-  salary: number;
-  status: 'active' | 'inactive';
-}
-
 interface SalaryDetailsModalProps {
   salary: SalaryRecord;
-  employee?: Employee;
+  employee?: any;
   onEdit: () => void;
   onClose: () => void;
 }

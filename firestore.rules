@@ -232,7 +232,8 @@ service cloud.firestore {
         && data.amount is number && data.amount > 0 && data.amount <= 100000000
         && data.date is string
         && data.paymentMethod is string && data.paymentMethod.size() >= 2
-        && data.status in ['Validé', 'En attente', 'Annulé'];
+        && data.status in ['Validé', 'En attente', 'Annulé']
+        && (!data.keys().hasAny(['isManual']) || data.isManual is bool);
     }
     
     // Validation pour les paramètres financiers

@@ -100,28 +100,31 @@ export class FinancialDataCleanupService {
         return 0;
       }
 
-      // Utiliser un batch pour supprimer par lots (max 500 par batch)
-      const batch = writeBatch(db);
-      let batchCount = 0;
+      // Supprimer par lots de 500 documents maximum
+      const batchSize = 500;
       let totalDeleted = 0;
+      const docs = snapshot.docs;
 
-      for (const docSnapshot of snapshot.docs) {
-        batch.delete(doc(db, collectionName, docSnapshot.id));
-        batchCount++;
+      // Traiter les documents par lots
+      for (let i = 0; i < docs.length; i += batchSize) {
+        const batch = writeBatch(db); // Créer un nouveau batch pour chaque lot
+        const batchDocs = docs.slice(i, i + batchSize);
         
-        // Commit le batch quand on atteint 500 documents
-        if (batchCount === 500) {
-          await batch.commit();
-          totalDeleted += batchCount;
-          batchCount = 0;
-          console.log(`📦 Batch de 500 documents supprimé de ${collectionName}`);
+        // Ajouter les suppressions au batch
+        for (const docSnapshot of batchDocs) {
+          batch.delete(doc(db, collectionName, docSnapshot.id));
         }
-      }
 
-      // Commit le dernier batch s'il reste des documents
-      if (batchCount > 0) {
+        // Commit le batch
         await batch.commit();
-        totalDeleted += batchCount;
+        totalDeleted += batchDocs.length;
+        
+        console.log(`📦 Batch de ${batchDocs.length} documents supprimé de ${collectionName} (${totalDeleted}/${docs.length})`);
+        
+        // Petite pause entre les batches pour éviter la surcharge
+        if (i + batchSize < docs.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
       }
 
       console.log(`✅ Collection ${collectionName} vidée: ${totalDeleted} document(s) supprimé(s)`);

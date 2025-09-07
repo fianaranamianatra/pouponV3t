@@ -1,4 +1,24 @@
 // Firebase collection type definitions
+import { IRSABareme } from '../services/irsaService';
+
+export interface FinancialSetting {
+  id?: string;
+  cnaps: {
+    employeeRate: number;
+    employerRate: number;
+    ceiling: number;
+    isActive: boolean;
+  };
+  ostie: {
+    employeeRate: number;
+    employerRate: number;
+    ceiling: number;
+    isActive: boolean;
+  };
+  irsa: IRSABareme;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
 export interface Student {
   id?: string;
@@ -100,6 +120,53 @@ export interface Employee {
   salary: number;
   hireDate: string;
   status: 'active' | 'inactive';
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface SalaryRecord {
+  id?: string;
+  employeeId: string;
+  employeeName: string;
+  employeeType: 'teacher' | 'staff';
+  position: string;
+  department: string;
+  paymentMonth: number;
+  paymentYear: number;
+  baseSalary: number;
+  allowances: {
+    transport?: number;
+    housing?: number;
+    meal?: number;
+    performance?: number;
+    other?: number;
+  };
+  totalGross: number;
+  cnaps: number;
+  ostie: number;
+  irsa: number;
+  totalDeductions: number;
+  netSalary: number;
+  effectiveDate: string;
+  status: 'active' | 'inactive' | 'pending';
+  notes?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Transaction {
+  id?: string;
+  type: 'Encaissement' | 'Décaissement';
+  category: string;
+  description: string;
+  amount: number;
+  date: string;
+  paymentMethod: string;
+  status: 'Validé' | 'En attente' | 'Annulé';
+  reference?: string;
+  relatedModule?: 'ecolage' | 'salary' | 'other';
+  relatedId?: string;
+  notes?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -21,13 +21,7 @@ export function useFinancialIntegration() {
     setError(null);
     
     try {
-      // Forcer des valeurs à zéro pour la réinitialisation
-      const summaryData = {
-        totalEcolages: 0,
-        totalSalaires: 0,
-        soldeNet: 0,
-        transactionsCount: 0
-      };
+      const summaryData = await FinancialIntegrationService.calculateFinancialSummary();
       setSummary({
         ...summaryData,
         lastUpdated: new Date()

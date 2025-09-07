@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { User, DollarSign, Calendar, FileText, Calculator, Wallet, TrendingUp, Building, Eye, History, Clock } from 'lucide-react';
-import { Avatar } from '../components/Avatar';
-import { IRSAService } from '../lib/services/irsaService';
-import { Modal } from '../components/Modal';
-import { PayslipPreview } from '../components/payroll/PayslipPreview';
-import { SalaryHistoryModal } from '../components/modals/SalaryHistoryModal';
-import { hierarchyService, salariesService } from '../lib/firebase/firebaseService';
+import { Avatar } from '../Avatar';
+import { IRSAService } from '../../lib/services/irsaService';
+import { Modal } from '../Modal';
+import { PayslipPreview } from '../payroll/PayslipPreview';
+import { SalaryHistoryModal } from '../modals/SalaryHistoryModal';
 
 interface SalaryFormProps {
   onSubmit: (data: any) => void;
@@ -16,7 +15,7 @@ interface SalaryFormProps {
   isSubmitting?: boolean;
 }
 
-export function SalaryManagement({ onSubmit, onCancel, initialData, employees = [], teachers = [], isSubmitting = false }: SalaryFormProps) {
+export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], teachers = [], isSubmitting = false }: SalaryFormProps) {
   const [formData, setFormData] = useState({
     employeeId: initialData?.employeeId || '',
     employeeName: initialData?.employeeName || '',
@@ -52,8 +51,7 @@ export function SalaryManagement({ onSubmit, onCancel, initialData, employees = 
 
   // Combine employees and teachers for selection
   const allEmployees = [
-    ...employees.map(emp => ({ ...emp, type: 'staff' })),
-    ...teachers.map(teacher => ({ ...teacher, type: 'teacher' }))
+import { hierarchyService, salariesService } from '../lib/firebase/firebaseService';
   ];
 
   // Options pour les mois
@@ -686,7 +684,10 @@ export function SalaryManagement({ onSubmit, onCancel, initialData, employees = 
             employeeName: `${selectedEmployee.firstName} ${selectedEmployee.lastName}`,
             position: formData.position,
             department: formData.department,
-          }}
+          history={[]} // L'historique sera géré par Firebase dans une future version
+            netSalary: calculatedValues.netSalary
+          teachers={[]} // Pas besoin de teachers séparés car inclus dans employees
+          history={mockSalaryHistory}
         />
       )}
     </>

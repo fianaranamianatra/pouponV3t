@@ -19,6 +19,9 @@ import {
   Upload,
   ChevronDown,
   ChevronRight,
+  Wallet,
+  TrendingUp,
+  Receipt
 } from 'lucide-react';
 import type { Page } from '../App';
 import { usePermissions } from '../hooks/usePermissions';
@@ -42,8 +45,16 @@ const menuItems = [
   { id: 'import', label: 'Import de Données', icon: Upload }
 ] as const;
 
+const financialMenuItems = [
+  { id: 'ecolage', label: 'Gestion Écolage', icon: CreditCard },
+  { id: 'financial-transactions', label: 'Encaissements & Décaissements', icon: TrendingUp },
+  { id: 'salary-management', label: 'Gestion des Salaires', icon: Wallet },
+  { id: 'payroll', label: 'Bulletins de Paie', icon: Receipt }
+] as const;
+
 export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse }: SidebarProps) {
   const { can, is } = usePermissions();
+  const [financialMenuOpen, setFinancialMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -112,7 +123,42 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
     });
   };
   
+  // Check if user has access to financial features
+  const hasFinancialAccess = () => {
+    return can('manage_fees') || can('view_all_fees') || can('view_child_fees') ||
+           can('manage_finances') || can('view_finances') ||
+           is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]);
+  };
+  
+  // Filter financial menu items based on permissions
+  const getFilteredFinancialItems = () => {
+    return financialMenuItems.filter(item => {
+      switch (item.id) {
+        case 'ecolage':
+          return can('manage_fees') || can('view_all_fees') || can('view_child_fees');
+        case 'financial-transactions':
+          return can('manage_finances') || can('view_finances') || is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]);
+        case 'salary-management':
+        case 'payroll':
+          return can('manage_finances') || can('view_finances') || is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]);
+        default:
+          return true;
+      }
+    });
+  };
+  
   const filteredMenuItems = getFilteredMenuItems();
+  const filteredFinancialItems = getFilteredFinancialItems();
+  
+  // Check if current page is a financial page
+  const isFinancialPage = financialMenuItems.some(item => item.id === currentPage);
+  
+  // Auto-open financial menu if current page is financial
+  React.useEffect(() => {
+    if (isFinancialPage) {
+      setFinancialMenuOpen(true);
+    }
+  }, [isFinancialPage]);
   
   return (
     <>
@@ -198,25 +244,60 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
                 </li>
               );
             })}
-
-            {/* Écolage - Standalone */}
-            {(can('manage_fees') || can('view_all_fees') || can('view_child_fees')) && (
+            
+            {/* Financial Management Menu */}
+            {hasFinancialAccess() && (
               <li className="relative">
                 <button
-                  onClick={() => handlePageChange('ecolage')}
+                  onClick={() => setFinancialMenuOpen(!financialMenuOpen)}
                   className={`w-full flex items-center space-x-3 ${isMobile ? 'px-4 py-3' : 'px-3 py-2.5'} rounded-lg text-left transition-all duration-200 group ${
-                    currentPage === 'ecolage'
+                    isFinancialPage
                       ? 'bg-green-50 text-green-600 shadow-sm'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
-                  <CreditCard className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'} transition-colors ${
-                    currentPage === 'ecolage' ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600'
+                  <Wallet className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'} transition-colors ${
+                    isFinancialPage ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600'
                   }`} />
                   {((!collapsed && !isMobile) || (isMobile && mobileMenuOpen)) && (
-                    <span className={`font-medium ${isMobile ? 'text-base' : 'text-sm'}`}>Gestion Écolage</span>
+                    <>
+                      <span className={`font-medium ${isMobile ? 'text-base' : 'text-sm'} flex-1`}>Gestion Financière</span>
+                      {financialMenuOpen ? (
+                        <ChevronDown className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />
+                      ) : (
+                        <ChevronRight className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />
+                      )}
+                    </>
                   )}
                 </button>
+                
+                {/* Financial Submenu */}
+                {((!collapsed && !isMobile) || (isMobile && mobileMenuOpen)) && financialMenuOpen && (
+                  <ul className={`mt-1 ${isMobile ? 'ml-10' : 'ml-8'} space-y-1`}>
+                    {filteredFinancialItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = currentPage === item.id;
+                      
+                      return (
+                        <li key={item.id}>
+                          <button
+                            onClick={() => handlePageChange(item.id as Page)}
+                            className={`w-full flex items-center space-x-3 ${isMobile ? 'px-4 py-2.5' : 'px-3 py-2'} rounded-lg text-left transition-all duration-200 group ${
+                              isActive
+                                ? 'bg-green-100 text-green-700 shadow-sm'
+                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                            }`}
+                          >
+                            <Icon className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} transition-colors ${
+                              isActive ? 'text-green-700' : 'text-gray-400 group-hover:text-gray-600'
+                            }`} />
+                            <span className={`font-medium ${isMobile ? 'text-sm' : 'text-xs'}`}>{item.label}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </li>
             )}
             

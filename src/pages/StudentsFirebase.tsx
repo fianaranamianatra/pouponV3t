@@ -3,6 +3,9 @@ import { Search, Plus, Filter, Edit, Trash2, Eye, Users, Calendar, MapPin, Phone
 import { Modal } from '../components/Modal';
 import { StudentFormFirebase } from '../components/forms/StudentFormFirebase';
 import { CertificateModal } from '../components/certificates/CertificateModal';
+import { StudentPaymentDetails } from '../components/ecolage/StudentPaymentDetails';
+import { StudentPaymentSummary } from '../components/students/StudentPaymentSummary';
+import { StudentSyncIndicator } from '../components/students/StudentSyncIndicator';
 import { Avatar } from '../components/Avatar';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { studentsService } from '../lib/firebase/firebaseService';
@@ -30,6 +33,7 @@ export function StudentsFirebase() {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const [showPaymentDetails, setShowPaymentDetails] = useState(false);
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -112,6 +116,11 @@ export function StudentsFirebase() {
   const handleGenerateCertificate = (student: Student) => {
     setSelectedStudent(student);
     setShowCertificateModal(true);
+  };
+
+  const handleViewPaymentDetails = (student: Student) => {
+    setSelectedStudent(student);
+    setShowPaymentDetails(true);
   };
 
   const handleSelectStudent = (id: string) => {
@@ -407,6 +416,16 @@ export function StudentsFirebase() {
                           )}
                         </div>
                       </div>
+                      {/* Affichage conditionnel des informations de paiement */}
+                      <div className="ml-auto">
+                        <StudentPaymentSummary
+                          studentName={`${student.firstName} ${student.lastName}`}
+                          studentClass={student.class}
+                          compact={true}
+                          showActions={false}
+                          conditionalDisplay={true}
+                        />
+                      </div>
                     </td>
                     <td className={`${isMobile ? 'py-3 px-3 hidden sm:table-cell' : 'py-4 px-6'}`}>
                       <span className={`inline-flex items-center ${isMobile ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-0.5 text-xs'} font-medium bg-blue-100 text-blue-800 rounded-full`}>
@@ -599,6 +618,17 @@ export function StudentsFirebase() {
               </div>
             </div>
             
+            {/* Résumé financier synchronisé */}
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <h4 className={`font-medium text-gray-900 ${isMobile ? 'text-sm mb-2' : 'mb-3'}`}>Situation Financière (Temps Réel)</h4>
+              <StudentPaymentSummary
+                studentName={`${selectedStudent.firstName} ${selectedStudent.lastName}`}
+                studentClass={selectedStudent.class}
+                compact={false}
+                showActions={false}
+              />
+            </div>
+            
             {/* Actions rapides */}
             <div className="mt-6 pt-4 border-t border-gray-200">
               <h4 className={`font-medium text-gray-900 ${isMobile ? 'text-sm mb-2' : 'mb-3'}`}>Actions rapides</h4>
@@ -635,6 +665,18 @@ export function StudentsFirebase() {
           isOpen={showCertificateModal}
           onClose={() => {
             setShowCertificateModal(false);
+            setSelectedStudent(null);
+          }}
+          student={selectedStudent}
+        />
+      )}
+      
+      {/* Student Payment Details Modal */}
+      {selectedStudent && (
+        <StudentPaymentDetails
+          isOpen={showPaymentDetails}
+          onClose={() => {
+            setShowPaymentDetails(false);
             setSelectedStudent(null);
           }}
           student={selectedStudent}

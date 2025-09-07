@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Calendar, Building, DollarSign, FileText, Users, Briefcase } from 'lucide-react';
+import { useFirebaseCollection } from '../../hooks/useFirebaseCollection';
+import { teachersService } from '../../lib/firebase/firebaseService';
 
 interface Employee {
   id?: string;
@@ -25,6 +27,9 @@ interface EmployeeFormProps {
 }
 
 const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initialData }) => {
+  // Hook Firebase pour charger les enseignants
+  const { data: teachers, loading: teachersLoading } = useFirebaseCollection(teachersService, true);
+  
   const [formData, setFormData] = useState({
     firstName: initialData?.firstName || '',
     lastName: initialData?.lastName || '',
@@ -42,6 +47,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [selectedTeacherId, setSelectedTeacherId] = useState('');
+  const [showTeacherSelector, setShowTeacherSelector] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   React.useEffect(() => {
@@ -53,6 +60,44 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Effet pour afficher/masquer le sélecteur d'enseignant
+  useEffect(() => {
+    const shouldShowTeacherSelector = formData.department === 'Enseignement';
+    setShowTeacherSelector(shouldShowTeacherSelector);
+    
+    // Réinitialiser la sélection si on change de département
+    if (!shouldShowTeacherSelector) {
+      setSelectedTeacherId('');
+    }
+  }, [formData.department]);
+
+  // Effet pour remplir automatiquement le formulaire quand un enseignant est sélectionné
+  useEffect(() => {
+    if (selectedTeacherId && teachers.length > 0) {
+      const selectedTeacher = teachers.find(t => t.id === selectedTeacherId);
+      if (selectedTeacher) {
+        console.log('🎓 Enseignant sélectionné:', selectedTeacher);
+        
+        // Remplir automatiquement les champs avec les données de l'enseignant
+        setFormData(prev => ({
+          ...prev,
+          firstName: selectedTeacher.firstName || prev.firstName,
+          lastName: selectedTeacher.lastName || prev.lastName,
+          dateOfBirth: selectedTeacher.dateOfBirth || prev.dateOfBirth,
+          email: selectedTeacher.email || prev.email,
+          phone: selectedTeacher.phone || prev.phone,
+          position: selectedTeacher.subject ? `Enseignant(e) ${selectedTeacher.subject}` : 'Enseignant(e)',
+          department: 'Enseignement',
+          entryDate: selectedTeacher.entryDate || prev.entryDate,
+          contractType: selectedTeacher.status || prev.contractType,
+          experience: selectedTeacher.experience ? selectedTeacher.experience.toString() : prev.experience
+        }));
+        
+        console.log('✅ Formulaire rempli automatiquement avec les données de l\'enseignant');
+      }
+    }
+  }, [selectedTeacherId, teachers]);
 
   // Calculate age from date of birth
   const calculateAge = (dateOfBirth: string): number => {
@@ -234,6 +279,11 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
         <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-green-900 mb-4 flex items-center`}>
           <Briefcase className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} mr-2`} />
           Informations Professionnelles
+          {selectedTeacherId && (
+            <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              Depuis Module Enseignants
+            </span>
+          )}
         </h3>
         
         <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 md:grid-cols-2 gap-4'}`}>
@@ -252,6 +302,11 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
               placeholder="ex: Directeur, Enseignant, Secrétaire"
             />
             {errors.position && <p className={`mt-1 ${isMobile ? 'text-sm' : 'text-xs'} text-red-600`}>{errors.position}</p>}
+            {selectedTeacherId && (
+              <p className={`mt-1 ${isMobile ? 'text-sm' : 'text-xs'} text-blue-600`}>
+                ✅ Poste généré automatiquement depuis les données enseignant
+              </p>
+            )}
           </div>
 
           <div>
@@ -277,6 +332,99 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
             </select>
             {errors.department && <p className={`mt-1 ${isMobile ? 'text-sm' : 'text-xs'} text-red-600`}>{errors.department}</p>}
           </div>
+
+          {/* Affichage des informations de l'enseignant sélectionné */}
+          {selectedTeacherId && teachers.length > 0 && (
+            <div className="md:col-span-2">
+              {(() => {
+                const selectedTeacher = teachers.find(t => t.id === selectedTeacherId);
+                if (!selectedTeacher) return null;
+                
+                return (
+                  <div className="bg-white border border-green-200 rounded-lg p-4">
+                    <h4 className={`${isMobile ? 'text-sm' : 'text-base'} font-medium text-green-800 mb-3 flex items-center`}>
+                      <Users className="w-4 h-4 mr-2" />
+                      Données Enseignant Importées
+                    </h4>
+                    <div className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-2 md:grid-cols-3 gap-3'} ${isMobile ? 'text-sm' : 'text-sm'}`}>
+                      <div>
+                        <span className="font-medium text-gray-700">Matière:</span>
+                        <p className="text-green-700">{selectedTeacher.subject}</p>
+                      </div>
+                      {selectedTeacher.experience && (
+                        <div>
+                          <span className="font-medium text-gray-700">Expérience:</span>
+                          <p className="text-green-700">{selectedTeacher.experience} ans</p>
+                        </div>
+                      )}
+                      {selectedTeacher.status && (
+                        <div>
+                          <span className="font-medium text-gray-700">Statut:</span>
+                          <p className="text-green-700">{selectedTeacher.status}</p>
+                        </div>
+                      )}
+                      {selectedTeacher.classes && selectedTeacher.classes.length > 0 && (
+                        <div className="md:col-span-3">
+                          <span className="font-medium text-gray-700">Classes assignées:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {selectedTeacher.classes.map((className, index) => (
+                              <span key={index} className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                {className}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded">
+                      <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-green-700`}>
+                        <strong>ℹ️ Note :</strong> Les informations ci-dessus ont été automatiquement importées 
+                        depuis le module Enseignants. Vous pouvez les modifier dans les champs du formulaire si nécessaire.
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Sélecteur d'enseignant (affiché seulement si département = Enseignement) */}
+          {showTeacherSelector && (
+            <div className="md:col-span-2">
+              <label className={`block ${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-700 mb-2`}>
+                <Users className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} inline mr-2`} />
+                Sélectionner un enseignant existant (optionnel)
+              </label>
+              <select
+                value={selectedTeacherId}
+                onChange={(e) => setSelectedTeacherId(e.target.value)}
+                className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+              >
+                <option value="">-- Saisie manuelle ou sélectionner un enseignant --</option>
+                {teachersLoading ? (
+                  <option disabled>Chargement des enseignants...</option>
+                ) : (
+                  teachers.map(teacher => (
+                    <option key={teacher.id} value={teacher.id}>
+                      {teacher.firstName} {teacher.lastName} - {teacher.subject} 
+                      {teacher.experience ? ` (${teacher.experience} ans d'exp.)` : ''}
+                    </option>
+                  ))
+                )}
+              </select>
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-blue-700`}>
+                  <strong>💡 Astuce :</strong> Sélectionnez un enseignant existant pour remplir automatiquement 
+                  les informations personnelles et professionnelles. Vous pourrez ensuite les modifier si nécessaire.
+                </p>
+                {selectedTeacherId && (
+                  <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-green-700 mt-1`}>
+                    ✅ Formulaire rempli automatiquement avec les données de l'enseignant sélectionné
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           <div>
             <label className={`block ${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-700 mb-2`}>
@@ -311,6 +459,11 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
               className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
             />
             {experience > 0 && <p className={`mt-1 ${isMobile ? 'text-sm' : 'text-xs'} text-green-600`}>Expérience: {experience} ans</p>}
+            {selectedTeacherId && (
+              <p className={`mt-1 ${isMobile ? 'text-sm' : 'text-xs'} text-blue-600`}>
+                ✅ Date d'entrée importée depuis les données enseignant
+              </p>
+            )}
           </div>
 
           <div>
@@ -331,6 +484,11 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
               <option value="Stagiaire">Stagiaire</option>
               <option value="Consultant">Consultant</option>
             </select>
+            {selectedTeacherId && (
+              <p className={`mt-1 ${isMobile ? 'text-sm' : 'text-xs'} text-blue-600`}>
+                ✅ Type de contrat importé depuis les données enseignant
+              </p>
+            )}
           </div>
 
           <div>
@@ -350,6 +508,37 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
             </select>
           </div>
         </div>
+        
+        {/* Bouton pour réinitialiser la sélection d'enseignant */}
+        {selectedTeacherId && (
+          <div className="mt-4 pt-4 border-t border-green-200">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedTeacherId('');
+                // Optionnel: réinitialiser certains champs
+                if (confirm('Voulez-vous effacer les données importées de l\'enseignant ?')) {
+                  setFormData(prev => ({
+                    ...prev,
+                    firstName: '',
+                    lastName: '',
+                    dateOfBirth: '',
+                    email: '',
+                    phone: '',
+                    position: '',
+                    entryDate: '',
+                    contractType: '',
+                    experience: ''
+                  }));
+                }
+              }}
+              className={`inline-flex items-center ${isMobile ? 'px-4 py-2 text-sm' : 'px-3 py-2 text-xs'} border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors`}
+            >
+              <Users className={`${isMobile ? 'w-4 h-4' : 'w-3 h-3'} mr-2`} />
+              Désélectionner l'enseignant
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Informations Calculées */}
@@ -365,6 +554,9 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
               <div className="bg-white border border-purple-200 rounded-lg p-3">
                 <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-purple-600 font-medium`}>Âge Actuel</p>
                 <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-purple-800`}>{age} ans</p>
+                {selectedTeacherId && (
+                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-blue-600 mt-1`}>Depuis enseignant</p>
+                )}
               </div>
             )}
             
@@ -372,6 +564,9 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
               <div className="bg-white border border-purple-200 rounded-lg p-3">
                 <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-purple-600 font-medium`}>Expérience</p>
                 <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-purple-800`}>{experience} ans</p>
+                {selectedTeacherId && (
+                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-blue-600 mt-1`}>Depuis enseignant</p>
+                )}
               </div>
             )}
             
@@ -381,9 +576,53 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initial
                 <p className={`${isMobile ? 'text-sm' : 'text-xs'} font-bold text-purple-800`}>
                   {new Date(retirementDate).toLocaleDateString('fr-FR')}
                 </p>
+                {selectedTeacherId && (
+                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-blue-600 mt-1`}>Calculé depuis enseignant</p>
+                )}
               </div>
             )}
           </div>
+          
+          {/* Informations supplémentaires de l'enseignant */}
+          {selectedTeacherId && teachers.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-purple-200">
+              {(() => {
+                const selectedTeacher = teachers.find(t => t.id === selectedTeacherId);
+                if (!selectedTeacher) return null;
+                
+                return (
+                  <div className="bg-white border border-purple-200 rounded-lg p-4">
+                    <h4 className={`${isMobile ? 'text-sm' : 'text-base'} font-medium text-purple-800 mb-3`}>
+                      📚 Informations Pédagogiques Importées
+                    </h4>
+                    <div className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-2 gap-3'} ${isMobile ? 'text-sm' : 'text-sm'}`}>
+                      <div>
+                        <span className="font-medium text-gray-700">Matière principale:</span>
+                        <p className="text-purple-700">{selectedTeacher.subject}</p>
+                      </div>
+                      {selectedTeacher.classes && selectedTeacher.classes.length > 0 && (
+                        <div>
+                          <span className="font-medium text-gray-700">Classes:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {selectedTeacher.classes.slice(0, 3).map((className, index) => (
+                              <span key={index} className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                {className}
+                              </span>
+                            ))}
+                            {selectedTeacher.classes.length > 3 && (
+                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                                +{selectedTeacher.classes.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </div>
       )}
 

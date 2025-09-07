@@ -22,6 +22,9 @@ export function FinancialDataCleanup({ className = '' }: FinancialDataCleanupPro
   const [showDuplicateCleanup, setShowDuplicateCleanup] = useState(false);
   const [isCleaningDuplicates, setIsCleaningDuplicates] = useState(false);
   const [duplicateCleanupResult, setDuplicateCleanupResult] = useState<any>(null);
+  const [duplicateAnalysis, setDuplicateAnalysis] = useState<any>(null);
+  const [showDuplicateDetails, setShowDuplicateDetails] = useState(false);
+  const [isAnalyzingDuplicates, setIsAnalyzingDuplicates] = useState(false);
 
   // Charger les compteurs au montage
   useEffect(() => {
@@ -42,6 +45,28 @@ export function FinancialDataCleanup({ className = '' }: FinancialDataCleanupPro
       console.error('Erreur lors du chargement des compteurs:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAnalyzeDuplicates = async () => {
+    setIsAnalyzingDuplicates(true);
+    try {
+      // Note: This would need to be implemented in the service
+      // const result = await FinancialDataCleanupService.analyzeDuplicateTransactions();
+      // setDuplicateAnalysis(result);
+      
+      // For now, simulate the analysis
+      const result = {
+        totalTransactions: dataCounts.transactions,
+        totalDuplicates: 0,
+        duplicateGroups: []
+      };
+      setDuplicateAnalysis(result);
+    } catch (error: any) {
+      console.error('Erreur lors de l\'analyse des doublons:', error);
+      alert('Erreur lors de l\'analyse des doublons: ' + error.message);
+    } finally {
+      setIsAnalyzingDuplicates(false);
     }
   };
 
@@ -276,15 +301,15 @@ ${result.errors.join('\n')}`);
             <div className="flex space-x-3">
               <button
                 onClick={handleAnalyzeDuplicates}
-                disabled={loading || isCleaningDuplicates}
+                disabled={loading || isCleaningDuplicates || isAnalyzingDuplicates}
                 className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
-                {loading ? (
+                {isAnalyzingDuplicates ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                 ) : (
                   <Database className="w-4 h-4 mr-2" />
                 )}
-                {loading ? 'Analyse...' : '1. Analyser les Doublons'}
+                {isAnalyzingDuplicates ? 'Analyse...' : '1. Analyser les Doublons'}
               </button>
               
               <button
@@ -333,7 +358,6 @@ ${result.errors.join('\n')}`);
             </p>
           )}
           </div>
-        </div>
       </div>
 
       {/* Confirmation Modal */}

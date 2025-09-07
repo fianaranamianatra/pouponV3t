@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, CreditCard, Calendar, DollarSign, FileText } from 'lucide-react';
 import { useFirebaseCollection } from '../../hooks/useFirebaseCollection';
 import { studentsService, classesService } from '../../lib/firebase/firebaseService';
+import { ClassEcolageService } from '../../lib/services/classEcolageService';
 
 interface PaymentFormProps {
   onSubmit: (data: any) => void;
@@ -41,6 +42,14 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
     reference: initialData?.reference || '',
     notes: initialData?.notes || ''
   });
+  
+  const [suggestedAmounts, setSuggestedAmounts] = useState({
+    monthlyAmount: 0,
+    registrationFee: 0,
+    examFee: 0,
+    source: 'default' as 'configured' | 'default'
+  });
+  const [showAmountSuggestions, setShowAmountSuggestions] = useState(false);
 
   // Mettre à jour la classe lorsque l'élève change
   useEffect(() => {
@@ -54,6 +63,56 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
       }
     }
   }, [formData.studentName, finalStudents]);
+
+  // Charger les montants suggérés lorsque la classe change
+  useEffect(() => {
+    if (formData.class) {
+      loadSuggestedAmounts();
+    }
+  }, [formData.class]);
+
+  const loadSuggestedAmounts = async () => {
+    try {
+      const classData = finalClasses.find(c => c.name === formData.class);
+      if (classData) {
+        const suggested = await ClassEcolageService.getSuggestedAmount(formData.class, classData.level);
+        setSuggestedAmounts(suggested);
+        setShowAmountSuggestions(true);
+        
+        // Remplir automatiquement le montant si le champ est vide
+        if (!formData.amount || formData.amount === '') {
+          setFormData(prev => ({
+            ...prev,
+            amount: suggested.monthlyAmount.toString()
+          }));
+        }
+        
+        console.log(`💰 Montant suggéré pour ${formData.class}: ${suggested.monthlyAmount.toLocaleString()} Ar (source: ${suggested.source})`);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des montants suggérés:', error);
+    }
+  };
+
+  const handleUseSuggestedAmount = (type: 'monthly' | 'registration' | 'exam') => {
+    let amount = 0;
+    switch (type) {
+      case 'monthly':
+        amount = suggestedAmounts.monthlyAmount;
+        break;
+      case 'registration':
+        amount = suggestedAmounts.registrationFee;
+        break;
+      case 'exam':
+        amount = suggestedAmounts.examFee;
+        break;
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      amount: amount.toString()
+    }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,6 +208,63 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
             required
             className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
           />
+          
+          {/* Suggestions de montants */}
+          {showAmountSuggestions && suggestedAmounts.monthlyAmount > 0 && (
+            <div className={`mt-2 ${isMobile ? 'p-3' : 'p-3'} bg-blue-50 border border-blue-200 rounded-lg`}>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className={`${isMobile ? 'text-sm' : 'text-sm'} font-medium text-blue-800`}>
+                  💡 Montants suggérés pour {formData.class}
+                </h4>
+                <span className={`${isMobile ? 'text-xs' : 'text-xs'} px-2 py-1 rounded-full font-medium ${
+                  suggestedAmounts.source === 'configured' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {suggestedAmounts.source === 'configured' ? 'Configuré' : 'Par défaut'}
+                </span>
+              </div>
+              
+              <div className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-3 gap-2'}`}>
+                <button
+                  type="button"
+                  onClick={() => handleUseSuggestedAmount('monthly')}
+                  className={`${isMobile ? 'p-2' : 'p-2'} bg-white border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors text-left`}
+                >
+                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-blue-600 font-medium`}>Écolage mensuel</p>
+                  <p className={`${isMobile ? 'text-sm' : 'text-sm'} font-bold text-blue-800`}>
+                    {suggestedAmounts.monthlyAmount.toLocaleString()} Ar
+                  </p>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => handleUseSuggestedAmount('registration')}
+                  className={`${isMobile ? 'p-2' : 'p-2'} bg-white border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors text-left`}
+                >
+                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-blue-600 font-medium`}>Frais inscription</p>
+                  <p className={`${isMobile ? 'text-sm' : 'text-sm'} font-bold text-blue-800`}>
+                    {suggestedAmounts.registrationFee.toLocaleString()} Ar
+                  </p>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => handleUseSuggestedAmount('exam')}
+                  className={`${isMobile ? 'p-2' : 'p-2'} bg-white border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors text-left`}
+                >
+                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-blue-600 font-medium`}>Frais examen</p>
+                  <p className={`${isMobile ? 'text-sm' : 'text-sm'} font-bold text-blue-800`}>
+                    {suggestedAmounts.examFee.toLocaleString()} Ar
+                  </p>
+                </button>
+              </div>
+              
+              <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-blue-600 mt-2`}>
+                <strong>💡 Astuce :</strong> Cliquez sur un montant pour l'utiliser automatiquement
+              </p>
+            </div>
+          )}
         </div>
 
         <div>
@@ -239,6 +355,16 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
             placeholder="Notes additionnelles..."
             className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
           />
+          
+          {/* Indicateur de montant configuré */}
+          <div className="mt-1">
+            <ClassAmountIndicator
+              className={payment.class}
+              level=""
+              currentAmount={payment.amount}
+              compact={true}
+            />
+          </div>
         </div>
       </div>
 

@@ -141,6 +141,22 @@ service cloud.firestore {
       allow delete: if request.auth != null;
     }
     
+    // Règles pour les montants d'écolage par classe
+    match /class_ecolage_amounts/{amountId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateClassEcolageAmount(request.resource.data);
+      allow update: if request.auth != null && validateClassEcolageAmount(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les paramètres d'écolage
+    match /ecolage_settings/{settingId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateEcolageSettings(request.resource.data);
+      allow update: if request.auth != null && validateEcolageSettings(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
     // Fonctions de validation
     function validateStudent(data) {
       return data.keys().hasAll(['firstName', 'lastName', 'dateOfBirth', 'class', 'address', 'phone', 'parentName', 'status'])
@@ -245,6 +261,33 @@ service cloud.firestore {
         && data.cnaps.employerRate is number && data.cnaps.employerRate >= 0 && data.cnaps.employerRate <= 20
         && data.ostie.employeeRate is number && data.ostie.employeeRate >= 0 && data.ostie.employeeRate <= 20
         && data.ostie.employerRate is number && data.ostie.employerRate >= 0 && data.ostie.employerRate <= 20;
+    }
+    
+    // Validation pour les montants d'écolage par classe
+    function validateClassEcolageAmount(data) {
+      return data.keys().hasAll(['className', 'level', 'monthlyAmount', 'annualAmount', 'isActive', 'effectiveDate'])
+        && data.className is string && data.className.size() >= 1 && data.className.size() <= 50
+        && data.level is string && data.level.size() >= 2 && data.level.size() <= 100
+        && data.monthlyAmount is number && data.monthlyAmount >= 50000 && data.monthlyAmount <= 1000000
+        && data.annualAmount is number && data.annualAmount >= 500000 && data.annualAmount <= 10000000
+        && data.isActive is bool
+        && data.effectiveDate is string
+        && (!data.keys().hasAny(['registrationFee']) || (data.registrationFee is number && data.registrationFee >= 0 && data.registrationFee <= 500000))
+        && (!data.keys().hasAny(['examFee']) || (data.examFee is number && data.examFee >= 0 && data.examFee <= 200000));
+    }
+    
+    // Validation pour les paramètres d'écolage
+    function validateEcolageSettings(data) {
+      return data.keys().hasAll(['defaultMonthlyAmount', 'defaultRegistrationFee', 'defaultExamFee', 'academicYear', 'paymentSchedule', 'isActive'])
+        && data.defaultMonthlyAmount is number && data.defaultMonthlyAmount >= 50000 && data.defaultMonthlyAmount <= 1000000
+        && data.defaultRegistrationFee is number && data.defaultRegistrationFee >= 0 && data.defaultRegistrationFee <= 500000
+        && data.defaultExamFee is number && data.defaultExamFee >= 0 && data.defaultExamFee <= 200000
+        && data.academicYear is string && data.academicYear.size() >= 7 && data.academicYear.size() <= 15
+        && data.paymentSchedule.keys().hasAll(['startMonth', 'endMonth', 'totalMonths'])
+        && data.paymentSchedule.startMonth is number && data.paymentSchedule.startMonth >= 1 && data.paymentSchedule.startMonth <= 12
+        && data.paymentSchedule.endMonth is number && data.paymentSchedule.endMonth >= 1 && data.paymentSchedule.endMonth <= 12
+        && data.paymentSchedule.totalMonths is number && data.paymentSchedule.totalMonths >= 8 && data.paymentSchedule.totalMonths <= 12
+        && data.isActive is bool;
     }
   }
 }

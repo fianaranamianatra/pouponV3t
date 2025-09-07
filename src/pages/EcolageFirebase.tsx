@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Filter, CreditCard, DollarSign, AlertTriangle, CheckCircle, Clock, Download, Eye, Edit, Trash2, BarChart3 } from 'lucide-react';
+import { Search, Plus, Filter, CreditCard, DollarSign, AlertTriangle, CheckCircle, Clock, Download, Eye, Edit, Trash2, BarChart3, Settings } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { PaymentForm } from '../components/forms/PaymentForm';
 import { Avatar } from '../components/Avatar';
 import { PaymentDashboard } from '../components/ecolage/PaymentDashboard';
+import { ClassEcolageManagement } from '../components/ecolage/ClassEcolageManagement';
+import { EcolageQuickSetup } from '../components/ecolage/EcolageQuickSetup';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { useEcolageSync } from '../hooks/useEcolageSync';
 import { feesService, studentsService, classesService } from '../lib/firebase/firebaseService';
 import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
 import { CentralizedSyncIndicator } from '../components/financial/CentralizedSyncIndicator';
+import { ClassAmountIndicator } from '../components/ecolage/ClassAmountIndicator';
 
 interface Payment {
   id?: string;
@@ -55,6 +58,7 @@ export function EcolageFirebase() {
   const [selectedPeriod, setSelectedPeriod] = useState('');
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showClassAmountsConfig, setShowClassAmountsConfig] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   React.useEffect(() => {
@@ -263,6 +267,13 @@ export function EcolageFirebase() {
             Rappels
           </button>
           <button 
+            onClick={() => setShowClassAmountsConfig(true)}
+            className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors`}
+          >
+            <Settings className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
+            Montants par Classe
+          </button>
+          <button 
             onClick={() => setShowDashboard(true)}
             className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors`}
           >
@@ -387,6 +398,9 @@ export function EcolageFirebase() {
         </div>
       </div>
 
+      {/* Configuration rapide des montants */}
+      <EcolageQuickSetup />
+
       {/* Payments Table */}
       <div className={`bg-white ${isMobile ? 'rounded-lg' : 'rounded-xl'} shadow-sm border border-gray-100 overflow-hidden`}>
         {payments.length === 0 ? (
@@ -440,6 +454,17 @@ export function EcolageFirebase() {
                             className="mt-1"
                             showDetails={true}
                           />
+                          
+                          {/* Indicateur de montant configuré */}
+                          <div className="mt-1">
+                            <ClassAmountIndicator
+                              className={payment.class}
+                              level=""
+                              currentAmount={payment.amount}
+                              compact={true}
+                            />
+                          </div>
+                          
                           {isMobile && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">
                               {payment.class}
@@ -633,6 +658,12 @@ export function EcolageFirebase() {
       >
         <PaymentDashboard />
       </Modal>
+
+      {/* Class Amounts Configuration Modal */}
+      <ClassEcolageManagement
+        isOpen={showClassAmountsConfig}
+        onClose={() => setShowClassAmountsConfig(false)}
+      />
 
       {/* Financial Data Cleanup - Admin Section */}
       <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100 mt-6`}>

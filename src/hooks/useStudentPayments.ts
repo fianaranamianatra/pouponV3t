@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { onSnapshot, query, where } from 'firebase/firestore';
 import { feesService } from '../lib/firebase/firebaseService';
+import { ClassEcolageService } from '../lib/services/classEcolageService';
 
 export interface StudentPaymentData {
   payments: any[];
@@ -60,19 +61,18 @@ export function useStudentPayments(studentName: string, studentClass: string) {
         });
 
         // Calculer les statistiques
-        const calculatedData = calculatePaymentStatistics(payments, studentClass);
-        
-        setPaymentData({
-          ...calculatedData,
-          payments,
-          loading: false,
-          error: null
+        calculatePaymentStatistics(payments, studentClass).then(calculatedData => {
+          setPaymentData({
+            ...calculatedData,
+            payments,
+            loading: false,
+            error: null
+          });
         });
 
         console.log(`✅ Données de paiement mises à jour pour ${studentName}:`, {
           totalPayments: payments.length,
-          totalPaid: calculatedData.totalPaid,
-          status: calculatedData.status
+          totalPaid: payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0)
         });
       },
       (error) => {
@@ -95,24 +95,31 @@ export function useStudentPayments(studentName: string, studentClass: string) {
 }
 
 // Fonction pour calculer les statistiques de paiement
-function calculatePaymentStatistics(payments: any[], studentClass: string) {
+async function calculatePaymentStatistics(payments: any[], studentClass: string) {
   // Montant mensuel standard selon la classe
-  const getMonthlyAmount = (className: string): number => {
-    const classAmounts: { [key: string]: number } = {
-      'TPSA': 120000, 'TPSB': 120000,
-      'PSA': 130000, 'PSB': 130000, 'PSC': 130000,
-      'MS_A': 140000, 'MSB': 140000,
-      'GSA': 150000, 'GSB': 150000, 'GSC': 150000,
-      '11_A': 160000, '11B': 160000,
-      '10_A': 170000, '10_B': 170000,
-      '9A': 180000, '9_B': 180000,
-      '8': 190000, '7': 200000,
-      'CS': 110000, 'GARDERIE': 100000
-    };
-    return classAmounts[className] || 150000;
+  const getMonthlyAmount = async (className: string): Promise<number> => {
+    try {
+      const suggested = await ClassEcolageService.getSuggestedAmount(className, '');
+      return suggested.monthlyAmount;
+    } catch (error) {
+      console.error('Erreur lors de la récupération du montant configuré:', error);
+      // Fallback vers les montants par défaut
+      const classAmounts: { [key: string]: number } = {
+        'TPSA': 120000, 'TPSB': 120000,
+        'PSA': 130000, 'PSB': 130000, 'PSC': 130000,
+        'MS_A': 140000, 'MSB': 140000,
+        'GSA': 150000, 'GSB': 150000, 'GSC': 150000,
+        '11_A': 160000, '11B': 160000,
+        '10_A': 170000, '10_B': 170000,
+        '9A': 180000, '9_B': 180000,
+        '8': 190000, '7': 200000,
+        'CS': 110000, 'GARDERIE': 100000
+      };
+      return classAmounts[className] || 150000;
+    }
   };
 
-  const monthlyAmount = getMonthlyAmount(studentClass);
+  const monthlyAmount = await getMonthlyAmount(studentClass);
   const totalDue = monthlyAmount * 10; // 10 mois d'école
 
   const totalPaid = payments

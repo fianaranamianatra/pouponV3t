@@ -9,7 +9,6 @@ import { FinancialSettingsService } from '../lib/services/financialSettingsServi
 import { IRSAService } from '../lib/services/irsaService';
 import { IRSACalculator } from '../components/IRSACalculator';
 import { IRSABaremeDisplay } from '../components/IRSABaremeDisplay';
-import { FinancialIntegrationService } from '../lib/services/financialIntegrationService';
 import { PayrollSalarySyncPanel } from '../components/payroll/PayrollSalarySyncPanel';
 import { PayrollSyncIndicator } from '../components/payroll/PayrollSyncIndicator';
 import { usePayrollSalarySync } from '../hooks/usePayrollSalarySync';
@@ -166,11 +165,6 @@ export function PayrollManagement() {
       
       const calculations = await PayrollService.calculateBulkPayroll(employeesToCalculate);
       console.log('✅ Calculs terminés avec succès');
-      
-      // Note: Les transactions financières sont créées automatiquement
-      // par le service PayrollSalarySyncService lors de la synchronisation
-      console.log('ℹ️ Les transactions financières seront créées automatiquement par la synchronisation');
-      
       setBulkPayroll(calculations);
       setShowBulkModal(true);
     } catch (error: any) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Plus, Filter, Edit, Trash2, Eye, Users, DollarSign, UserCheck, Building, User, Calendar, Briefcase, Clock, Calculator } from 'lucide-react';
 import { Modal } from '../components/Modal';
-import { EmployeeForm } from '../components/forms/EmployeeForm';
+import EmployeeForm from '../components/forms/EmployeeForm';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { hierarchyService } from '../lib/firebase/firebaseService';
 import { Avatar } from '../components/Avatar';

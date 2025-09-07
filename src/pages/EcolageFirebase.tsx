@@ -3,12 +3,10 @@ import { Search, Plus, Filter, CreditCard, DollarSign, AlertTriangle, CheckCircl
 import { Modal } from '../components/Modal';
 import { PaymentForm } from '../components/forms/PaymentForm';
 import { Avatar } from '../components/Avatar';
-import { TransactionSyncIndicator } from '../components/financial/TransactionSyncIndicator';
 import { PaymentDashboard } from '../components/ecolage/PaymentDashboard';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { useEcolageSync } from '../hooks/useEcolageSync';
 import { feesService, studentsService, classesService } from '../lib/firebase/firebaseService';
-import { FinancialIntegrationService } from '../lib/services/financialIntegrationService';
 import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
 
 interface Payment {
@@ -148,26 +146,6 @@ export function EcolageFirebase() {
       const paymentId = await create(paymentData);
       console.log('✅ Paiement créé avec l\'ID:', paymentId);
       
-      // Créer automatiquement une transaction financière UNIQUEMENT pour les nouveaux paiements
-      if (paymentData.status === 'paid') {
-        try {
-          const result = await FinancialIntegrationService.createEcolageTransaction({
-            ...paymentData,
-            id: paymentId
-          });
-          
-          if (result.success) {
-            console.log('✅ Transaction financière créée automatiquement avec l\'ID:', result.transactionId);
-            console.log('🔄 Synchronisation automatique avec profils étudiants activée');
-          } else {
-            console.warn('⚠️ Erreur lors de la création de la transaction automatique:', result.error);
-          }
-        } catch (transactionError) {
-          console.warn('⚠️ Erreur lors de la création de la transaction automatique:', transactionError);
-          // Ne pas bloquer le processus principal si la transaction échoue
-        }
-      }
-      
       setShowAddForm(false);
       
       // Message de succès
@@ -191,23 +169,6 @@ export function EcolageFirebase() {
         
         await update(selectedPayment.id, updateData);
         console.log('✅ Paiement modifié avec succès');
-        
-        // Synchroniser avec les transactions financières
-        try {
-          // Si le statut change vers "paid", créer ou mettre à jour une transaction
-          if (updateData.status === 'paid') {
-            const result = await FinancialIntegrationService.createEcolageTransaction({
-              ...updateData,
-              id: selectedPayment.id
-            });
-            
-            if (result.success) {
-              console.log('✅ Transaction financière synchronisée lors de la modification');
-            }
-          }
-        } catch (syncError) {
-          console.warn('⚠️ Erreur lors de la synchronisation:', syncError);
-        }
         
         setShowEditForm(false);
         setSelectedPayment(null);

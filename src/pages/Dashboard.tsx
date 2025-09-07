@@ -1,7 +1,6 @@
 import React from 'react';
 import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCircle, AlertTriangle, Plus, DollarSign, Zap, Activity, Calculator, Trash2 } from 'lucide-react';
 // import { DataInitializer } from '../components/admin/DataInitializer';
-import { FinancialSyncStatus } from '../components/financial/FinancialSyncStatus';
 import { PaymentAlerts } from '../components/ecolage/PaymentAlerts';
 import { EcolageStudentSync } from '../components/ecolage/EcolageStudentSync';
 import { GlobalSyncStatus } from '../components/sync/GlobalSyncStatus';
@@ -242,12 +241,6 @@ export function Dashboard() {
             <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-600 group-hover:text-purple-600 text-center`}>Envoyer Message</span>
           </button>
         </div>
-      </div>
-
-      {/* Quick Financial Sync Status */}
-      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
-        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'}`}>État de Synchronisation Financière</h2>
-        <FinancialSyncStatus compact={false} showActions={true} />
       </div>
 
       {/* Payment Alerts */}

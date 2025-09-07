@@ -239,31 +239,31 @@ export function SalaryCalculationForm({
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
             >
               <option value="">Sélectionner un employé</option>
-              <optgroup label="🏛️ Direction ({employees.filter(emp => emp.department === 'Direction').length})">
+              <optgroup label="🏛️ Direction">
                 {employees.filter(emp => emp.department === 'Direction').map(emp => (
                   <option key={emp.id} value={emp.id}>
-                    {emp.firstName} {emp.lastName} - {emp.position} ({emp.salary.toLocaleString()} Ar)
+                    {emp.firstName} {emp.lastName} - {emp.position}
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="📋 Administration ({employees.filter(emp => emp.department === 'Administration').length})">
+              <optgroup label="📋 Administration">
                 {employees.filter(emp => emp.department === 'Administration').map(emp => (
                   <option key={emp.id} value={emp.id}>
-                    {emp.firstName} {emp.lastName} - {emp.position} ({emp.salary.toLocaleString()} Ar)
+                    {emp.firstName} {emp.lastName} - {emp.position}
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="🎓 Enseignement ({employees.filter(emp => emp.department === 'Enseignement').length})">
+              <optgroup label="🎓 Enseignement">
                 {employees.filter(emp => emp.department === 'Enseignement').map(emp => (
                   <option key={emp.id} value={emp.id}>
-                    {emp.firstName} {emp.lastName} - {emp.position} ({emp.salary.toLocaleString()} Ar)
+                    {emp.firstName} {emp.lastName} - {emp.position}
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="🔧 Service ({employees.filter(emp => emp.department === 'Service').length})">
+              <optgroup label="🔧 Service">
                 {employees.filter(emp => emp.department === 'Service').map(emp => (
                   <option key={emp.id} value={emp.id}>
-                    {emp.firstName} {emp.lastName} - {emp.position} ({emp.salary.toLocaleString()} Ar)
+                    {emp.firstName} {emp.lastName} - {emp.position}
                   </option>
                 ))}
               </optgroup>

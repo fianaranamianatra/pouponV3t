@@ -21,6 +21,17 @@ class FirebaseService {
 
   async create(data) {
     try {
+      // PRÉVENTION DES DOUBLONS : Vérification avant création
+      if (this.collectionName === 'transactions') {
+        const { TransactionDeduplicationService } = await import('../services/transactionDeduplicationService');
+        const duplicateCheck = await TransactionDeduplicationService.checkForDuplicate(data);
+        
+        if (duplicateCheck.isDuplicate) {
+          console.log('🚫 DOUBLON EMPÊCHÉ - Transaction identique existante:', duplicateCheck.existingTransaction?.id);
+          return duplicateCheck.existingTransaction.id;
+        }
+      }
+      
       // Ajouter un timestamp de création pour éviter les doublons
       const dataWithTimestamp = {
         ...data,
@@ -28,7 +39,7 @@ class FirebaseService {
         updatedAt: new Date()
       };
       
-      const docRef = await addDoc(this.collectionRef, data);
+      const docRef = await addDoc(this.collectionRef, dataWithTimestamp);
       console.log(`✅ Document créé avec ID: ${docRef.id} dans collection: ${this.collectionName}`);
       return docRef.id;
     } catch (error) {

@@ -6,6 +6,7 @@ import { TransactionForm } from '../components/forms/TransactionForm';
 import { transactionsService } from '../lib/firebase/firebaseService';
 import { FinancialIntegrationService } from '../lib/services/financialIntegrationService';
 import { FinancialIntegrationPanel } from '../components/financial/FinancialIntegrationPanel';
+import { TransactionDeduplicationService } from '../lib/services/transactionDeduplicationService';
 import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
 
 interface Transaction {
@@ -46,6 +47,9 @@ export default function FinancialTransactions() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [showDeduplicationPanel, setShowDeduplicationPanel] = useState(false);
+  const [deduplicationResult, setDeduplicationResult] = useState<any>(null);
+  const [isDeduplicating, setIsDeduplicating] = useState(false);
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -94,6 +98,23 @@ export default function FinancialTransactions() {
   const handleAddTransaction = async (data: any) => {
     try {
       console.log('🚀 Ajout de transaction - Données reçues:', data);
+      
+      // Vérifier les doublons avant création
+      const duplicateCheck = await TransactionDeduplicationService.checkForDuplicate(data);
+      if (duplicateCheck.isDuplicate) {
+        const proceed = confirm(`⚠️ Une transaction similaire existe déjà:
+        
+Description: ${duplicateCheck.existingTransaction.description}
+Montant: ${duplicateCheck.existingTransaction.amount.toLocaleString()} Ar
+Date: ${duplicateCheck.existingTransaction.date}
+
+Voulez-vous quand même créer cette transaction ?`);
+        
+        if (!proceed) {
+          console.log('🚫 Création annulée par l\'utilisateur pour éviter un doublon');
+          return;
+        }
+      }
       
       // Préparer les données pour Firebase
       const transactionData = {
@@ -226,6 +247,53 @@ export default function FinancialTransactions() {
     URL.revokeObjectURL(url);
   };
 
+  const handleAnalyzeDuplicates = async () => {
+    setIsDeduplicating(true);
+    try {
+      const result = await TransactionDeduplicationService.analyzeDuplicates();
+      setDeduplicationResult(result);
+      setShowDeduplicationPanel(true);
+    } catch (error: any) {
+      alert('Erreur lors de l\'analyse: ' + error.message);
+    } finally {
+      setIsDeduplicating(false);
+    }
+  };
+
+  const handleRemoveDuplicates = async () => {
+    if (!deduplicationResult || deduplicationResult.duplicatesFound === 0) {
+      alert('Aucun doublon à supprimer');
+      return;
+    }
+
+    if (!confirm(`Supprimer ${deduplicationResult.duplicatesFound} doublon(s) ?`)) {
+      return;
+    }
+
+    setIsDeduplicating(true);
+    try {
+      const result = await TransactionDeduplicationService.removeDuplicates();
+      
+      if (result.success) {
+        alert(`✅ Nettoyage terminé !
+        
+• ${result.duplicatesRemoved} doublon(s) supprimé(s)
+• ${result.uniqueTransactionsKept} transaction(s) unique(s) conservée(s)
+
+Les totaux sont maintenant corrects.`);
+        
+        // Recharger les données
+        window.location.reload();
+      } else {
+        alert('Erreurs lors du nettoyage: ' + result.errors.join(', '));
+      }
+    } catch (error: any) {
+      alert('Erreur lors de la suppression: ' + error.message);
+    } finally {
+      setIsDeduplicating(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -261,6 +329,18 @@ export default function FinancialTransactions() {
         </div>
         
         <div className={`flex ${isMobile ? 'flex-col gap-2' : 'gap-2'}`}>
+          <button 
+            onClick={handleAnalyzeDuplicates}
+            disabled={isDeduplicating}
+            className={`${isMobile ? 'hidden sm:inline-flex' : 'inline-flex'} items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50`}
+          >
+            {isDeduplicating ? (
+              <div className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} border-2 border-red-600 border-t-transparent rounded-full animate-spin mr-2`}></div>
+            ) : (
+              <AlertTriangle className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
+            )}
+            {isDeduplicating ? 'Analyse...' : 'Corriger Doublons'}
+          </button>
           <button 
             onClick={handleExport}
             className={`${isMobile ? 'hidden sm:inline-flex' : 'inline-flex'} items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors`}
@@ -682,6 +762,99 @@ export default function FinancialTransactions() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Deduplication Panel Modal */}
+      <Modal
+        isOpen={showDeduplicationPanel}
+        onClose={() => setShowDeduplicationPanel(false)}
+        title="🔧 Correction des Doublons de Transactions"
+        size="lg"
+      >
+        {deduplicationResult && (
+          <div className="space-y-6">
+            {/* Analysis Summary */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-medium text-blue-800 mb-3">📊 Résultats de l'Analyse</h3>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-blue-600">{deduplicationResult.totalTransactions}</p>
+                  <p className="text-sm text-blue-700">Total Transactions</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-red-600">{deduplicationResult.duplicatesFound}</p>
+                  <p className="text-sm text-red-700">Doublons Détectés</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-green-600">{deduplicationResult.uniqueTransactionsKept}</p>
+                  <p className="text-sm text-green-700">Transactions Uniques</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Duplicate Groups Details */}
+            {deduplicationResult.duplicatesFound > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h3 className="font-medium text-red-800 mb-3">🚨 Groupes de Doublons Détectés</h3>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {deduplicationResult.duplicateGroups.map((group: any, index: number) => (
+                    <div key={index} className="bg-white border border-red-200 rounded p-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium text-gray-900">{group.description}</p>
+                          <p className="text-sm text-gray-600">
+                            {group.amount.toLocaleString()} Ar • {group.date}
+                          </p>
+                        </div>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          {group.count} copies
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 p-3 bg-white border border-red-200 rounded">
+                  <p className="text-red-800 text-sm font-medium">
+                    ⚠️ Impact sur les totaux: Les montants sont multipliés par le nombre de copies
+                  </p>
+                  <p className="text-red-700 text-xs mt-1">
+                    La suppression des doublons restaurera les totaux corrects.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex space-x-3 pt-4 border-t border-gray-200">
+              <button
+                onClick={() => setShowDeduplicationPanel(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Fermer
+              </button>
+              
+              {deduplicationResult.duplicatesFound > 0 && (
+                <button
+                  onClick={handleRemoveDuplicates}
+                  disabled={isDeduplicating}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {isDeduplicating ? (
+                    <div className="flex items-center justify-center">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Suppression...
+                    </div>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2 inline" />
+                      Supprimer {deduplicationResult.duplicatesFound} Doublon(s)
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         )}

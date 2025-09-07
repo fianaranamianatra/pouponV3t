@@ -18,6 +18,29 @@ export class FinancialIntegrationService {
     try {
       console.log('🔄 Création automatique de transaction pour salaire:', salaryRecord.employeeName);
       
+      // PRÉVENTION RENFORCÉE DES DOUBLONS
+      const { TransactionDeduplicationService } = await import('./transactionDeduplicationService');
+      
+      // Vérifier d'abord s'il existe déjà une transaction pour ce salaire
+      const duplicateCheck = await TransactionDeduplicationService.checkForDuplicate({
+        type: 'Décaissement',
+        category: 'Salaires',
+        description: `Salaire ${salaryRecord.employeeName} - ${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`,
+        amount: salaryRecord.netSalary,
+        date: new Date().toISOString().split('T')[0],
+        paymentMethod: 'Virement',
+        relatedModule: 'salary',
+        relatedId: salaryRecord.id
+      });
+      
+      if (duplicateCheck.isDuplicate) {
+        console.log('🚫 DOUBLON DÉTECTÉ - Transaction identique existante:', duplicateCheck.existingTransaction?.id);
+        return {
+          success: true,
+          transactionId: duplicateCheck.existingTransaction?.id
+        };
+      }
+      
       // PRÉVENTION DES DOUBLONS : Vérification stricte d'unicité
       const existingTransactions = await transactionsService.getAll();
       
@@ -104,6 +127,29 @@ export class FinancialIntegrationService {
   static async createEcolageTransaction(payment: Fee): Promise<FinancialIntegrationResult> {
     try {
       console.log('🔄 Création automatique de transaction pour écolage:', payment.studentName);
+      
+      // PRÉVENTION RENFORCÉE DES DOUBLONS
+      const { TransactionDeduplicationService } = await import('./transactionDeduplicationService');
+      
+      // Vérifier d'abord s'il existe déjà une transaction pour ce paiement
+      const duplicateCheck = await TransactionDeduplicationService.checkForDuplicate({
+        type: 'Encaissement',
+        category: 'Écolages',
+        description: `Écolage ${payment.studentName} - ${payment.period}`,
+        amount: payment.amount,
+        date: payment.paymentDate,
+        paymentMethod: this.mapPaymentMethod(payment.paymentMethod),
+        relatedModule: 'ecolage',
+        relatedId: payment.id
+      });
+      
+      if (duplicateCheck.isDuplicate) {
+        console.log('🚫 DOUBLON DÉTECTÉ - Transaction identique existante:', duplicateCheck.existingTransaction?.id);
+        return {
+          success: true,
+          transactionId: duplicateCheck.existingTransaction?.id
+        };
+      }
       
       // PRÉVENTION DES DOUBLONS : Vérification stricte d'unicité
       const existingTransactions = await transactionsService.getAll();

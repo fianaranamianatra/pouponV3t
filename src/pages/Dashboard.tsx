@@ -290,8 +290,20 @@ export function Dashboard() {
       <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
         <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'} flex items-center`}>
           <Trash2 className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-red-600`} />
-          Gestion des Données Financières
+          🚨 Correction Urgente - Doublons Massifs (x14)
         </h2>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div className="flex items-start space-x-3">
+            <AlertTriangle className="w-6 h-6 text-red-600 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-red-800">Problème Critique Détecté</h3>
+              <p className="text-red-700 text-sm mt-1">
+                Les transactions financières apparaissent <strong>14 fois chacune</strong> au lieu d'une seule fois.
+                Cela fausse complètement les totaux financiers. Utilisez les outils ci-dessous pour corriger immédiatement.
+              </p>
+            </div>
+          </div>
+        </div>
         <FinancialDataCleanup />
       </div>
     </div>

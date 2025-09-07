@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, AlertTriangle, RefreshCw, Database, DollarSign, Users, Receipt, CreditCard } from 'lucide-react';
 import { FinancialDataCleanupService, CleanupResult } from '../../lib/services/financialDataCleanup';
+import { TransactionDeduplicationService, DeduplicationResult } from '../../lib/services/transactionDeduplicationService';
 import { Modal } from '../Modal';
 
 interface FinancialDataCleanupProps {
@@ -22,7 +23,7 @@ export function FinancialDataCleanup({ className = '' }: FinancialDataCleanupPro
   const [showDuplicateCleanup, setShowDuplicateCleanup] = useState(false);
   const [isCleaningDuplicates, setIsCleaningDuplicates] = useState(false);
   const [duplicateCleanupResult, setDuplicateCleanupResult] = useState<any>(null);
-  const [duplicateAnalysis, setDuplicateAnalysis] = useState<any>(null);
+  const [duplicateAnalysis, setDuplicateAnalysis] = useState<DeduplicationResult | null>(null);
   const [showDuplicateDetails, setShowDuplicateDetails] = useState(false);
   const [isAnalyzingDuplicates, setIsAnalyzingDuplicates] = useState(false);
 
@@ -51,17 +52,15 @@ export function FinancialDataCleanup({ className = '' }: FinancialDataCleanupPro
   const handleAnalyzeDuplicates = async () => {
     setIsAnalyzingDuplicates(true);
     try {
-      // Note: This would need to be implemented in the service
-      // const result = await FinancialDataCleanupService.analyzeDuplicateTransactions();
-      // setDuplicateAnalysis(result);
-      
-      // For now, simulate the analysis
-      const result = {
-        totalTransactions: dataCounts.transactions,
-        totalDuplicates: 0,
-        duplicateGroups: []
-      };
+      console.log('🔍 Lancement de l\'analyse des doublons...');
+      const result = await TransactionDeduplicationService.analyzeDuplicates();
       setDuplicateAnalysis(result);
+      
+      if (result.duplicatesFound > 0) {
+        console.log(`⚠️ ${result.duplicatesFound} doublon(s) détecté(s) dans ${result.duplicateGroups.length} groupe(s)`);
+      } else {
+        console.log('✅ Aucun doublon détecté');
+      }
     } catch (error: any) {
       console.error('Erreur lors de l\'analyse des doublons:', error);
       alert('Erreur lors de l\'analyse des doublons: ' + error.message);
@@ -71,20 +70,41 @@ export function FinancialDataCleanup({ className = '' }: FinancialDataCleanupPro
   };
 
   const handleCleanupDuplicates = async () => {
+    if (!duplicateAnalysis || duplicateAnalysis.duplicatesFound === 0) {
+      alert('Aucun doublon à supprimer');
+      return;
+    }
+    
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${duplicateAnalysis.duplicatesFound} doublon(s) ?`)) {
+      return;
+    }
+    
     setIsCleaningDuplicates(true);
     try {
-      // Note: This would need to be implemented in the service
-      // const result = await FinancialDataCleanupService.cleanupAllDuplicateSalaryTransactions();
-      // setDuplicateCleanupResult(result);
-      
-      // For now, simulate the cleanup
-      const result = { totalCleaned: 0, success: true };
+      console.log('🧹 Lancement de la suppression des doublons...');
+      const result = await TransactionDeduplicationService.removeDuplicates();
       setDuplicateCleanupResult(result);
       
       // Reload data counts after cleanup
       await loadDataCounts();
       
-      alert(`Nettoyage terminé: ${result.totalCleaned} doublon(s) supprimé(s)`);
+      if (result.success) {
+        alert(`✅ Nettoyage terminé avec succès !
+        
+Résultats :
+• ${result.duplicatesRemoved} doublon(s) supprimé(s)
+• ${result.uniqueTransactionsKept} transaction(s) unique(s) conservée(s)
+• Base de données nettoyée
+
+Les totaux financiers sont maintenant corrects.`);
+        
+        // Réinitialiser l'analyse pour forcer une nouvelle analyse
+        setDuplicateAnalysis(null);
+      } else {
+        alert(`❌ Erreurs lors du nettoyage :
+        
+${result.errors.join('\n')}`);
+      }
     } catch (error: any) {
       console.error('Erreur lors du nettoyage des doublons:', error);
       alert('Erreur lors du nettoyage des doublons: ' + error.message);
@@ -251,21 +271,24 @@ ${result.errors.join('\n')}`);
                     <p className="text-sm text-blue-700">Total Transactions</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-red-600">{duplicateAnalysis.totalDuplicates}</p>
+                    <p className="text-2xl font-bold text-red-600">{duplicateAnalysis.duplicatesFound}</p>
                     <p className="text-sm text-red-700">Doublons Détectés</p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-green-600">
-                      {duplicateAnalysis.totalTransactions - duplicateAnalysis.totalDuplicates}
+                      {duplicateAnalysis.uniqueTransactionsKept}
                     </p>
                     <p className="text-sm text-green-700">Transactions Uniques</p>
                   </div>
                 </div>
                 
-                {duplicateAnalysis.totalDuplicates > 0 && (
+                {duplicateAnalysis.duplicatesFound > 0 && (
                   <div className="bg-red-50 border border-red-200 rounded p-3">
                     <p className="text-red-800 text-sm font-medium">
                       ⚠️ {duplicateAnalysis.duplicateGroups.length} groupe(s) de doublons détecté(s)
+                    </p>
+                    <p className="text-red-700 text-xs mt-1">
+                      Chaque groupe contient des transactions identiques qui seront réduites à une seule.
                     </p>
                     <button
                       onClick={() => setShowDuplicateDetails(!showDuplicateDetails)}
@@ -276,13 +299,16 @@ ${result.errors.join('\n')}`);
                     
                     {showDuplicateDetails && (
                       <div className="mt-3 space-y-2">
-                        {duplicateAnalysis.duplicateGroups.slice(0, 5).map((group: any, index: number) => (
+                        {duplicateAnalysis.duplicateGroups.slice(0, 5).map((group, index) => (
                           <div key={index} className="bg-white border border-red-200 rounded p-2">
                             <p className="text-xs font-medium text-gray-900">
-                              {group.transactions[0].description} - {group.transactions[0].amount.toLocaleString()} Ar
+                              {group.description} - {group.amount.toLocaleString()} Ar
                             </p>
                             <p className="text-xs text-red-600">
                               {group.count} exemplaires identiques
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Date: {group.date}
                             </p>
                           </div>
                         ))}
@@ -314,7 +340,7 @@ ${result.errors.join('\n')}`);
               
               <button
                 onClick={handleCleanupDuplicates}
-                disabled={isCleaningDuplicates || !duplicateAnalysis || duplicateAnalysis.totalDuplicates === 0}
+                disabled={isCleaningDuplicates || !duplicateAnalysis || duplicateAnalysis.duplicatesFound === 0}
                 className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
               >
                 {isCleaningDuplicates ? (
@@ -326,10 +352,13 @@ ${result.errors.join('\n')}`);
               </button>
             </div>
             
-            {duplicateCleanupResult && duplicateCleanupResult.totalCleaned > 0 && (
+            {duplicateCleanupResult && duplicateCleanupResult.duplicatesRemoved > 0 && (
               <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-green-800 text-sm font-medium">
-                  ✅ Dernier nettoyage: {duplicateCleanupResult.totalCleaned} doublon(s) supprimé(s)
+                  ✅ Dernier nettoyage: {duplicateCleanupResult.duplicatesRemoved} doublon(s) supprimé(s)
+                </p>
+                <p className="text-green-700 text-xs mt-1">
+                  {duplicateCleanupResult.uniqueTransactionsKept} transaction(s) unique(s) conservée(s)
                 </p>
                 {duplicateCleanupResult.errors && duplicateCleanupResult.errors.length > 0 && (
                   <p className="text-red-600 text-xs mt-1">

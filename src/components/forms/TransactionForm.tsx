@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Calendar, CreditCard, FileText, Tag } from 'lucide-react';
+import { TransactionDeduplicationService } from '../../lib/services/transactionDeduplicationService';
 
 interface TransactionFormProps {
   onSubmit: (data: any) => void;
@@ -81,8 +82,39 @@ export function TransactionForm({ onSubmit, onCancel, initialData, isSubmitting 
       return;
     }
     
-    console.log('📤 Soumission des données de transaction:', formData);
-    onSubmit(formData);
+    // Vérification des doublons avant soumission
+    const checkDuplicateAndSubmit = async () => {
+      try {
+        const duplicateCheck = await TransactionDeduplicationService.checkForDuplicate(formData);
+        
+        if (duplicateCheck.isDuplicate && !initialData) {
+          const proceed = confirm(`⚠️ ATTENTION - Transaction similaire détectée !
+          
+Une transaction identique existe déjà :
+• Description: ${duplicateCheck.existingTransaction.description}
+• Montant: ${duplicateCheck.existingTransaction.amount.toLocaleString()} Ar
+• Date: ${duplicateCheck.existingTransaction.date}
+• Type: ${duplicateCheck.existingTransaction.type}
+
+Voulez-vous quand même créer cette nouvelle transaction ?
+(Cela pourrait créer un doublon)`);
+          
+          if (!proceed) {
+            console.log('🚫 Création annulée par l\'utilisateur pour éviter un doublon');
+            return;
+          }
+        }
+        
+        console.log('📤 Soumission des données de transaction:', formData);
+        onSubmit(formData);
+      } catch (error) {
+        console.error('Erreur lors de la vérification de doublon:', error);
+        // Continuer avec la soumission normale en cas d'erreur de vérification
+        onSubmit(formData);
+      }
+    };
+    
+    checkDuplicateAndSubmit();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {

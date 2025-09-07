@@ -101,6 +101,7 @@ export class FinancialIntegrationService {
         reference: `SAL-${currentDate.getFullYear()}-${salaryRecord.employeeId?.substring(0, 4).toUpperCase()}`,
         relatedModule: 'salary',
         relatedId: salaryRecord.id,
+        isManual: false,
         notes: `Paiement automatique - Salaire net: ${salaryRecord.netSalary.toLocaleString()} Ar - Créé: ${new Date().toLocaleString('fr-FR')}`
       };
 
@@ -208,6 +209,7 @@ export class FinancialIntegrationService {
         reference: payment.reference,
         relatedModule: 'ecolage',
         relatedId: payment.id,
+        isManual: false,
         notes: `Paiement automatique - Classe: ${payment.class} - Créé: ${new Date().toLocaleString('fr-FR')}`
       };
 
@@ -548,6 +550,76 @@ export class FinancialIntegrationService {
     } catch (error: any) {
       console.error('❌ Erreur lors du nettoyage des doublons:', error);
       return { cleaned: 0, errors: [error.message] };
+    }
+  }
+
+  /**
+   * Basculer l'état de liaison d'une transaction
+   */
+  static async toggleTransactionLink(transactionId: string, currentIsManual: boolean): Promise<FinancialIntegrationResult> {
+    try {
+      console.log(`🔄 Basculement de liaison pour transaction ${transactionId}, isManual: ${currentIsManual}`);
+      
+      const updateData = {
+        isManual: !currentIsManual,
+        updatedAt: new Date()
+      };
+      
+      // Si on passe en mode manuel, supprimer les liaisons
+      if (!currentIsManual) {
+        updateData.relatedModule = null;
+        updateData.relatedId = null;
+      }
+      
+      await transactionsService.update(transactionId, updateData);
+      
+      console.log('✅ État de liaison mis à jour avec succès');
+      
+      return {
+        success: true,
+        transactionId
+      };
+    } catch (error: any) {
+      console.error('❌ Erreur lors du basculement de liaison:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Lier manuellement une transaction à un module
+   */
+  static async linkTransactionToModule(
+    transactionId: string, 
+    module: 'ecolage' | 'salary' | 'other', 
+    recordId: string
+  ): Promise<FinancialIntegrationResult> {
+    try {
+      console.log(`🔗 Liaison manuelle de transaction ${transactionId} au module ${module}`);
+      
+      const updateData = {
+        relatedModule: module,
+        relatedId: recordId,
+        isManual: false, // Redevient automatique une fois liée
+        updatedAt: new Date()
+      };
+      
+      await transactionsService.update(transactionId, updateData);
+      
+      console.log('✅ Transaction liée manuellement avec succès');
+      
+      return {
+        success: true,
+        transactionId
+      };
+    } catch (error: any) {
+      console.error('❌ Erreur lors de la liaison manuelle:', error);
+      return {
+        success: false,
+        error: error.message
+      };
     }
   }
 

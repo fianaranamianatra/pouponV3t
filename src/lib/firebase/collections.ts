@@ -166,6 +166,7 @@ export interface Transaction {
   reference?: string;
   relatedModule?: 'ecolage' | 'salary' | 'other';
   relatedId?: string;
+  isManual?: boolean;
   notes?: string;
   createdAt?: Date;
   updatedAt?: Date;

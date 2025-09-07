@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Filter, Edit, Trash2, Eye, TrendingUp, TrendingDown, DollarSign, AlertTriangle, CheckCircle, Clock, Download, Calendar, CreditCard } from 'lucide-react';
+import { Search, Plus, Filter, Edit, Trash2, Eye, TrendingUp, TrendingDown, DollarSign, AlertTriangle, CheckCircle, Clock, Download, Calendar, CreditCard, Link2, Unlink } from 'lucide-react';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { Modal } from '../components/Modal';
 import { TransactionForm } from '../components/forms/TransactionForm';
@@ -50,6 +50,9 @@ export default function FinancialTransactions() {
   const [showDeduplicationPanel, setShowDeduplicationPanel] = useState(false);
   const [deduplicationResult, setDeduplicationResult] = useState<any>(null);
   const [isDeduplicating, setIsDeduplicating] = useState(false);
+  const [togglingTransactionId, setTogglingTransactionId] = useState<string | null>(null);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [transactionToLink, setTransactionToLink] = useState<Transaction | null>(null);
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -291,6 +294,68 @@ Les totaux sont maintenant corrects.`);
       alert('Erreur lors de la suppression: ' + error.message);
     } finally {
       setIsDeduplicating(false);
+    }
+  };
+
+  const handleToggleLink = async (transaction: Transaction) => {
+    if (!transaction.id) return;
+    
+    setTogglingTransactionId(transaction.id);
+    
+    try {
+      if (transaction.relatedModule && transaction.relatedId) {
+        // Délier la transaction
+        const confirmUnlink = confirm(`Êtes-vous sûr de vouloir délier cette transaction du module ${
+          transaction.relatedModule === 'ecolage' ? 'Écolage' : 'Salaires'
+        } ?
+        
+Cette action supprimera la liaison automatique et la transaction deviendra manuelle.`);
+        
+        if (confirmUnlink) {
+          const updateData = {
+            relatedModule: null,
+            relatedId: null,
+            isManual: true,
+            notes: (transaction.notes || '') + ` | Délié manuellement le ${new Date().toLocaleString('fr-FR')}`
+          };
+          
+          await update(transaction.id, updateData);
+          console.log('✅ Transaction déliée avec succès');
+          alert('✅ Transaction déliée du module source avec succès !');
+        }
+      } else {
+        // Lier la transaction
+        setTransactionToLink(transaction);
+        setShowLinkModal(true);
+      }
+    } catch (error: any) {
+      console.error('❌ Erreur lors de la modification de liaison:', error);
+      alert('❌ Erreur lors de la modification: ' + error.message);
+    } finally {
+      setTogglingTransactionId(null);
+    }
+  };
+
+  const handleLinkToModule = async (module: 'ecolage' | 'salary', recordId: string) => {
+    if (!transactionToLink?.id) return;
+    
+    try {
+      const updateData = {
+        relatedModule: module,
+        relatedId: recordId,
+        isManual: false,
+        notes: (transactionToLink.notes || '') + ` | Lié manuellement au module ${module} le ${new Date().toLocaleString('fr-FR')}`
+      };
+      
+      await update(transactionToLink.id, updateData);
+      console.log('✅ Transaction liée avec succès');
+      alert('✅ Transaction liée au module avec succès !');
+      
+      setShowLinkModal(false);
+      setTransactionToLink(null);
+    } catch (error: any) {
+      console.error('❌ Erreur lors de la liaison:', error);
+      alert('❌ Erreur lors de la liaison: ' + error.message);
     }
   };
 
@@ -543,6 +608,7 @@ Les totaux sont maintenant corrects.`);
                   <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm' : 'py-3 px-6'} font-medium text-gray-900`}>Montant</th>
                   <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden lg:table-cell' : 'py-3 px-6'} font-medium text-gray-900`}>Mode de Paiement</th>
                   <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden sm:table-cell' : 'py-3 px-6'} font-medium text-gray-900`}>Statut</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden xl:table-cell' : 'py-3 px-6'} font-medium text-gray-900`}>Liaison</th>
                   <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm' : 'py-3 px-6'} font-medium text-gray-900`}>Actions</th>
                 </tr>
               </thead>
@@ -599,6 +665,50 @@ Les totaux sont maintenant corrects.`);
                       <span className={`inline-flex items-center ${isMobile ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-0.5 text-xs'} font-medium rounded-full ${statusColors[transaction.status]}`}>
                         {transaction.status}
                       </span>
+                    </td>
+                    <td className={`${isMobile ? 'py-3 px-3 hidden xl:table-cell' : 'py-4 px-6'}`}>
+                      <div className="flex items-center space-x-2">
+                        {transaction.relatedModule && transaction.relatedId ? (
+                          <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-1">
+                              <Link2 className="w-3 h-3 text-blue-600" />
+                              <span className="text-xs text-blue-600 font-medium">
+                                {transaction.relatedModule === 'ecolage' ? 'Écolage' : 'Salaires'}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => handleToggleLink(transaction)}
+                              disabled={togglingTransactionId === transaction.id}
+                              className="inline-flex items-center px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors disabled:opacity-50"
+                              title="Délier du module source"
+                            >
+                              {togglingTransactionId === transaction.id ? (
+                                <div className="w-3 h-3 border border-red-600 border-t-transparent rounded-full animate-spin mr-1"></div>
+                              ) : (
+                                <Unlink className="w-3 h-3 mr-1" />
+                              )}
+                              Délier
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">Manuel</span>
+                            <button
+                              onClick={() => handleToggleLink(transaction)}
+                              disabled={togglingTransactionId === transaction.id}
+                              className="inline-flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors disabled:opacity-50"
+                              title="Lier à un module"
+                            >
+                              {togglingTransactionId === transaction.id ? (
+                                <div className="w-3 h-3 border border-blue-600 border-t-transparent rounded-full animate-spin mr-1"></div>
+                              ) : (
+                                <Link2 className="w-3 h-3 mr-1" />
+                              )}
+                              Lier
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className={`${isMobile ? 'py-3 px-3' : 'py-4 px-6'}`}>
                       <div className={`flex items-center ${isMobile ? 'space-x-1' : 'space-x-2'}`}>
@@ -855,6 +965,105 @@ Les totaux sont maintenant corrects.`);
                   )}
                 </button>
               )}
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Link Transaction Modal */}
+      <Modal
+        isOpen={showLinkModal}
+        onClose={() => {
+          setShowLinkModal(false);
+          setTransactionToLink(null);
+        }}
+        title="Lier la Transaction à un Module"
+        size="md"
+      >
+        {transactionToLink && (
+          <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-medium text-blue-800 mb-2">Transaction à Lier</h3>
+              <div className="space-y-1 text-sm">
+                <p><span className="font-medium">Description:</span> {transactionToLink.description}</p>
+                <p><span className="font-medium">Montant:</span> {transactionToLink.amount.toLocaleString()} Ar</p>
+                <p><span className="font-medium">Date:</span> {new Date(transactionToLink.date).toLocaleDateString('fr-FR')}</p>
+                <p><span className="font-medium">Type:</span> {transactionToLink.type}</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Sélectionner le module de liaison</h4>
+              
+              <div className="grid grid-cols-1 gap-3">
+                {transactionToLink.type === 'Encaissement' && (
+                  <button
+                    onClick={() => handleLinkToModule('ecolage', 'manual-link')}
+                    className="flex items-center justify-between p-4 border-2 border-green-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-all"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <TrendingUp className="w-6 h-6 text-green-600" />
+                      <div className="text-left">
+                        <p className="font-medium text-gray-900">Module Écolage</p>
+                        <p className="text-sm text-gray-600">Lier aux paiements d'écolage</p>
+                      </div>
+                    </div>
+                    <Link2 className="w-5 h-5 text-green-600" />
+                  </button>
+                )}
+                
+                {transactionToLink.type === 'Décaissement' && (
+                  <button
+                    onClick={() => handleLinkToModule('salary', 'manual-link')}
+                    className="flex items-center justify-between p-4 border-2 border-red-200 rounded-lg hover:border-red-300 hover:bg-red-50 transition-all"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <TrendingDown className="w-6 h-6 text-red-600" />
+                      <div className="text-left">
+                        <p className="font-medium text-gray-900">Module Salaires</p>
+                        <p className="text-sm text-gray-600">Lier aux paiements de salaires</p>
+                      </div>
+                    </div>
+                    <Link2 className="w-5 h-5 text-red-600" />
+                  </button>
+                )}
+                
+                <button
+                  onClick={() => handleLinkToModule('other', 'manual-other')}
+                  className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-all"
+                >
+                  <div className="flex items-center space-x-3">
+                    <DollarSign className="w-6 h-6 text-gray-600" />
+                    <div className="text-left">
+                      <p className="font-medium text-gray-900">Transaction Manuelle</p>
+                      <p className="text-sm text-gray-600">Marquer comme transaction indépendante</p>
+                    </div>
+                  </div>
+                  <Link2 className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <div className="flex items-start space-x-2">
+                <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5" />
+                <div className="text-sm text-yellow-700">
+                  <p className="font-medium">Note importante:</p>
+                  <p>Une fois liée, cette transaction sera synchronisée avec le module sélectionné. Les modifications dans le module source affecteront automatiquement cette transaction.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex space-x-3 pt-4 border-t border-gray-200">
+              <button
+                onClick={() => {
+                  setShowLinkModal(false);
+                  setTransactionToLink(null);
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Annuler
+              </button>
             </div>
           </div>
         )}

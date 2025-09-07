@@ -9,6 +9,7 @@ import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { useEcolageSync } from '../hooks/useEcolageSync';
 import { feesService, studentsService, classesService } from '../lib/firebase/firebaseService';
 import { FinancialIntegrationService } from '../lib/services/financialIntegrationService';
+import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
 
 interface Payment {
   id?: string;
@@ -659,6 +660,15 @@ export function EcolageFirebase() {
       >
         <PaymentDashboard />
       </Modal>
+
+      {/* Financial Data Cleanup - Admin Section */}
+      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100 mt-6`}>
+        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'} flex items-center`}>
+          <Trash2 className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-red-600`} />
+          Administration - Nettoyage des Données
+        </h2>
+        <FinancialDataCleanup />
+      </div>
     </div>
   );
 }

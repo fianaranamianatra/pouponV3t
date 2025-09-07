@@ -13,6 +13,7 @@ import { FinancialIntegrationService } from '../lib/services/financialIntegratio
 import { PayrollSalarySyncPanel } from '../components/payroll/PayrollSalarySyncPanel';
 import { PayrollSyncIndicator } from '../components/payroll/PayrollSyncIndicator';
 import { usePayrollSalarySync } from '../hooks/usePayrollSalarySync';
+import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
 import type { FinancialSetting } from '../lib/firebase/collections';
 
 interface Employee {
@@ -723,6 +724,15 @@ export function PayrollManagement() {
           </div>
         )}
       </Modal>
+
+      {/* Financial Data Cleanup - Admin Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+          <Trash2 className="w-5 h-5 mr-2 text-red-600" />
+          Administration - Nettoyage des Données
+        </h2>
+        <FinancialDataCleanup />
+      </div>
 
       {/* Bulk Calculation Modal */}
       <Modal

@@ -6,6 +6,7 @@ import { TransactionForm } from '../components/forms/TransactionForm';
 import { transactionsService } from '../lib/firebase/firebaseService';
 import { FinancialIntegrationService } from '../lib/services/financialIntegrationService';
 import { FinancialIntegrationPanel } from '../components/financial/FinancialIntegrationPanel';
+import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
 
 interface Transaction {
   id?: string;
@@ -287,6 +288,15 @@ export default function FinancialTransactions() {
 
       {/* Financial Integration Panel */}
       <FinancialIntegrationPanel />
+
+      {/* Financial Data Cleanup Panel */}
+      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
+        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'} flex items-center`}>
+          <Trash2 className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-red-600`} />
+          Nettoyage des Données
+        </h2>
+        <FinancialDataCleanup />
+      </div>
 
       {/* Navigation Tabs */}
       <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>

@@ -1,11 +1,12 @@
 import React from 'react';
-import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCircle, AlertTriangle, Plus, DollarSign, Zap, Activity, Calculator } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCircle, AlertTriangle, Plus, DollarSign, Zap, Activity, Calculator, Trash2 } from 'lucide-react';
 // import { DataInitializer } from '../components/admin/DataInitializer';
 import { FinancialSyncStatus } from '../components/financial/FinancialSyncStatus';
 import { PaymentAlerts } from '../components/ecolage/PaymentAlerts';
 import { EcolageStudentSync } from '../components/ecolage/EcolageStudentSync';
 import { GlobalSyncStatus } from '../components/sync/GlobalSyncStatus';
 import { PayrollSalarySyncPanel } from '../components/payroll/PayrollSalarySyncPanel';
+import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
 
 const stats = [
   {
@@ -328,6 +329,15 @@ export function Dashboard() {
           Statut de Synchronisation Globale
         </h2>
         <GlobalSyncStatus />
+      </div>
+
+      {/* Nettoyage des Données Financières */}
+      <div className={`bg-white ${isMobile ? 'rounded-lg p-4' : 'rounded-xl p-6'} shadow-sm border border-gray-100`}>
+        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 ${isMobile ? 'mb-3' : 'mb-4'} flex items-center`}>
+          <Trash2 className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-red-600`} />
+          Gestion des Données Financières
+        </h2>
+        <FinancialDataCleanup />
       </div>
     </div>
   );

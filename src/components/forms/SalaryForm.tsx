@@ -5,7 +5,6 @@ import { IRSAService } from '../../lib/services/irsaService';
 import { Modal } from '../Modal';
 import { PayslipPreview } from '../payroll/PayslipPreview';
 import { SalaryHistoryModal } from '../modals/SalaryHistoryModal';
-
 interface SalaryFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;

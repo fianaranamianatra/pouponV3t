@@ -108,5 +108,7 @@ export const subjectsService = new FirebaseService('subjects');
 export const feesService = new FirebaseService('fees');
 export const reportsService = new FirebaseService('reports');
 export const hierarchyService = new FirebaseService('hierarchy');
+export const salariesService = new FirebaseService('salaries');
+export const transactionsService = new FirebaseService('transactions');
 
 export default FirebaseService;

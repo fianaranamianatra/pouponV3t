@@ -109,28 +109,60 @@ export const logout = async () => {
 
 // Récupérer le profil utilisateur
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
+  const PROFILE_TIMEOUT = 8000; // 8 secondes
+  
   try {
-    const docRef = doc(db, 'users', uid);
-    const docSnap = await getDoc(docRef);
+    console.log('🔄 Récupération du profil utilisateur avec timeout:', uid);
     
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      
-      // Check if user is active
-      if (data.isActive === false) {
-        throw new Error("USER_ACCOUNT_DISABLED");
+    // Créer une promesse avec timeout
+    const profilePromise = new Promise<UserProfile | null>(async (resolve, reject) => {
+      try {
+        const docRef = doc(db, 'users', uid);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          
+          // Check if user is active
+          if (data.isActive === false) {
+            reject(new Error("USER_ACCOUNT_DISABLED"));
+            return;
+          }
+          
+          resolve({
+            ...data,
+            createdAt: data.createdAt?.toDate() || new Date(),
+            lastLogin: data.lastLogin?.toDate()
+          } as UserProfile);
+        } else {
+          resolve(null);
+        }
+      } catch (error) {
+        reject(error);
       }
-      
-      return {
-        ...data,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        lastLogin: data.lastLogin?.toDate()
-      } as UserProfile;
-    }
+    });
     
-    return null;
-  } catch (error) {
+    // Promesse de timeout
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('PROFILE_FETCH_TIMEOUT'));
+      }, PROFILE_TIMEOUT);
+    });
+    
+    // Course entre la récupération et le timeout
+    const result = await Promise.race([profilePromise, timeoutPromise]);
+    
+    console.log('✅ Profil utilisateur récupéré avec succès');
+    return result;
+    
+  } catch (error: any) {
     console.error("Erreur lors de la récupération du profil:", error);
+    
+    // Gestion spécifique du timeout
+    if (error.message === 'PROFILE_FETCH_TIMEOUT') {
+      console.warn("⏰ Timeout lors de la récupération du profil utilisateur");
+      throw new Error("timeout: La récupération du profil utilisateur a pris trop de temps");
+    }
     
     // Gestion spécifique des erreurs de connectivité
     if (error.code === 'unavailable' || error.message.includes('offline')) {
@@ -160,8 +192,43 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
       return null;
     }
     
+    // Erreurs réseau
+    if (error.code === 'network-request-failed' || error.message.includes('network')) {
+      throw new Error("network: Erreur de connectivité réseau");
+    }
+    
     return null;
   }
+};
+
+// Version alternative avec retry automatique
+export const getUserProfileWithRetry = async (uid: string, maxRetries: number = 3): Promise<UserProfile | null> => {
+  let lastError: any;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 Tentative ${attempt}/${maxRetries} de récupération du profil`);
+      const profile = await getUserProfile(uid);
+      return profile;
+    } catch (error: any) {
+      lastError = error;
+      console.warn(`❌ Tentative ${attempt} échouée:`, error.message);
+      
+      // Ne pas retry sur certaines erreurs
+      if (error.message.includes('USER_ACCOUNT_DISABLED') || 
+          error.message.includes('FIRESTORE_PERMISSION_DENIED')) {
+        throw error;
+      }
+      
+      // Attendre avant le prochain retry (sauf pour la dernière tentative)
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+  }
+  
+  // Si toutes les tentatives ont échoué, lancer la dernière erreur
+  throw lastError;
 };
 
 // Mettre à jour le profil utilisateur

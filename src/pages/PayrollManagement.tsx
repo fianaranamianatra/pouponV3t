@@ -347,7 +347,6 @@ export function PayrollManagement() {
         </div>
       </div>
 
-      {/* Paramètres actuels */}
       {/* Panneau de Synchronisation Paie ↔ Salaires */}
       <PayrollSalarySyncPanel />
 
@@ -476,6 +475,13 @@ export function PayrollManagement() {
             <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun employé trouvé</h3>
             <p className="text-gray-500 mb-6">Ajoutez des employés dans le plan hiérarchique pour calculer leur paie.</p>
+            <button
+              onClick={() => window.location.href = '/#hr'}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Aller aux Ressources Humaines
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">

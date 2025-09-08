@@ -3,6 +3,7 @@ import { User, CreditCard, Calendar, DollarSign, FileText } from 'lucide-react';
 import { useFirebaseCollection } from '../../hooks/useFirebaseCollection';
 import { studentsService, classesService } from '../../lib/firebase/firebaseService';
 import { ClassEcolageService } from '../../lib/services/classEcolageService';
+import { ClassAmountIndicator } from '../ecolage/ClassAmountIndicator';
 
 interface PaymentFormProps {
   onSubmit: (data: any) => void;

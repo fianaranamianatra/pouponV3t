@@ -323,9 +323,9 @@ export function HumanResources() {
       </div>
 
       {/* Employees Grid */}
-      <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'}`}>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {employees.length === 0 ? (
-          <div className={`col-span-full text-center ${isMobile ? 'py-8' : 'py-12'}`}>
+          <div className={`text-center ${isMobile ? 'py-8' : 'py-12'}`}>
             <Users className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} text-gray-300 mx-auto mb-4`} />
             <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-medium text-gray-900 mb-2`}>Aucun employé enregistré</h3>
             <p className={`${isMobile ? 'text-sm' : ''} text-gray-500 mb-6`}>Commencez par ajouter votre premier employé à l'école.</p>
@@ -338,24 +338,64 @@ export function HumanResources() {
             </button>
           </div>
         ) : (
-          filteredEmployees.map((employee) => (
-            <div key={employee.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-              {/* Header avec avatar et nom */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-gray-100">
-                <div className="flex items-center space-x-4">
-                  <Avatar 
-                    firstName={employee.firstName} 
-                    lastName={employee.lastName} 
-                    size="lg" 
-                    showPhoto={true}
-                  />
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900">
-                      {employee.firstName} {employee.lastName}
-                    </h3>
-                    <p className="text-blue-600 font-medium">{employee.position}</p>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm' : 'py-4 px-6'} font-medium text-gray-900`}>Employé</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden sm:table-cell' : 'py-4 px-6'} font-medium text-gray-900`}>Poste</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden md:table-cell' : 'py-4 px-6'} font-medium text-gray-900`}>Département</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden lg:table-cell' : 'py-4 px-6'} font-medium text-gray-900`}>Contact</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm' : 'py-4 px-6'} font-medium text-gray-900`}>Salaire</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm hidden sm:table-cell' : 'py-4 px-6'} font-medium text-gray-900`}>Statut</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-3 text-sm' : 'py-4 px-6'} font-medium text-gray-900`}>Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredEmployees.map((employee) => (
+                  <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
+                    <td className={`${isMobile ? 'py-3 px-3' : 'py-4 px-6'}`}>
+                      <div className="flex items-center space-x-3">
+                        <Avatar 
+                          firstName={employee.firstName} 
+                          lastName={employee.lastName} 
+                          size={isMobile ? "sm" : "md"}
+                          showPhoto={true}
+                        />
+                        <div>
+                          <p className={`font-medium text-gray-900 ${isMobile ? 'text-sm' : ''}`}>
+                            {employee.firstName} {employee.lastName}
+                          </p>
+                          {employee.dateOfBirth && (
+                            <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-500`}>
+                              {calculateAge(employee.dateOfBirth)} ans
+                            </p>
+                          )}
+                          {/* Afficher le poste sur mobile */}
+                          {isMobile && (
+                            <p className="text-xs text-blue-600 font-medium mt-1">{employee.position}</p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className={`${isMobile ? 'py-3 px-3 hidden sm:table-cell' : 'py-4 px-6'}`}>
+                      <div>
+                        <p className={`font-medium text-gray-900 ${isMobile ? 'text-sm' : ''}`}>{employee.position}</p>
+                        {employee.contractType && (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${
+                            employee.contractType === 'FRAM' 
+                              ? 'bg-blue-100 text-blue-800' 
+                              : employee.contractType === 'CDI'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-purple-100 text-purple-800'
+                          }`}>
+                            {employee.contractType}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className={`${isMobile ? 'py-3 px-3 hidden md:table-cell' : 'py-4 px-6'}`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         employee.department === 'Administration' 
                           ? 'bg-blue-100 text-blue-800' 
                           : employee.department === 'Enseignement'
@@ -366,135 +406,112 @@ export function HumanResources() {
                       }`}>
                         {employee.department}
                       </span>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      {employee.entryDate && (
+                        <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500 mt-1`}>
+                          Exp: {calculateExperience(employee.entryDate)}
+                        </p>
+                      )}
+                    </td>
+                    <td className={`${isMobile ? 'py-3 px-3 hidden lg:table-cell' : 'py-4 px-6'}`}>
+                      <div className="space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <Phone className="w-3 h-3 text-gray-400" />
+                          <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>{employee.phone}</span>
+                        </div>
+                        {employee.email && (
+                          <div className="flex items-center space-x-2">
+                            <Mail className="w-3 h-3 text-gray-400" />
+                            <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>{employee.email}</span>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className={`${isMobile ? 'py-3 px-3' : 'py-4 px-6'}`}>
+                      <div>
+                        <p className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-green-600`}>
+                          {employee.salary.toLocaleString()} Ar
+                        </p>
+                        <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500`}>Mensuel</p>
+                        {/* Calcul rapide du net sur mobile */}
+                        {isMobile && (
+                          <p className="text-xs text-blue-600 mt-1">
+                            Net: ~{Math.round(employee.salary * 0.82).toLocaleString()} Ar
+                          </p>
+                        )}
+                      </div>
+                    </td>
+                    <td className={`${isMobile ? 'py-3 px-3 hidden sm:table-cell' : 'py-4 px-6'}`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         employee.status === 'Actif' 
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-red-100 text-red-800'
                       }`}>
                         {employee.status}
                       </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contenu de la carte */}
-              <div className="p-6 space-y-4">
-                {/* Informations personnelles */}
-                <div className="space-y-3">
-                  {employee.dateOfBirth && (
-                    <div className="flex items-center space-x-3">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Âge</p>
-                        <p className="text-sm text-gray-900">{calculateAge(employee.dateOfBirth)} ans</p>
+                    </td>
+                    <td className={`${isMobile ? 'py-3 px-3' : 'py-4 px-6'}`}>
+                      <div className={`flex items-center ${isMobile ? 'space-x-1' : 'space-x-2'}`}>
+                        <button 
+                          onClick={() => handleViewEmployee(employee)}
+                          className={`${isMobile ? 'p-2' : 'p-1.5'} text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors`}
+                          title="Voir les détails"
+                        >
+                          <Eye className={`${isMobile ? 'w-4 h-4' : 'w-4 h-4'}`} />
+                        </button>
+                        {!isMobile && (
+                          <>
+                            <button 
+                              onClick={() => handleEditClick(employee)}
+                              disabled={updating}
+                              className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                              title="Modifier"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteEmployee(employee.id)}
+                              disabled={deleting}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                alert(`Génération du bulletin de paie pour ${employee.firstName} ${employee.lastName}...`);
+                              }}
+                              className="inline-flex items-center px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+                            >
+                              <Calculator className="w-3 h-3 mr-1" />
+                              Bulletin
+                            </button>
+                          </>
+                        )}
+                        {/* Menu mobile pour les actions supplémentaires */}
+                        {isMobile && (
+                          <button 
+                            onClick={() => {
+                              const actions = ['Modifier', 'Supprimer', 'Bulletin de paie'];
+                              const choice = confirm(`Actions: ${actions.join(' | ')}. Modifier l'employé ?`);
+                              if (choice) {
+                                handleEditClick(employee);
+                              }
+                            }}
+                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                            title="Plus d'actions"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
-                    </div>
-                  )}
-                  
-                  {employee.entryDate && (
-                    <div className="flex items-center space-x-3">
-                      <Briefcase className="w-4 h-4 text-gray-400" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Expérience</p>
-                        <p className="text-sm text-gray-900">{calculateExperience(employee.entryDate)}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {employee.contractType && (
-                    <div className="flex items-center space-x-3">
-                      <Building className="w-4 h-4 text-gray-400" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Contrat</p>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          employee.contractType === 'FRAM' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : employee.contractType === 'CDI'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-purple-100 text-purple-800'
-                        }`}>
-                          {employee.contractType}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Contact */}
-                  <div className="flex items-center space-x-3">
-                    <Phone className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Téléphone</p>
-                      <p className="text-sm text-gray-900">{employee.phone}</p>
-                    </div>
-                  </div>
-
-                  {employee.email && (
-                    <div className="flex items-center space-x-3">
-                      <Mail className="w-4 h-4 text-gray-400" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Email</p>
-                        <p className="text-sm text-gray-900">{employee.email}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Salaire */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="w-5 h-5 text-green-600" />
-                      <span className="text-sm font-medium text-gray-700">Salaire</span>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-green-600">{employee.salary.toLocaleString()} Ar</p>
-                      <p className="text-xs text-gray-500">Salaire mensuel</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                  <div className="flex items-center space-x-2">
-                    <button 
-                      onClick={() => handleViewEmployee(employee)}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Voir les détails"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleEditClick(employee)}
-                      disabled={updating}
-                      className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
-                      title="Modifier"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteEmployee(employee.id)}
-                      disabled={deleting}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                      title="Supprimer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                  
-                  <button
-                    onClick={() => {
-                      alert(`Génération du bulletin de paie pour ${employee.firstName} ${employee.lastName}...`);
-                    }}
-                    className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                  >
-                    <Calculator className="w-4 h-4 mr-2" />
-                    Bulletin
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

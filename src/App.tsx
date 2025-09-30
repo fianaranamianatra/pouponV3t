@@ -18,6 +18,7 @@ import { UserProfile } from './pages/UserProfile';
 import { AccessDenied } from './pages/AccessDenied';
 import { SalaryManagement } from './pages/SalaryManagement';
 import FinancialTransactions from './pages/FinancialTransactions';
+import UserManagement from './pages/UserManagement';
 import { StudentEcolageSyncService } from './lib/services/studentEcolageSync';
 import { BidirectionalSyncService } from './lib/services/bidirectionalSync';
 import { PayrollSalarySyncService } from './lib/services/payrollSalarySync';
@@ -26,7 +27,7 @@ import { USER_ROLES } from './lib/roles';
 import { useAuth } from './hooks/useAuth';
 import { OfflineHandler } from './lib/firebase/offlineHandler';
 
-export type Page = 'dashboard' | 'students' | 'teachers' | 'classes' | 'subjects' | 'ecolage' | 'payroll' | 'salary-management' | 'financial-transactions' | 'reports' | 'hr' | 'import';
+export type Page = 'dashboard' | 'students' | 'teachers' | 'classes' | 'subjects' | 'ecolage' | 'payroll' | 'salary-management' | 'financial-transactions' | 'reports' | 'hr' | 'users' | 'import';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
@@ -171,6 +172,12 @@ function App() {
         return (
           <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR]}>
             <HumanResources />
+          </RoleBasedRoute>
+        );
+      case 'users':
+        return (
+          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN]}>
+            <UserManagement />
           </RoleBasedRoute>
         );
       case 'import':

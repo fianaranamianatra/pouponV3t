@@ -15,23 +15,11 @@ import {
 import { Avatar } from '../Avatar';
 import { IRSAService } from '../../lib/services/irsaService';
 
-interface Employee {
-  id: string;
-  firstName: string;
-  lastName: string;
-  position: string;
-  department: string;
-  salary: number;
-  status: 'active' | 'inactive';
-  contractType?: string;
-  entryDate?: string;
-}
-
 interface SalaryCalculationFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
   initialData?: any;
-  employees: Employee[];
+  employees: any[];
   isSubmitting?: boolean;
 }
 
@@ -239,28 +227,28 @@ export function SalaryCalculationForm({
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
             >
               <option value="">Sélectionner un employé</option>
-              <optgroup label="Direction">
+              <optgroup label="🏛️ Direction">
                 {employees.filter(emp => emp.department === 'Direction').map(emp => (
                   <option key={emp.id} value={emp.id}>
                     {emp.firstName} {emp.lastName} - {emp.position}
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="Administration">
+              <optgroup label="📋 Administration">
                 {employees.filter(emp => emp.department === 'Administration').map(emp => (
                   <option key={emp.id} value={emp.id}>
                     {emp.firstName} {emp.lastName} - {emp.position}
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="Enseignement">
+              <optgroup label="🎓 Enseignement">
                 {employees.filter(emp => emp.department === 'Enseignement').map(emp => (
                   <option key={emp.id} value={emp.id}>
                     {emp.firstName} {emp.lastName} - {emp.position}
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="Service">
+              <optgroup label="🔧 Service">
                 {employees.filter(emp => emp.department === 'Service').map(emp => (
                   <option key={emp.id} value={emp.id}>
                     {emp.firstName} {emp.lastName} - {emp.position}
@@ -268,6 +256,13 @@ export function SalaryCalculationForm({
                 ))}
               </optgroup>
             </select>
+            <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-700">
+                <strong>📊 Source :</strong> Base de données intégrée • 
+                <strong>Filtre :</strong> Employés actifs uniquement • 
+                <strong>Total disponible :</strong> {employees.length} employé(s)
+              </p>
+            </div>
           </div>
 
           {/* Affichage automatique du poste occupé */}
@@ -291,12 +286,16 @@ export function SalaryCalculationForm({
                     {selectedEmployee.entryDate && (
                       <span>Entrée: {new Date(selectedEmployee.entryDate).toLocaleDateString('fr-FR')}</span>
                     )}
+                    <span className="text-green-600 font-medium">✅ Depuis RH</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-600">Salaire RH</p>
+                  <p className="text-sm text-blue-600 font-medium">💰 Salaire de base</p>
                   <p className="text-xl font-bold text-blue-600">
                     {selectedEmployee.salary.toLocaleString()} Ar
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Salaire de base de l'employé
                   </p>
                 </div>
               </div>
@@ -417,7 +416,7 @@ export function SalaryCalculationForm({
               <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
                 <p className="text-yellow-700 text-sm">
                   <AlertTriangle className="w-4 h-4 inline mr-1" />
-                  Attention: Le salaire saisi ({baseSalary.toLocaleString()} Ar) diffère du salaire RH ({selectedEmployee.salary.toLocaleString()} Ar)
+                  Attention: Le salaire saisi ({baseSalary.toLocaleString()} Ar) diffère du salaire de base ({selectedEmployee.salary.toLocaleString()} Ar)
                 </p>
               </div>
             )}

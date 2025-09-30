@@ -1,5 +1,6 @@
 // Service de suivi des paiements d'écolage
 import { feesService, studentsService } from '../firebase/firebaseService';
+import { CURRENT_SCHOOL_YEAR } from '../constants/schoolYears';
 
 export interface PaymentSummary {
   studentId: string;
@@ -30,7 +31,7 @@ export class PaymentTrackingService {
   /**
    * Obtenir le résumé des paiements pour un élève
    */
-  static async getStudentPaymentSummary(studentId: string, academicYear: string = '2024-2025'): Promise<PaymentSummary | null> {
+  static async getStudentPaymentSummary(studentId: string, academicYear: string = CURRENT_SCHOOL_YEAR): Promise<PaymentSummary | null> {
     try {
       const student = await studentsService.getById(studentId);
       if (!student) return null;

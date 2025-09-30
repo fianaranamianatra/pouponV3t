@@ -41,6 +41,7 @@ const menuItems = [
   { id: 'classes', label: 'Classes', icon: BookOpen },
   { id: 'subjects', label: 'Matières', icon: BookOpen },
   { id: 'hr', label: 'Ressources Humaines', icon: UserCheck },
+  { id: 'users', label: 'Gestion Utilisateurs', icon: User },
   { id: 'reports', label: 'Rapports', icon: BarChart3 },
   { id: 'import', label: 'Import de Données', icon: Upload }
 ] as const;
@@ -115,6 +116,8 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
           return can('all_reports') || can('view_all_reports');
         case 'hr':
           return is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR]);
+        case 'users':
+          return is([USER_ROLES.ADMIN]);
         case 'import':
           return is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR]);
         default:

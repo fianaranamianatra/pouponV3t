@@ -191,4 +191,158 @@ export class FinancialDataCleanupService {
       return { transactions: 0, fees: 0, salaries: 0, payroll: 0 };
     }
   }
+
+  /**
+   * Nettoyer TOUS les doublons de transactions (pas seulement les salaires)
+   */
+  static async cleanupAllDuplicateTransactions(): Promise<{
+    totalCleaned: number;
+    duplicateGroups: number;
+    errors: string[];
+  }> {
+    try {
+      console.log('🧹 Début du nettoyage de TOUS les doublons de transactions');
+      
+      const allTransactions = await transactionsService.getAll();
+      console.log(`📊 Total transactions trouvées: ${allTransactions.length}`);
+      
+      if (allTransactions.length === 0) {
+        return { totalCleaned: 0, duplicateGroups: 0, errors: [] };
+      }
+      
+      // Grouper les transactions par signature unique
+      const transactionGroups = new Map<string, any[]>();
+      
+      allTransactions.forEach(transaction => {
+        // Créer une signature unique basée sur les champs critiques
+        const signature = `${transaction.type}-${transaction.category}-${transaction.description}-${transaction.amount}-${transaction.date}-${transaction.paymentMethod}`;
+        
+        if (!transactionGroups.has(signature)) {
+          transactionGroups.set(signature, []);
+        }
+        transactionGroups.get(signature)!.push(transaction);
+      });
+      
+      let totalCleaned = 0;
+      let duplicateGroups = 0;
+      const errors: string[] = [];
+      
+      console.log(`📊 Groupes de transactions trouvés: ${transactionGroups.size}`);
+      
+      // Traiter chaque groupe de doublons
+      for (const [signature, transactions] of transactionGroups) {
+        if (transactions.length > 1) {
+          duplicateGroups++;
+          console.log(`🔍 Groupe de doublons trouvé: ${transactions.length} transactions identiques`);
+          console.log(`📝 Signature: ${signature}`);
+          
+          try {
+            // Trier par date de création (garder le plus récent)
+            const sortedTransactions = transactions.sort((a, b) => {
+              const dateA = new Date(a.createdAt || a.date).getTime();
+              const dateB = new Date(b.createdAt || b.date).getTime();
+              return dateB - dateA; // Plus récent en premier
+            });
+            
+            // Garder le premier (plus récent) et supprimer les autres
+            const transactionToKeep = sortedTransactions[0];
+            const transactionsToDelete = sortedTransactions.slice(1);
+            
+            console.log(`✅ Transaction à conserver: ${transactionToKeep.id}`);
+            console.log(`🗑️ Transactions à supprimer: ${transactionsToDelete.length}`);
+            
+            // Supprimer les doublons par lots
+            for (const transaction of transactionsToDelete) {
+              try {
+                if (transaction.id) {
+                  await transactionsService.delete(transaction.id);
+                  totalCleaned++;
+                  console.log(`🗑️ Doublon supprimé: ${transaction.id}`);
+                }
+              } catch (deleteError: any) {
+                errors.push(`Erreur suppression ${transaction.id}: ${deleteError.message}`);
+              }
+            }
+            
+          } catch (groupError: any) {
+            errors.push(`Erreur traitement groupe: ${groupError.message}`);
+          }
+        }
+      }
+      
+      console.log(`✅ Nettoyage global terminé: ${totalCleaned} doublon(s) supprimé(s) dans ${duplicateGroups} groupe(s)`);
+      
+      return { totalCleaned, duplicateGroups, errors };
+    } catch (error: any) {
+      console.error('❌ Erreur lors du nettoyage global des doublons:', error);
+      return { totalCleaned: 0, duplicateGroups: 0, errors: [error.message] };
+    }
+  }
+
+  /**
+   * Analyser les doublons sans les supprimer
+   */
+  static async analyzeDuplicateTransactions(): Promise<{
+    totalTransactions: number;
+    duplicateGroups: Array<{
+      signature: string;
+      count: number;
+      transactions: any[];
+    }>;
+    totalDuplicates: number;
+  }> {
+    try {
+      console.log('🔍 Analyse des doublons de transactions');
+      
+      const allTransactions = await transactionsService.getAll();
+      console.log(`📊 Total transactions à analyser: ${allTransactions.length}`);
+      
+      if (allTransactions.length === 0) {
+        return { totalTransactions: 0, duplicateGroups: [], totalDuplicates: 0 };
+      }
+      
+      // Grouper les transactions par signature unique
+      const transactionGroups = new Map<string, any[]>();
+      
+      allTransactions.forEach(transaction => {
+        const signature = `${transaction.type}-${transaction.category}-${transaction.description}-${transaction.amount}-${transaction.date}-${transaction.paymentMethod}`;
+        
+        if (!transactionGroups.has(signature)) {
+          transactionGroups.set(signature, []);
+        }
+        transactionGroups.get(signature)!.push(transaction);
+      });
+      
+      // Identifier les groupes avec des doublons
+      const duplicateGroups: Array<{
+        signature: string;
+        count: number;
+        transactions: any[];
+      }> = [];
+      
+      let totalDuplicates = 0;
+      
+      for (const [signature, transactions] of transactionGroups) {
+        if (transactions.length > 1) {
+          duplicateGroups.push({
+            signature,
+            count: transactions.length,
+            transactions
+          });
+          totalDuplicates += transactions.length - 1; // -1 car on garde un original
+        }
+      }
+      
+      console.log(`📊 Analyse terminée: ${duplicateGroups.length} groupe(s) de doublons, ${totalDuplicates} doublons au total`);
+      
+      return {
+        totalTransactions: allTransactions.length,
+        duplicateGroups,
+        totalDuplicates
+      };
+    } catch (error: any) {
+      console.error('❌ Erreur lors de l\'analyse des doublons:', error);
+      return { totalTransactions: 0, duplicateGroups: [], totalDuplicates: 0 };
+    }
+  }
 }

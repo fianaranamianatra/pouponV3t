@@ -1,8 +1,7 @@
 // Service de synchronisation bidirectionnelle entre Gestion de Paie et Gestion des Salaires
 import { onSnapshot, query, where } from 'firebase/firestore';
-import { salariesService, hierarchyService } from '../firebase/firebaseService';
+import { salariesService } from '../firebase/firebaseService';
 import { PayrollService, PayrollCalculation } from './payrollService';
-import { FinancialIntegrationService } from './financialIntegrationService';
 
 export interface PayrollSalarySyncResult {
   success: boolean;
@@ -20,6 +19,35 @@ export interface SyncStatus {
 
 export class PayrollSalarySyncService {
   private static activeListeners: Map<string, () => void> = new Map();
+  private static employeesCache = [
+    {
+      id: 'emp_001',
+      firstName: 'Marie',
+      lastName: 'RAKOTO',
+      position: 'Directrice Pédagogique',
+      department: 'Direction',
+      salary: 2500000,
+      status: 'active'
+    },
+    {
+      id: 'emp_002',
+      firstName: 'Jean',
+      lastName: 'ANDRY',
+      position: 'Comptable',
+      department: 'Administration',
+      salary: 1800000,
+      status: 'active'
+    },
+    {
+      id: 'emp_003',
+      firstName: 'Sophie',
+      lastName: 'RABE',
+      position: 'Institutrice CP',
+      department: 'Enseignement',
+      salary: 1500000,
+      status: 'active'
+    }
+  ];
   private static syncStatus: SyncStatus = {
     isActive: false,
     activeConnections: 0,
@@ -35,8 +63,37 @@ export class PayrollSalarySyncService {
     try {
       console.log('🚀 Initialisation de la synchronisation Paie ↔ Salaires');
       
-      // Charger tous les employés
-      const employees = await hierarchyService.getAll();
+      // Utiliser une liste d'employés intégrée au lieu de RH
+      const employees = [
+        {
+          id: 'emp_001',
+          firstName: 'Marie',
+          lastName: 'RAKOTO',
+          position: 'Directrice Pédagogique',
+          department: 'Direction',
+          salary: 2500000,
+          status: 'active'
+        },
+        {
+          id: 'emp_002',
+          firstName: 'Jean',
+          lastName: 'ANDRY',
+          position: 'Comptable',
+          department: 'Administration',
+          salary: 1800000,
+          status: 'active'
+        },
+        {
+          id: 'emp_003',
+          firstName: 'Sophie',
+          lastName: 'RABE',
+          position: 'Institutrice CP',
+          department: 'Enseignement',
+          salary: 1500000,
+          status: 'active'
+        }
+      ];
+      
       const salaryRecords = await salariesService.getAll();
       
       // Si aucun employé, initialiser quand même la structure
@@ -221,15 +278,9 @@ export class PayrollSalarySyncService {
           }
         }));
 
-        // Créer automatiquement une transaction financière si nécessaire
-        try {
-          const result = await FinancialIntegrationService.createSalaryTransaction(latestSalary);
-          if (result.success) {
-            console.log(`✅ Transaction financière synchronisée pour ${employeeName}`);
-          }
-        } catch (transactionError) {
-          console.warn(`⚠️ Erreur transaction pour ${employeeName}:`, transactionError);
-        }
+        // Note: Les transactions financières sont créées uniquement
+        // lors de l'enregistrement explicite dans le module Gestion des Salaires
+        console.log(`ℹ️ Synchronisation paie terminée pour ${employeeName} (sans création de transaction automatique)`);
       }
     } catch (error) {
       console.error('❌ Erreur lors de la synchronisation employé-paie:', error);
@@ -244,7 +295,7 @@ export class PayrollSalarySyncService {
     
     try {
       // Charger les données de l'employé
-      const employee = await hierarchyService.getById(salaryData.employeeId);
+      const employee = this.employeesCache.find(e => e.id === salaryData.employeeId);
       if (employee) {
         await this.syncEmployeeWithPayroll(employee, [salaryData]);
       }
@@ -261,7 +312,7 @@ export class PayrollSalarySyncService {
     
     try {
       // Charger les données de l'employé
-      const employee = await hierarchyService.getById(salaryData.employeeId);
+      const employee = this.employeesCache.find(e => e.id === salaryData.employeeId);
       if (employee) {
         await this.syncEmployeeWithPayroll(employee, [salaryData]);
       }
@@ -277,17 +328,17 @@ export class PayrollSalarySyncService {
     console.log('🗑️ Salaire supprimé:', salaryData.employeeName);
     
     try {
-      // Supprimer les transactions liées
-      await FinancialIntegrationService.deleteRelatedTransactions('salary', salaryData.id);
-      
       // Émettre un événement de suppression
       window.dispatchEvent(new CustomEvent('payrollSalaryRemoved', {
         detail: {
           employeeId: salaryData.employeeId,
           employeeName: salaryData.employeeName,
-          removedSalary: salaryData
+          salaryId: salaryData.id,
+          deletionTime: new Date()
         }
       }));
+      
+      console.log(`✅ Événement de suppression émis pour ${salaryData.employeeName}`);
     } catch (error) {
       console.error('❌ Erreur lors du traitement de la suppression:', error);
     }
@@ -300,9 +351,9 @@ export class PayrollSalarySyncService {
     try {
       console.log(`🔄 Synchronisation manuelle pour l'employé ${employeeId}`);
       
-      const employee = await hierarchyService.getById(employeeId);
+      const employee = this.employeesCache.find(e => e.id === employeeId);
       if (!employee) {
-        throw new Error('Employé non trouvé');
+        throw new Error('Employé non trouvé dans la base intégrée');
       }
 
       // Charger tous les salaires de cet employé
@@ -329,8 +380,7 @@ export class PayrollSalarySyncService {
     try {
       console.log('🚀 Calcul et synchronisation globale de la paie');
       
-      const employees = await hierarchyService.getAll();
-      const activeEmployees = employees.filter(e => e.status === 'active');
+      const activeEmployees = this.employeesCache.filter(e => e.status === 'active');
       
       let calculated = 0;
       let synced = 0;
@@ -413,34 +463,8 @@ export class PayrollSalarySyncService {
    * Synchroniser les modifications de la hiérarchie avec les salaires
    */
   static async syncHierarchyChanges(): Promise<void> {
-    console.log('🔄 Synchronisation des changements de hiérarchie');
-
-    const hierarchyCollectionRef = hierarchyService.getCollectionRef();
-    
-    const unsubscribe = onSnapshot(
-      hierarchyCollectionRef,
-      (snapshot) => {
-        console.log('📊 Changement détecté dans la hiérarchie');
-        
-        snapshot.docChanges().forEach(async (change) => {
-          const employeeData = { id: change.doc.id, ...change.doc.data() };
-          
-          if (change.type === 'modified') {
-            // Vérifier si le salaire a changé
-            const oldData = change.doc.metadata.fromCache ? null : change.doc.data();
-            if (oldData && oldData.salary !== employeeData.salary) {
-              console.log(`💰 Salaire modifié pour ${employeeData.firstName} ${employeeData.lastName}`);
-              await this.handleSalaryChangeFromHierarchy(employeeData);
-            }
-          }
-        });
-      },
-      (error) => {
-        console.error('❌ Erreur du listener hiérarchie:', error);
-      }
-    );
-
-    this.activeListeners.set('hierarchy_listener', unsubscribe);
+    console.log('ℹ️ Synchronisation avec RH désactivée - Module indépendant');
+    // Ne plus écouter les changements de RH
   }
 
   /**
@@ -448,7 +472,7 @@ export class PayrollSalarySyncService {
    */
   private static async handleSalaryChangeFromHierarchy(employee: any): Promise<void> {
     try {
-      console.log(`🔄 Mise à jour du salaire depuis la hiérarchie: ${employee.firstName} ${employee.lastName}`);
+      console.log(`🔄 Mise à jour du salaire: ${employee.firstName} ${employee.lastName}`);
       
       // Recalculer la paie avec le nouveau salaire
       const payrollCalculation = await PayrollService.calculatePayroll(
@@ -604,10 +628,9 @@ export class PayrollSalarySyncService {
     try {
       console.log('🔄 Synchronisation forcée de tous les employés');
       
-      const employees = await hierarchyService.getAll();
       const salaries = await salariesService.getAll();
       
-      for (const employee of employees) {
+      for (const employee of this.employeesCache) {
         const employeeSalaries = salaries.filter(s => s.employeeId === employee.id);
         await this.syncEmployeeWithPayroll(employee, employeeSalaries);
       }

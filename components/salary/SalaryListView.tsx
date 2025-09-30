@@ -31,19 +31,9 @@ interface SalaryRecord {
   notes?: string;
 }
 
-interface Employee {
-  id: string;
-  firstName: string;
-  lastName: string;
-  position: string;
-  department: string;
-  salary: number;
-  status: 'active' | 'inactive';
-}
-
 interface SalaryListViewProps {
   salaries: SalaryRecord[];
-  employees: Employee[];
+  employees: any[];
   onView: (salary: SalaryRecord) => void;
   onEdit: (salary: SalaryRecord) => void;
   onDelete: (salaryId: string) => void;
@@ -243,10 +233,6 @@ export function SalaryListView({
                         <p className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-green-600`}>
                           {salary.netSalary.toLocaleString()} Ar
                         </p>
-                            <div className="flex items-center space-x-1 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <span className="text-xs text-green-600">Source: RH</span>
-                            </div>
                         <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500`}>
                           Taux: {salary.totalGross > 0 ? ((salary.netSalary / salary.totalGross) * 100).toFixed(1) : 0}%
                         </p>

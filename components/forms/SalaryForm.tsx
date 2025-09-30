@@ -10,10 +10,11 @@ interface SalaryFormProps {
   onCancel: () => void;
   initialData?: any;
   employees?: any[];
+  teachers?: any[];
   isSubmitting?: boolean;
 }
 
-export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], isSubmitting = false }: SalaryFormProps) {
+export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], teachers = [], isSubmitting = false }: SalaryFormProps) {
   const [formData, setFormData] = useState({
     employeeId: initialData?.employeeId || '',
     employeeName: initialData?.employeeName || '',
@@ -48,20 +49,15 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], is
   });
 
   // Combine employees and teachers for selection
-  // Utiliser UNIQUEMENT les employés RH actifs
-  const allEmployees = employees.filter(emp => emp.status === 'active');
-
-  // Organiser par département
-  const employeesByDepartment = allEmployees.reduce((acc, emp) => {
-    const dept = emp.department || 'Non classé';
-    if (!acc[dept]) {
-      acc[dept] = [];
-    }
-    acc[dept].push(emp);
-    return acc;
-  }, {} as { [key: string]: any[] });
-
-  const departmentOrder = ['Direction', 'Administration', 'Enseignement', 'Service'];
+  const allEmployees = [
+    ...employees.filter(emp => emp.status === 'active'), // Filtrer seulement les employés actifs
+    ...teachers.filter(teacher => teacher.status && teacher.status !== 'inactive').map(teacher => ({ 
+      ...teacher, 
+      type: 'teacher',
+      position: teacher.subject || 'Enseignant',
+      department: 'Enseignement'
+    }))
+  ];
 
   // Options pour les mois
   const monthOptions = [
@@ -227,24 +223,25 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], is
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
                 <option value="">Sélectionner un employé</option>
-                {departmentOrder.map(department => {
-                  const deptEmployees = employeesByDepartment[department];
-                  if (!deptEmployees || deptEmployees.length === 0) return null;
-                  
-                  return (
-                    <optgroup key={department} label={`${department} - Ressources Humaines (${deptEmployees.length})`}>
-                      {deptEmployees
-                        .sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`))
-                        .map(emp => (
-                          <option key={emp.id} value={emp.id}>
-                            {emp.firstName} {emp.lastName} - {emp.position}
-                            {emp.salary && ` (${emp.salary.toLocaleString()} Ar)`}
-                          </option>
-                        ))
-                      }
-                    </optgroup>
-                  );
-                })}
+                <optgroup label="Personnel des Ressources Humaines">
+                  {employees.filter(emp => emp.department !== 'Enseignement').map(emp => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.firstName} {emp.lastName} - {emp.position} ({emp.department})
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Enseignants">
+                  {employees.filter(emp => emp.department === 'Enseignement').map(emp => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.firstName} {emp.lastName} - {emp.position}
+                    </option>
+                  ))}
+                  {teachers.length > 0 && teachers.map(teacher => (
+                    <option key={`teacher-${teacher.id}`} value={teacher.id}>
+                      {teacher.firstName} {teacher.lastName} - {teacher.subject} (Enseignant)
+                    </option>
+                  ))}
+                </optgroup>
               </select>
               
               <button

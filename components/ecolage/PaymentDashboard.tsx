@@ -16,6 +16,7 @@ import {
 import { useFirebaseCollection } from '../../hooks/useFirebaseCollection';
 import { feesService, studentsService, classesService } from '../../lib/firebase/firebaseService';
 import { StudentPaymentDetails } from './StudentPaymentDetails';
+import { CURRENT_SCHOOL_YEAR, SCHOOL_YEARS } from '../../lib/constants/schoolYears';
 
 interface ClassPaymentSummary {
   className: string;
@@ -32,7 +33,7 @@ interface PaymentDashboardProps {
   academicYear?: string;
 }
 
-export function PaymentDashboard({ selectedClass = '', academicYear = '2024-2025' }: PaymentDashboardProps) {
+export function PaymentDashboard({ selectedClass = '', academicYear = CURRENT_SCHOOL_YEAR }: PaymentDashboardProps) {
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [showStudentDetails, setShowStudentDetails] = useState(false);
   const [classSummaries, setClassSummaries] = useState<ClassPaymentSummary[]>([]);
